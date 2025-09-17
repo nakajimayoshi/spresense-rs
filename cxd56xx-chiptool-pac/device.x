@@ -1,0 +1,12 @@
+PROVIDE(CRG = DefaultHandler);
+PROVIDE(UART1 = DefaultHandler);
+PROVIDE(SPI3 = DefaultHandler);
+PROVIDE(SPI0 = DefaultHandler);
+PROVIDE(_2D = DefaultHandler);
+PROVIDE(ROT = DefaultHandler);
+PROVIDE(CISIF = DefaultHandler);
+PROVIDE(SPI5 = DefaultHandler);
+PROVIDE(DMAC3 = DefaultHandler);
+PROVIDE(UART2 = DefaultHandler);
+PROVIDE(SPI4 = DefaultHandler);
+PROVIDE(DMAC1 = DefaultHandler);
