@@ -27,24 +27,30 @@ Link to the [technical manual](https://www.sony-semicon.com/files/62/pdf/p-28_CX
 
 ### SVD file
 
-Some of the enumerateValues names are not valid identifiers in Rust
+~~Some of the enumerateValues names are not valid identifiers in Rust~~
 
-- Change "16 .. 240 range" to "FROM16TO240range"
-  - the ".." can't be inside an identifier
-- Change "don't" to "dont"
-  - the "'" can't be inside an identifier
+- ~~Change "16 .. 240 range" to "FROM16TO240range"~~
+  - ~~the ".." can't be inside an identifier~~
+- ~~Change "don't" to "dont"~~
+  - ~~the "'" can't be inside an identifier~~
+
+SVD changes are now encoded into a `svdtools` patch file at `patch.yml`
+
+```
+svdtools patch patch.yml
+```
 
 #### svd2rust
 
 ```bash
-svd2rust -i cxd5602-fixed.svd
+svd2rust -i cxd5602.svd.patched
 form -i lib.rs -o src/
 ```
 
 #### `chiptool`
 
 ```bash
-chiptool generate --svd cxd5602-fixed.svd
+chiptool generate --svd cxd5602.svd.patched
 form -i lib.rs -o src/
 ```
 

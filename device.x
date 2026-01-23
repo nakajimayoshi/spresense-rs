@@ -10,3 +10,4 @@ PROVIDE(DMAC3 = DefaultHandler);
 PROVIDE(UART2 = DefaultHandler);
 PROVIDE(SPI4 = DefaultHandler);
 PROVIDE(DMAC1 = DefaultHandler);
+

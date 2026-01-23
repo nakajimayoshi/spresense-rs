@@ -78,9 +78,9 @@ where
 #[doc = "Scale factor for Cb and Cr\n\nValue on reset: 0"]
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum ConvCalcSel {
-    #[doc = "0: `0`"]
+    #[doc = "0: 16 .. 240 range"]
     From16to240range = 0,
-    #[doc = "1: `1`"]
+    #[doc = "1: -127 .. 127 range"]
     From127to127range = 1,
 }
 impl From<ConvCalcSel> for bool {
@@ -100,12 +100,12 @@ impl ConvCalcSelR {
             true => ConvCalcSel::From127to127range,
         }
     }
-    #[doc = "`0`"]
+    #[doc = "16 .. 240 range"]
     #[inline(always)]
     pub fn is_from16to240range(&self) -> bool {
         *self == ConvCalcSel::From16to240range
     }
-    #[doc = "`1`"]
+    #[doc = "-127 .. 127 range"]
     #[inline(always)]
     pub fn is_from127to127range(&self) -> bool {
         *self == ConvCalcSel::From127to127range
@@ -117,12 +117,12 @@ impl<'a, REG> ConvCalcSelW<'a, REG>
 where
     REG: crate::Writable + crate::RegisterSpec,
 {
-    #[doc = "`0`"]
+    #[doc = "16 .. 240 range"]
     #[inline(always)]
     pub fn from16to240range(self) -> &'a mut crate::W<REG> {
         self.variant(ConvCalcSel::From16to240range)
     }
-    #[doc = "`1`"]
+    #[doc = "-127 .. 127 range"]
     #[inline(always)]
     pub fn from127to127range(self) -> &'a mut crate::W<REG> {
         self.variant(ConvCalcSel::From127to127range)
