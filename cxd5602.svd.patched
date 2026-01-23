@@ -1136,20 +1136,21 @@
               <description>Rotation Angle</description>
               <bitRange>[2:0]</bitRange>
               <enumeratedValues>
+                <name>ROT</name>
                 <enumeratedValue>
-                  <name>No rotation</name>
+                  <name>NoRotation</name>
                   <value>0</value>
                 </enumeratedValue>
                 <enumeratedValue>
-                  <name>Right 90 degrees</name>
+                  <name>Right90degrees</name>
                   <value>1</value>
                 </enumeratedValue>
                 <enumeratedValue>
-                  <name>Right 180 degrees</name>
+                  <name>Right180degrees</name>
                   <value>2</value>
                 </enumeratedValue>
                 <enumeratedValue>
-                  <name>Right 270 degrees</name>
+                  <name>Right270degrees</name>
                   <value>4</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -1267,7 +1268,7 @@
                   <value>0</value>
                 </enumeratedValue>
                 <enumeratedValue>
-                  <name>FROM-127TO127RANGE</name>
+                  <name>FROMNEG127TO127RANGE</name>
                   <description>-127 .. 127 range</description>
                   <value>1</value>
                 </enumeratedValue>
@@ -1347,12 +1348,13 @@
               <description>TX buffer is full</description>
               <bitRange>[0:0]</bitRange>
               <enumeratedValues>
+                <name>FULL_FLAG</name>
                 <enumeratedValue>
-                  <name>not full</name>
+                  <name>NotFull</name>
                   <value>0</value>
                 </enumeratedValue>
                 <enumeratedValue>
-                  <name>full</name>
+                  <name>Full</name>
                   <value>1</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -1396,11 +1398,11 @@
               <enumeratedValues>
                 <name>PUSH_CMP</name>
                 <enumeratedValue>
-                  <name>dont care</name>
+                  <name>DontCare</name>
                   <value>0</value>
                 </enumeratedValue>
                 <enumeratedValue>
-                  <name>complete</name>
+                  <name>Complete</name>
                   <value>1</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -1420,12 +1422,13 @@
               <description>RX buffer is empty</description>
               <bitRange>[0:0]</bitRange>
               <enumeratedValues>
+                <name>EMPTY_FLAG</name>
                 <enumeratedValue>
-                  <name>not empty</name>
+                  <name>NotEmpty</name>
                   <value>0</value>
                 </enumeratedValue>
                 <enumeratedValue>
-                  <name>empty</name>
+                  <name>Empty</name>
                   <value>1</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -1469,11 +1472,11 @@
               <enumeratedValues>
                 <name>PULL_CMP</name>
                 <enumeratedValue>
-                  <name>dont care</name>
+                  <name>DontCare</name>
                   <value>0</value>
                 </enumeratedValue>
                 <enumeratedValue>
-                  <name>complete</name>
+                  <name>Complete</name>
                   <value>1</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -6180,6 +6183,37 @@
       <name>GPIO0</name>
       <description>GPIO Port 0</description>
       <baseAddress>0x04120000</baseAddress>
+      <addressBlock>
+        <offset>0x0</offset>
+        <size>0x400</size>
+        <usage>registers</usage>
+      </addressBlock>
+      <registers>
+        <register>
+          <name>PIN97</name>
+          <description>todo</description>
+          <addressOffset>0x168</addressOffset>
+          <access>read-write</access>
+          <resetValue>0x00000000</resetValue>
+          <fields>
+            <field>
+              <name>OUTPUT_EN</name>
+              <bitOffset>16</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>OUTPUT</name>
+              <bitOffset>8</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>INPUT</name>
+              <bitOffset>0</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+          </fields>
+        </register>
+      </registers>
     </peripheral>
     <peripheral>
       <name>CISIF</name>
