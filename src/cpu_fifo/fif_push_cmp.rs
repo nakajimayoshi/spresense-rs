@@ -4,7 +4,7 @@ pub type W = crate::W<FifPushCmpSpec>;
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum PushCmp {
     #[doc = "0: `0`"]
-    Dontcare = 0,
+    DontCare = 0,
     #[doc = "1: `1`"]
     Complete = 1,
 }
@@ -22,8 +22,8 @@ where
 {
     #[doc = "`0`"]
     #[inline(always)]
-    pub fn dontcare(self) -> &'a mut crate::W<REG> {
-        self.variant(PushCmp::Dontcare)
+    pub fn dont_care(self) -> &'a mut crate::W<REG> {
+        self.variant(PushCmp::DontCare)
     }
     #[doc = "`1`"]
     #[inline(always)]

@@ -7,7 +7,7 @@ pub type W = crate::W<SetDirectionSpec>;
 #[repr(u8)]
 pub enum Rot {
     #[doc = "0: `0`"]
-    Norotation = 0,
+    NoRotation = 0,
     #[doc = "1: `1`"]
     Right90degrees = 1,
     #[doc = "2: `10`"]
@@ -32,7 +32,7 @@ impl RotR {
     #[inline(always)]
     pub const fn variant(&self) -> Option<Rot> {
         match self.bits {
-            0 => Some(Rot::Norotation),
+            0 => Some(Rot::NoRotation),
             1 => Some(Rot::Right90degrees),
             2 => Some(Rot::Right180degrees),
             4 => Some(Rot::Right270degrees),
@@ -41,8 +41,8 @@ impl RotR {
     }
     #[doc = "`0`"]
     #[inline(always)]
-    pub fn is_norotation(&self) -> bool {
-        *self == Rot::Norotation
+    pub fn is_no_rotation(&self) -> bool {
+        *self == Rot::NoRotation
     }
     #[doc = "`1`"]
     #[inline(always)]
@@ -69,8 +69,8 @@ where
 {
     #[doc = "`0`"]
     #[inline(always)]
-    pub fn norotation(self) -> &'a mut crate::W<REG> {
-        self.variant(Rot::Norotation)
+    pub fn no_rotation(self) -> &'a mut crate::W<REG> {
+        self.variant(Rot::NoRotation)
     }
     #[doc = "`1`"]
     #[inline(always)]

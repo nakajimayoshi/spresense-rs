@@ -4,7 +4,7 @@ pub type R = crate::R<FifPullEmpSpec>;
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum EmptyFlag {
     #[doc = "0: `0`"]
-    Notempty = 0,
+    NotEmpty = 0,
     #[doc = "1: `1`"]
     Empty = 1,
 }
@@ -21,14 +21,14 @@ impl EmptyFlagR {
     #[inline(always)]
     pub const fn variant(&self) -> EmptyFlag {
         match self.bits {
-            false => EmptyFlag::Notempty,
+            false => EmptyFlag::NotEmpty,
             true => EmptyFlag::Empty,
         }
     }
     #[doc = "`0`"]
     #[inline(always)]
-    pub fn is_notempty(&self) -> bool {
-        *self == EmptyFlag::Notempty
+    pub fn is_not_empty(&self) -> bool {
+        *self == EmptyFlag::NotEmpty
     }
     #[doc = "`1`"]
     #[inline(always)]

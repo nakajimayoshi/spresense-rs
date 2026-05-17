@@ -81,7 +81,7 @@ pub enum ConvCalcSel {
     #[doc = "0: 16 .. 240 range"]
     From16to240range = 0,
     #[doc = "1: -127 .. 127 range"]
-    From127to127range = 1,
+    Fromneg127to127range = 1,
 }
 impl From<ConvCalcSel> for bool {
     #[inline(always)]
@@ -97,7 +97,7 @@ impl ConvCalcSelR {
     pub const fn variant(&self) -> ConvCalcSel {
         match self.bits {
             false => ConvCalcSel::From16to240range,
-            true => ConvCalcSel::From127to127range,
+            true => ConvCalcSel::Fromneg127to127range,
         }
     }
     #[doc = "16 .. 240 range"]
@@ -107,8 +107,8 @@ impl ConvCalcSelR {
     }
     #[doc = "-127 .. 127 range"]
     #[inline(always)]
-    pub fn is_from127to127range(&self) -> bool {
-        *self == ConvCalcSel::From127to127range
+    pub fn is_fromneg127to127range(&self) -> bool {
+        *self == ConvCalcSel::Fromneg127to127range
     }
 }
 #[doc = "Field `CONV_CALC_SEL` writer - Scale factor for Cb and Cr"]
@@ -124,8 +124,8 @@ where
     }
     #[doc = "-127 .. 127 range"]
     #[inline(always)]
-    pub fn from127to127range(self) -> &'a mut crate::W<REG> {
-        self.variant(ConvCalcSel::From127to127range)
+    pub fn fromneg127to127range(self) -> &'a mut crate::W<REG> {
+        self.variant(ConvCalcSel::Fromneg127to127range)
     }
 }
 impl R {

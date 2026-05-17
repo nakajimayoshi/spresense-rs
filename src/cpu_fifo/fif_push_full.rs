@@ -4,7 +4,7 @@ pub type R = crate::R<FifPushFullSpec>;
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum FullFlag {
     #[doc = "0: `0`"]
-    Notfull = 0,
+    NotFull = 0,
     #[doc = "1: `1`"]
     Full = 1,
 }
@@ -21,14 +21,14 @@ impl FullFlagR {
     #[inline(always)]
     pub const fn variant(&self) -> FullFlag {
         match self.bits {
-            false => FullFlag::Notfull,
+            false => FullFlag::NotFull,
             true => FullFlag::Full,
         }
     }
     #[doc = "`0`"]
     #[inline(always)]
-    pub fn is_notfull(&self) -> bool {
-        *self == FullFlag::Notfull
+    pub fn is_not_full(&self) -> bool {
+        *self == FullFlag::NotFull
     }
     #[doc = "`1`"]
     #[inline(always)]
