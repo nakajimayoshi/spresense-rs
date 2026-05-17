@@ -10,6 +10,7 @@ Collection of notes and outputs for setting up a PAC for the CXD5602 from the So
 
 ### Relevant Repos
 
+[SPRESENSE SDK](https://github.com/sonydevworld/spresense)
 [SPRESENSE Nuttx Fork](https://github.com/SPRESENSE/nuttx/tree/99dbb7fa0111dc26baca2689d67088a34d238d94)
 
 - Contains CXD5602 specific C code for studying
