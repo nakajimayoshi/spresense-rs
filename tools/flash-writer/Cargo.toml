@@ -1,0 +1,19 @@
+[package]
+name = "flash-writer"
+version = "0.1.0"
+edition = "2021"
+description = "Pure-Rust port of the Spresense flash_writer: install SPK packages over UART"
+license = "MIT OR Apache-2.0"
+
+[lib]
+name = "flash_writer"
+path = "src/lib.rs"
+
+[[bin]]
+name = "flash_writer"
+path = "src/main.rs"
+
+[dependencies]
+anyhow = "1"
+clap = { version = "4", features = ["derive"] }
+serialport = "4"

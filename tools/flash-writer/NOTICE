@@ -1,0 +1,16 @@
+flash-writer
+============
+
+This product contains code derived from the Spresense SDK flash_writer tool
+(https://github.com/sonydevworld/spresense), licensed under BSD-3-Clause.
+
+  Copyright (c) 2018, 2021 Sony Semiconductor Solutions Corporation
+
+The XMODEM-1K implementation (src/xmodem.rs) is derived from xmodem.py,
+licensed under the MIT License.
+
+  Copyright (c) 2010 Wijnand Modderman
+  Copyright (c) 1981 Chuck Forsberg
+
+The CRC-16 table (src/xmodem.rs) was calculated by Mark G. Mendel,
+Network Systems Corporation.
