@@ -17,13 +17,15 @@ use cortex_m::asm;
 use cortex_m_rt::entry;
 use panic_halt as _;
 
+use cxd56_pac::pac::*;
+
 /// Cycles to spin between LED toggles at ~153.6 MHz (≈ 0.5 s).
 const DELAY_CYCLES: u32 = 76_800_000;
 
 #[entry]
 fn main() -> ! {
     // Safety: no other code runs on this core before this point.
-    let gpio0 = unsafe { spresense::Gpio0::steal() };
+    let gpio0 = unsafe { Gpio0::steal() };
 
     // Configure PIN97 (LED0) as output, initially low.
     // DIR is active-low: clear_bit() = 0 = drive output.
