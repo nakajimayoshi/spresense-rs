@@ -6,7 +6,7 @@ license = "BSD-3-Clause"
 
 [dependencies]
 cxd56-pac-svd2rust = { path = "../cxd56-pac-svd2rust", optional = true }
-cxd56-pac-chiptool = { path = "../cxd56-pac-svd2rust", optional = true }
+cxd56-pac-chiptool = { path = "../cxd56-pac-chiptool", optional = true }
 
 [features]
 default = ["svd2rust"]
