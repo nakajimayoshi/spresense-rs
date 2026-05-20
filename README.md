@@ -37,7 +37,7 @@ Link to the [technical manual](https://www.sony-semicon.com/files/62/pdf/p-28_CX
 
 SVD changes are now encoded into a `svdtools` patch file at `patch.yml`
 
-```
+```bash
 svdtools patch patch.yml
 ```
 
