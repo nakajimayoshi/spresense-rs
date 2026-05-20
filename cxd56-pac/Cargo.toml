@@ -2,6 +2,7 @@
 name = "cxd56-pac"
 version = "0.1.0"
 edition = "2024"
+license = "BSD-3-Clause"
 
 [dependencies]
 cxd56-pac-svd2rust = { path = "../cxd56-pac-svd2rust", optional = true }

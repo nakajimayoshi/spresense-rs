@@ -2,7 +2,7 @@
 name = "cxd56-pac-svd2rust"
 version = "0.1.0"
 edition = "2024"
-license = "MIT OR Apache-2.0"
+license = "BSD-3-Clause"
 
 [dependencies]
 cortex-m = "0.7.7"
