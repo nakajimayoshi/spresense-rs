@@ -1,0 +1,28 @@
+# Chiptool-specific IR transforms for the CXD5602 PAC.
+#
+# Pass via: chiptool generate --svd cxd5602.svd.patched --transform transform.chiptool.yaml
+#
+# chiptool calls syn::Ident::new on raw SVD names and panics on any name that
+# starts with a digit. svd2rust tolerates these (it auto-prefixes), so this
+# file is chiptool-only and separate from the generator-agnostic patch.yml.
+#
+# Three classes of invalid names in the Sony CXD5602 SVD:
+#   - Interrupt "2D" on peripheral GE2D (value 106)
+#   - Enum variants starting with a digit: 8bits, 1byte, 4bit..16bit, 16/32/64 …
+#     across UART1/2 (WLEN), DMAC1/3 (DBSize, FSIZE), SPI0/4 (DSS)
+#   - Enum variant named "static" (Rust keyword) in DMAC3/DMACConfiguration/ARB
+#
+# serde_yaml 0.9.x requires YAML-tag syntax (!VariantName) for enum variants.
+
+transforms:
+  - !RenameInterrupts
+    from: "2D"
+    to: "GE2D"
+  - !RenameEnumVariants
+    enum: ".*"
+    from: "static"
+    to: "Fixed"
+  - !RenameEnumVariants
+    enum: ".*"
+    from: "(\\d.*)"
+    to: "N${1}"
