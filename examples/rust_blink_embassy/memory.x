@@ -1,4 +1,8 @@
 MEMORY {
-    FLASH : ORIGIN = 0x80000000, LENGTH = 8M
-    RAM   : ORIGIN = 0x0D000000, LENGTH = 1536K
+    RAM : ORIGIN = 0x0D000000, LENGTH = 1536K
 }
+
+REGION_ALIAS("FLASH", RAM);
+
+_stack_start = ORIGIN(RAM) + LENGTH(RAM);
+PROVIDE(__stack = _stack_start);
