@@ -1,5 +1,5 @@
 [workspace]
-members = ["cxd56-pac", "examples/*", "tools/*"]
+members = ["cxd56-pac", "embassy-cxd56", "examples/*", "tools/*"]
 
 [package]
 name = "spresense"
