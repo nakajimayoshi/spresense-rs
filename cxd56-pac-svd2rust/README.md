@@ -2,7 +2,7 @@
 
 This is a [Peripheral Access Crate](https://rust-embedded.github.io/book/start/registers.html) for Sony cxd56 microcontrollers.
 
-This crate has been automatically generated from the SVD files in [nrfx](https://github.com/NordicSemiconductor/nrfx), using [svd2rust](https://github.com/rust-embedded/svd2rust). Fixes are added to the SVD file to make peripherals accessible such as LEDs and GPIO pins.
+This crate has been automatically generated from the SVD files in the [spresense SDK](https://github.com/sonydevworld/spresense), using [svd2rust](https://github.com/rust-embedded/svd2rust). Fixes are added to the SVD file to make peripherals accessible such as LEDs and GPIO pins.
 
 ## License
 
