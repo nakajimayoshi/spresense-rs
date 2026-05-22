@@ -1,6 +1,5 @@
 use std::{
-    env,
-    fs,
+    env, fs,
     io::BufReader,
     path::{Path, PathBuf},
     process::{Command, Stdio},
@@ -13,13 +12,20 @@ use clap::{ArgGroup, Parser};
 const DEFAULT_TARGET: &str = "thumbv7em-none-eabihf";
 const DEFAULT_PORT: &str = "/dev/ttyUSB0";
 
-#[derive(Parser)]
+#[derive(Parser, Debug)]
+#[command(name = "cargo-spresense-flash", bin_name = "cargo")]
+enum CargoCli {
+    SpresenseFlash(Cli),
+}
+
+#[derive(clap::Args, Debug)]
 #[command(
-    name = "cargo-spresense-flash",
-    bin_name = "cargo spresense-flash",
-    about = "Build and flash a Rust binary to a Sony Spresense board"
+    version,
+    about = "Build and flash a Rust binary to a Sony Spresense board",
+    group(
+        ArgGroup::new("artifact").required(true).multiple(false).args(["bin", "example"])
+    )
 )]
-#[command(group(ArgGroup::new("artifact").required(true).args(["bin", "example"])))]
 struct Cli {
     /// Binary target to build and flash
     #[arg(long, value_name = "NAME")]
@@ -75,16 +81,7 @@ struct Cli {
 }
 
 fn main() -> Result<()> {
-    // When cargo invokes us it prepends the subcommand name as argv[1].
-    // Drop it so clap sees a clean arg list.
-    let raw: Vec<String> = env::args().collect();
-    let args: Vec<String> = if raw.get(1).map(|s| s.as_str()) == Some("spresense-flash") {
-        raw[0..1].iter().chain(raw[2..].iter()).cloned().collect()
-    } else {
-        raw
-    };
-
-    let cli = Cli::parse_from(args);
+    let CargoCli::SpresenseFlash(cli) = CargoCli::parse();
 
     let artifact_name = cli
         .bin
@@ -194,9 +191,7 @@ fn build(cli: &Cli, artifact_name: &str) -> Result<PathBuf> {
     }
 
     elf_path.ok_or_else(|| {
-        anyhow!(
-            "cargo build succeeded but no executable artifact found for '{artifact_name}'"
-        )
+        anyhow!("cargo build succeeded but no executable artifact found for '{artifact_name}'")
     })
 }
 
@@ -205,10 +200,7 @@ fn find_existing_artifact(cli: &Cli, artifact_name: &str) -> Result<PathBuf> {
     if let Some(ref mp) = cli.manifest_path {
         mcmd.manifest_path(mp);
     }
-    let meta = mcmd
-        .no_deps()
-        .exec()
-        .context("cargo metadata failed")?;
+    let meta = mcmd.no_deps().exec().context("cargo metadata failed")?;
 
     let profile_dir = if let Some(ref p) = cli.profile {
         p.as_str()
