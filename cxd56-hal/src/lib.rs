@@ -2,4 +2,5 @@
 
 pub use cxd56_pac_svd2rust as pac;
 
+pub mod delay;
 pub mod gpio;

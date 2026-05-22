@@ -5,4 +5,5 @@ edition = "2024"
 
 [dependencies]
 cxd56-pac-svd2rust = { version = "0.1.0", path = "../cxd56-pac-svd2rust" }
+cortex-m = "0.7.7"
 embedded-hal = "1.0.0"
