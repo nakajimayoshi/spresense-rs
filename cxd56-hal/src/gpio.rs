@@ -157,3 +157,33 @@ impl<R: PinReg> embedded_hal::digital::InputPin for Input<R> {
         Ok(Input::is_low(self))
     }
 }
+
+/// Per-port split structs.
+///
+/// Mirrors the convention used by `stm32f4xx-hal` (`gpioa::Parts`),
+/// `nrf-hal` (`p0::Parts`), etc. Construct via [`Parts::new`], which
+/// consumes the corresponding PAC singleton — proving exclusive access
+/// so no `unsafe` is needed at the call site.
+pub mod gpio0 {
+    use super::GpioPin;
+    use crate::pac;
+
+    /// All GPIO0 pins.
+    pub struct Parts {
+        pub pin97: GpioPin<pac::gpio0::Pin97>,
+        pub gp_i2c4_bck: GpioPin<pac::gpio0::GpI2c4Bck>,
+    }
+
+    impl Parts {
+        pub fn new(_gpio0: pac::Gpio0) -> Self {
+            // Safety: ownership of `pac::Gpio0` — obtainable only via
+            // `pac::Peripherals::take()` — guarantees no other code holds
+            // a reference to this register block.
+            let block = unsafe { &*pac::Gpio0::PTR };
+            Self {
+                pin97: unsafe { GpioPin::new(block.pin97()) },
+                gp_i2c4_bck: unsafe { GpioPin::new(block.gp_i2c4_bck()) },
+            }
+        }
+    }
+}

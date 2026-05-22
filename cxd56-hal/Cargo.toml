@@ -3,6 +3,10 @@ name = "cxd56-hal"
 version = "0.1.0"
 edition = "2024"
 
+[features]
+rt = ["cxd56-pac-svd2rust/rt"]
+critical-section = ["cxd56-pac-svd2rust/critical-section"]
+
 [dependencies]
 cxd56-pac-svd2rust = { version = "0.1.0", path = "../cxd56-pac-svd2rust" }
 cortex-m = "0.7.7"
