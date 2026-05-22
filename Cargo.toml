@@ -1,4 +1,3 @@
 [workspace]
-members = ["cxd56-pac", "embassy-cxd56", "tools/*"]
+members = ["cxd56-hal", "cxd56-pac", "cxd56-pac-svd2rust", "embassy-cxd56", "spresense-bsp", "tools/*"]
 resolver = "3"
-
