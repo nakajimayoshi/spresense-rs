@@ -1,6 +1,8 @@
 use crate::clocks::{ClockError, Clocks, PeripheralId};
 use crate::pac;
 use core::fmt;
+use embedded_hal_nb::nb;
+use embedded_hal_nb::serial::{ErrorKind, ErrorType};
 
 #[derive(Debug)]
 pub enum UartError {
@@ -151,5 +153,37 @@ impl fmt::Write for Uart2 {
             self.write_byte(byte);
         }
         Ok(())
+    }
+}
+
+impl ErrorType for Uart2 {
+    type Error = ErrorKind;
+}
+
+impl embedded_hal_nb::serial::Read<u8> for Uart2 {
+    fn read(&mut self) -> nb::Result<u8, Self::Error> {
+        match self.read_byte() {
+            Some(b) => Ok(b),
+            None => Err(nb::Error::WouldBlock),
+        }
+    }
+}
+
+impl embedded_hal_nb::serial::Write<u8> for Uart2 {
+    fn write(&mut self, word: u8) -> nb::Result<(), Self::Error> {
+        if self.uart.fr().read().txff().bit_is_set() {
+            Err(nb::Error::WouldBlock)
+        } else {
+            self.uart.dr().write(|w| unsafe { w.bits(word as u32) });
+            Ok(())
+        }
+    }
+
+    fn flush(&mut self) -> nb::Result<(), Self::Error> {
+        if self.uart.fr().read().busy().bit_is_set() {
+            Err(nb::Error::WouldBlock)
+        } else {
+            Ok(())
+        }
     }
 }
