@@ -59,8 +59,11 @@ impl core::fmt::Debug for GP_I2C4_BCK {
 impl defmt::Format for GP_I2C4_BCK {
     fn format(&self, f: defmt::Formatter) {
         defmt::write!(
-            f, "GP_I2C4_BCK {{ IN: {=bool:?}, OUT: {=bool:?}, DIR: {=bool:?} }}", self
-            .IN(), self.OUT(), self.DIR()
+            f,
+            "GP_I2C4_BCK {{ IN: {=bool:?}, OUT: {=bool:?}, DIR: {=bool:?} }}",
+            self.IN(),
+            self.OUT(),
+            self.DIR()
         )
     }
 }
@@ -125,8 +128,11 @@ impl core::fmt::Debug for PIN97 {
 impl defmt::Format for PIN97 {
     fn format(&self, f: defmt::Formatter) {
         defmt::write!(
-            f, "PIN97 {{ IN: {=bool:?}, OUT: {=bool:?}, DIR: {=bool:?} }}", self.IN(),
-            self.OUT(), self.DIR()
+            f,
+            "PIN97 {{ IN: {=bool:?}, OUT: {=bool:?}, DIR: {=bool:?} }}",
+            self.IN(),
+            self.OUT(),
+            self.DIR()
         )
     }
 }

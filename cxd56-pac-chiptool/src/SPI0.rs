@@ -61,9 +61,7 @@ impl SPI0 {
     }
     ///DMA control register.
     #[inline(always)]
-    pub const fn SSPDMACR(
-        self,
-    ) -> crate::common::Reg<regs::SSPDMACR, crate::common::RW> {
+    pub const fn SSPDMACR(self) -> crate::common::Reg<regs::SSPDMACR, crate::common::RW> {
         unsafe { crate::common::Reg::from_ptr(self.ptr.wrapping_add(0x24usize) as _) }
     }
     #[inline(always)]
@@ -75,9 +73,7 @@ impl SPI0 {
         unsafe { crate::common::Reg::from_ptr(self.ptr.wrapping_add(0x94usize) as _) }
     }
     #[inline(always)]
-    pub const fn SLAVETYPE(
-        self,
-    ) -> crate::common::Reg<regs::SLAVETYPE, crate::common::RW> {
+    pub const fn SLAVETYPE(self) -> crate::common::Reg<regs::SLAVETYPE, crate::common::RW> {
         unsafe { crate::common::Reg::from_ptr(self.ptr.wrapping_add(0x98usize) as _) }
     }
 }

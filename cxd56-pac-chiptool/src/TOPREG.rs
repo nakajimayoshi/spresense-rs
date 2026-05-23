@@ -21,9 +21,7 @@ impl TOPREG {
     }
     ///Analog circuit power control (1 = powered on).
     #[inline(always)]
-    pub const fn ANA_PW_CTL(
-        self,
-    ) -> crate::common::Reg<regs::ANA_PW_CTL, crate::common::RW> {
+    pub const fn ANA_PW_CTL(self) -> crate::common::Reg<regs::ANA_PW_CTL, crate::common::RW> {
         unsafe { crate::common::Reg::from_ptr(self.ptr.wrapping_add(0x04usize) as _) }
     }
     ///Analog enable control (paired set/clear bits — use raw write).
@@ -43,9 +41,7 @@ impl TOPREG {
     }
     ///Analog power status (read-only mirror of ANA_PW_CTL).
     #[inline(always)]
-    pub const fn ANA_PW_STAT(
-        self,
-    ) -> crate::common::Reg<regs::ANA_PW_STAT, crate::common::R> {
+    pub const fn ANA_PW_STAT(self) -> crate::common::Reg<regs::ANA_PW_STAT, crate::common::R> {
         unsafe { crate::common::Reg::from_ptr(self.ptr.wrapping_add(0x0208usize) as _) }
     }
     ///Clock select/divider setting used on wake from sleep.
@@ -55,9 +51,7 @@ impl TOPREG {
     }
     ///CPU/DSP/bus clock divider used on wake from sleep.
     #[inline(always)]
-    pub const fn CKDIV_CPU_DSP_BUS_WAKE(
-        self,
-    ) -> crate::common::Reg<u32, crate::common::RW> {
+    pub const fn CKDIV_CPU_DSP_BUS_WAKE(self) -> crate::common::Reg<u32, crate::common::RW> {
         unsafe { crate::common::Reg::from_ptr(self.ptr.wrapping_add(0x0418usize) as _) }
     }
     ///Root clock source select used on wake from sleep.
@@ -72,9 +66,7 @@ impl TOPREG {
     }
     ///Root clock source select and RTC status.
     #[inline(always)]
-    pub const fn CKSEL_ROOT(
-        self,
-    ) -> crate::common::Reg<regs::CKSEL_ROOT, crate::common::RW> {
+    pub const fn CKSEL_ROOT(self) -> crate::common::Reg<regs::CKSEL_ROOT, crate::common::RW> {
         unsafe { crate::common::Reg::from_ptr(self.ptr.wrapping_add(0x04c4usize) as _) }
     }
     ///PMU clock source select.
@@ -124,9 +116,7 @@ impl TOPREG {
     }
     ///TOPREG clock-ready interrupt clear 0 (write 1 to clear).
     #[inline(always)]
-    pub const fn CRG_INT_CLR0(
-        self,
-    ) -> crate::common::Reg<regs::CRG_INT_CLR0, crate::common::RW> {
+    pub const fn CRG_INT_CLR0(self) -> crate::common::Reg<regs::CRG_INT_CLR0, crate::common::RW> {
         unsafe { crate::common::Reg::from_ptr(self.ptr.wrapping_add(0x04ecusize) as _) }
     }
     ///TOPREG clock-ready interrupt mask 0.
@@ -146,9 +136,7 @@ impl TOPREG {
     }
     ///TOPREG clock-ready interrupt clear 1 (write 1 to clear).
     #[inline(always)]
-    pub const fn CRG_INT_CLR1(
-        self,
-    ) -> crate::common::Reg<regs::CRG_INT_CLR1, crate::common::RW> {
+    pub const fn CRG_INT_CLR1(self) -> crate::common::Reg<regs::CRG_INT_CLR1, crate::common::RW> {
         unsafe { crate::common::Reg::from_ptr(self.ptr.wrapping_add(0x04fcusize) as _) }
     }
     ///TOPREG clock-ready interrupt mask 1.
@@ -198,9 +186,7 @@ impl TOPREG {
     }
     ///System PLL control 1.
     #[inline(always)]
-    pub const fn SYS_PLL_CTRL1(
-        self,
-    ) -> crate::common::Reg<regs::SYS_PLL_CTRL1, crate::common::RW> {
+    pub const fn SYS_PLL_CTRL1(self) -> crate::common::Reg<regs::SYS_PLL_CTRL1, crate::common::RW> {
         unsafe { crate::common::Reg::from_ptr(self.ptr.wrapping_add(0x0588usize) as _) }
     }
     ///System PLL control 2 (division ratios).
@@ -215,9 +201,7 @@ impl TOPREG {
     }
     ///RC oscillator control 2.
     #[inline(always)]
-    pub const fn RCOSC_CTRL2(
-        self,
-    ) -> crate::common::Reg<regs::RCOSC_CTRL2, crate::common::RW> {
+    pub const fn RCOSC_CTRL2(self) -> crate::common::Reg<regs::RCOSC_CTRL2, crate::common::RW> {
         unsafe { crate::common::Reg::from_ptr(self.ptr.wrapping_add(0x0594usize) as _) }
     }
     ///RF GP MBI enable.
@@ -237,16 +221,12 @@ impl TOPREG {
     }
     ///Bus peripheral software reset (0 = held in reset, 1 = released).
     #[inline(always)]
-    pub const fn SWRESET_BUS(
-        self,
-    ) -> crate::common::Reg<regs::SWRESET_BUS, crate::common::RW> {
+    pub const fn SWRESET_BUS(self) -> crate::common::Reg<regs::SWRESET_BUS, crate::common::RW> {
         unsafe { crate::common::Reg::from_ptr(self.ptr.wrapping_add(0x0700usize) as _) }
     }
     ///SCU peripheral software reset (0 = held in reset, 1 = released).
     #[inline(always)]
-    pub const fn SWRESET_SCU(
-        self,
-    ) -> crate::common::Reg<regs::SWRESET_SCU, crate::common::RW> {
+    pub const fn SWRESET_SCU(self) -> crate::common::Reg<regs::SWRESET_SCU, crate::common::RW> {
         unsafe { crate::common::Reg::from_ptr(self.ptr.wrapping_add(0x0704usize) as _) }
     }
     ///Bus ROM clock enable.
@@ -256,16 +236,12 @@ impl TOPREG {
     }
     ///SYSIOP peripheral clock enables.
     #[inline(always)]
-    pub const fn SYSIOP_CKEN(
-        self,
-    ) -> crate::common::Reg<regs::SYSIOP_CKEN, crate::common::RW> {
+    pub const fn SYSIOP_CKEN(self) -> crate::common::Reg<regs::SYSIOP_CKEN, crate::common::RW> {
         unsafe { crate::common::Reg::from_ptr(self.ptr.wrapping_add(0x0714usize) as _) }
     }
     ///SCU peripheral clock enables.
     #[inline(always)]
-    pub const fn SCU_CKEN(
-        self,
-    ) -> crate::common::Reg<regs::SCU_CKEN, crate::common::RW> {
+    pub const fn SCU_CKEN(self) -> crate::common::Reg<regs::SCU_CKEN, crate::common::RW> {
         unsafe { crate::common::Reg::from_ptr(self.ptr.wrapping_add(0x071cusize) as _) }
     }
     ///RTC0 control.

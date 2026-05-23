@@ -16,37 +16,27 @@ impl CRG {
     }
     ///Gear ratio (n/m) for AHB.
     #[inline(always)]
-    pub const fn GEAR_AHB(
-        self,
-    ) -> crate::common::Reg<regs::GEAR_AHB, crate::common::RW> {
+    pub const fn GEAR_AHB(self) -> crate::common::Reg<regs::GEAR_AHB, crate::common::RW> {
         unsafe { crate::common::Reg::from_ptr(self.ptr.wrapping_add(0x0usize) as _) }
     }
     ///IMG UART clock setting.
     #[inline(always)]
-    pub const fn GEAR_IMG_UART(
-        self,
-    ) -> crate::common::Reg<regs::GEAR_IMG_UART, crate::common::RW> {
+    pub const fn GEAR_IMG_UART(self) -> crate::common::Reg<regs::GEAR_IMG_UART, crate::common::RW> {
         unsafe { crate::common::Reg::from_ptr(self.ptr.wrapping_add(0x04usize) as _) }
     }
     ///IMG SPI clock setting.
     #[inline(always)]
-    pub const fn GEAR_IMG_SPI(
-        self,
-    ) -> crate::common::Reg<regs::GEAR_IMG_SPI, crate::common::RW> {
+    pub const fn GEAR_IMG_SPI(self) -> crate::common::Reg<regs::GEAR_IMG_SPI, crate::common::RW> {
         unsafe { crate::common::Reg::from_ptr(self.ptr.wrapping_add(0x08usize) as _) }
     }
     ///SDIO clock setting.
     #[inline(always)]
-    pub const fn GEAR_PER_SDIO(
-        self,
-    ) -> crate::common::Reg<regs::GEAR_PER_SDIO, crate::common::RW> {
+    pub const fn GEAR_PER_SDIO(self) -> crate::common::Reg<regs::GEAR_PER_SDIO, crate::common::RW> {
         unsafe { crate::common::Reg::from_ptr(self.ptr.wrapping_add(0x0cusize) as _) }
     }
     ///USB clock setting.
     #[inline(always)]
-    pub const fn GEAR_PER_USB(
-        self,
-    ) -> crate::common::Reg<regs::GEAR_PER_USB, crate::common::RW> {
+    pub const fn GEAR_PER_USB(self) -> crate::common::Reg<regs::GEAR_PER_USB, crate::common::RW> {
         unsafe { crate::common::Reg::from_ptr(self.ptr.wrapping_add(0x10usize) as _) }
     }
     ///VENB_M clock setting.
@@ -61,16 +51,12 @@ impl CRG {
     }
     ///IMG WSPI clock setting.
     #[inline(always)]
-    pub const fn GEAR_IMG_WSPI(
-        self,
-    ) -> crate::common::Reg<regs::GEAR_IMG_WSPI, crate::common::RW> {
+    pub const fn GEAR_IMG_WSPI(self) -> crate::common::Reg<regs::GEAR_IMG_WSPI, crate::common::RW> {
         unsafe { crate::common::Reg::from_ptr(self.ptr.wrapping_add(0x1cusize) as _) }
     }
     ///eMMC clock setting.
     #[inline(always)]
-    pub const fn CKEN_EMMC(
-        self,
-    ) -> crate::common::Reg<regs::CKEN_EMMC, crate::common::RW> {
+    pub const fn CKEN_EMMC(self) -> crate::common::Reg<regs::CKEN_EMMC, crate::common::RW> {
         unsafe { crate::common::Reg::from_ptr(self.ptr.wrapping_add(0x20usize) as _) }
     }
     ///Reset control.
@@ -80,9 +66,7 @@ impl CRG {
     }
     ///CPU/Peripheral clock gating control.
     #[inline(always)]
-    pub const fn CK_GATE_AHB(
-        self,
-    ) -> crate::common::Reg<regs::CK_GATE_AHB, crate::common::RW> {
+    pub const fn CK_GATE_AHB(self) -> crate::common::Reg<regs::CK_GATE_AHB, crate::common::RW> {
         unsafe { crate::common::Reg::from_ptr(self.ptr.wrapping_add(0x40usize) as _) }
     }
 }

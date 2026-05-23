@@ -165,9 +165,17 @@ impl defmt::Format for ANA_PW_CTL {
         defmt::write!(
             f,
             "ANA_PW_CTL {{ RCOSC: {=bool:?}, XOSC: {=bool:?}, SYSPLL: {=bool:?}, RF_LNA: {=bool:?}, RF_MIX: {=bool:?}, RF_IF: {=bool:?}, RF_ADC: {=bool:?}, RF_LO: {=bool:?}, RF_PLL: {=bool:?}, HPADC: {=bool:?}, LPADC: {=bool:?} }}",
-            self.RCOSC(), self.XOSC(), self.SYSPLL(), self.RF_LNA(), self.RF_MIX(), self
-            .RF_IF(), self.RF_ADC(), self.RF_LO(), self.RF_PLL(), self.HPADC(), self
-            .LPADC()
+            self.RCOSC(),
+            self.XOSC(),
+            self.SYSPLL(),
+            self.RF_LNA(),
+            self.RF_MIX(),
+            self.RF_IF(),
+            self.RF_ADC(),
+            self.RF_LO(),
+            self.RF_PLL(),
+            self.HPADC(),
+            self.LPADC()
         )
     }
 }
@@ -338,9 +346,17 @@ impl defmt::Format for ANA_PW_STAT {
         defmt::write!(
             f,
             "ANA_PW_STAT {{ RCOSC: {=bool:?}, XOSC: {=bool:?}, SYSPLL: {=bool:?}, RF_LNA: {=bool:?}, RF_MIX: {=bool:?}, RF_IF: {=bool:?}, RF_ADC: {=bool:?}, RF_LO: {=bool:?}, RF_PLL: {=bool:?}, HPADC: {=bool:?}, LPADC: {=bool:?} }}",
-            self.RCOSC(), self.XOSC(), self.SYSPLL(), self.RF_LNA(), self.RF_MIX(), self
-            .RF_IF(), self.RF_ADC(), self.RF_LO(), self.RF_PLL(), self.HPADC(), self
-            .LPADC()
+            self.RCOSC(),
+            self.XOSC(),
+            self.SYSPLL(),
+            self.RF_LNA(),
+            self.RF_MIX(),
+            self.RF_IF(),
+            self.RF_ADC(),
+            self.RF_LO(),
+            self.RF_PLL(),
+            self.HPADC(),
+            self.LPADC()
         )
     }
 }
@@ -407,7 +423,9 @@ impl defmt::Format for CKSEL_ROOT {
         defmt::write!(
             f,
             "CKSEL_ROOT {{ ENABLE_RF_PLL1: {=bool:?}, ENABLE_SOURCE_SEL: {=bool:?}, STATUS_RTC: {=u8:?} }}",
-            self.ENABLE_RF_PLL1(), self.ENABLE_SOURCE_SEL(), self.STATUS_RTC()
+            self.ENABLE_RF_PLL1(),
+            self.ENABLE_SOURCE_SEL(),
+            self.STATUS_RTC()
         )
     }
 }
@@ -721,12 +739,28 @@ impl defmt::Format for CRG_INT_CLR0 {
         defmt::write!(
             f,
             "CRG_INT_CLR0 {{ CK_PCLK_UART0: {=bool:?}, CK_UART0: {=bool:?}, CK_BRG_HOST: {=bool:?}, CK_PCLK_HOSTIFC: {=bool:?}, CK_HOSTIFC_SEQ: {=bool:?}, CK_I2CS: {=bool:?}, CK_RTC_ORG: {=bool:?}, CK_SYSIOP_RTC: {=bool:?}, CK_BRG_SCU: {=bool:?}, CK_SCU: {=bool:?}, CK_SCU_SPI: {=bool:?}, CK_SCU_I2C0: {=bool:?}, CK_SCU_I2C1: {=bool:?}, CK_SCU_SEQ: {=bool:?}, CK_SCU_SC: {=bool:?}, CK_32K: {=bool:?}, CK_U32KH: {=bool:?}, CK_U32KL: {=bool:?}, CK_TADC: {=bool:?}, CK_RTC_PCLK: {=bool:?}, CK_PMU_RTC_PCLK: {=bool:?}, CK_APP: {=bool:?} }}",
-            self.CK_PCLK_UART0(), self.CK_UART0(), self.CK_BRG_HOST(), self
-            .CK_PCLK_HOSTIFC(), self.CK_HOSTIFC_SEQ(), self.CK_I2CS(), self.CK_RTC_ORG(),
-            self.CK_SYSIOP_RTC(), self.CK_BRG_SCU(), self.CK_SCU(), self.CK_SCU_SPI(),
-            self.CK_SCU_I2C0(), self.CK_SCU_I2C1(), self.CK_SCU_SEQ(), self.CK_SCU_SC(),
-            self.CK_32K(), self.CK_U32KH(), self.CK_U32KL(), self.CK_TADC(), self
-            .CK_RTC_PCLK(), self.CK_PMU_RTC_PCLK(), self.CK_APP()
+            self.CK_PCLK_UART0(),
+            self.CK_UART0(),
+            self.CK_BRG_HOST(),
+            self.CK_PCLK_HOSTIFC(),
+            self.CK_HOSTIFC_SEQ(),
+            self.CK_I2CS(),
+            self.CK_RTC_ORG(),
+            self.CK_SYSIOP_RTC(),
+            self.CK_BRG_SCU(),
+            self.CK_SCU(),
+            self.CK_SCU_SPI(),
+            self.CK_SCU_I2C0(),
+            self.CK_SCU_I2C1(),
+            self.CK_SCU_SEQ(),
+            self.CK_SCU_SC(),
+            self.CK_32K(),
+            self.CK_U32KH(),
+            self.CK_U32KL(),
+            self.CK_TADC(),
+            self.CK_RTC_PCLK(),
+            self.CK_PMU_RTC_PCLK(),
+            self.CK_APP()
         )
     }
 }
@@ -910,10 +944,18 @@ impl defmt::Format for CRG_INT_CLR1 {
         defmt::write!(
             f,
             "CRG_INT_CLR1 {{ CK_CPU_BUS: {=bool:?}, CK_CPU_BUS_TO: {=bool:?}, CK_RFPLL1: {=bool:?}, CK_RFPLL1_TO: {=bool:?}, CK_RTC_PRE: {=bool:?}, CK_RTC_PRE_TO: {=bool:?}, CK_APP_PRE: {=bool:?}, CK_APP_PRE_TO: {=bool:?}, CK_SEL_SP: {=bool:?}, CK_SEL_SP_TO: {=bool:?}, CK_SEL_RO_RTC: {=bool:?}, CRG_FREQFIX_ERR: {=bool:?} }}",
-            self.CK_CPU_BUS(), self.CK_CPU_BUS_TO(), self.CK_RFPLL1(), self
-            .CK_RFPLL1_TO(), self.CK_RTC_PRE(), self.CK_RTC_PRE_TO(), self.CK_APP_PRE(),
-            self.CK_APP_PRE_TO(), self.CK_SEL_SP(), self.CK_SEL_SP_TO(), self
-            .CK_SEL_RO_RTC(), self.CRG_FREQFIX_ERR()
+            self.CK_CPU_BUS(),
+            self.CK_CPU_BUS_TO(),
+            self.CK_RFPLL1(),
+            self.CK_RFPLL1_TO(),
+            self.CK_RTC_PRE(),
+            self.CK_RTC_PRE_TO(),
+            self.CK_APP_PRE(),
+            self.CK_APP_PRE_TO(),
+            self.CK_SEL_SP(),
+            self.CK_SEL_SP_TO(),
+            self.CK_SEL_RO_RTC(),
+            self.CRG_FREQFIX_ERR()
         )
     }
 }
@@ -1071,8 +1113,16 @@ impl defmt::Format for PWD_CTL {
         defmt::write!(
             f,
             "PWD_CTL {{ SCU: {=bool:?}, CORE: {=bool:?}, SYSIOP: {=bool:?}, SYSIOP_SUB: {=bool:?}, APP: {=bool:?}, APP_DSP: {=bool:?}, APP_SUB: {=bool:?}, GNSS_ITP: {=bool:?}, GNSS: {=bool:?}, APP_AUDIO: {=bool:?} }}",
-            self.SCU(), self.CORE(), self.SYSIOP(), self.SYSIOP_SUB(), self.APP(), self
-            .APP_DSP(), self.APP_SUB(), self.GNSS_ITP(), self.GNSS(), self.APP_AUDIO()
+            self.SCU(),
+            self.CORE(),
+            self.SYSIOP(),
+            self.SYSIOP_SUB(),
+            self.APP(),
+            self.APP_DSP(),
+            self.APP_SUB(),
+            self.GNSS_ITP(),
+            self.GNSS(),
+            self.APP_AUDIO()
         )
     }
 }
@@ -1230,8 +1280,16 @@ impl defmt::Format for PWD_STAT {
         defmt::write!(
             f,
             "PWD_STAT {{ SCU: {=bool:?}, CORE: {=bool:?}, SYSIOP: {=bool:?}, SYSIOP_SUB: {=bool:?}, APP: {=bool:?}, APP_DSP: {=bool:?}, APP_SUB: {=bool:?}, GNSS_ITP: {=bool:?}, GNSS: {=bool:?}, APP_AUDIO: {=bool:?} }}",
-            self.SCU(), self.CORE(), self.SYSIOP(), self.SYSIOP_SUB(), self.APP(), self
-            .APP_DSP(), self.APP_SUB(), self.GNSS_ITP(), self.GNSS(), self.APP_AUDIO()
+            self.SCU(),
+            self.CORE(),
+            self.SYSIOP(),
+            self.SYSIOP_SUB(),
+            self.APP(),
+            self.APP_DSP(),
+            self.APP_SUB(),
+            self.GNSS_ITP(),
+            self.GNSS(),
+            self.APP_AUDIO()
         )
     }
 }
@@ -1285,7 +1343,8 @@ impl defmt::Format for RCOSC_CTRL2 {
         defmt::write!(
             f,
             "RCOSC_CTRL2 {{ DISABLE_LOGICLK: {=bool:?}, DISABLE_SENSCLK: {=bool:?} }}",
-            self.DISABLE_LOGICLK(), self.DISABLE_SENSCLK()
+            self.DISABLE_LOGICLK(),
+            self.DISABLE_SENSCLK()
         )
     }
 }
@@ -1430,8 +1489,15 @@ impl defmt::Format for SCU_CKEN {
         defmt::write!(
             f,
             "SCU_CKEN {{ SCU_SCU: {=bool:?}, SCU_I2C0: {=bool:?}, SCU_I2C1: {=bool:?}, SCU_SPI: {=bool:?}, SCU_SEQ: {=bool:?}, SCU_32K: {=bool:?}, SCU_U32KL: {=bool:?}, SCU_U32KH: {=bool:?}, SCU_SC: {=bool:?} }}",
-            self.SCU_SCU(), self.SCU_I2C0(), self.SCU_I2C1(), self.SCU_SPI(), self
-            .SCU_SEQ(), self.SCU_32K(), self.SCU_U32KL(), self.SCU_U32KH(), self.SCU_SC()
+            self.SCU_SCU(),
+            self.SCU_I2C0(),
+            self.SCU_I2C1(),
+            self.SCU_SPI(),
+            self.SCU_SEQ(),
+            self.SCU_32K(),
+            self.SCU_U32KL(),
+            self.SCU_U32KH(),
+            self.SCU_SC()
         )
     }
 }
@@ -1589,9 +1655,16 @@ impl defmt::Format for SWRESET_BUS {
         defmt::write!(
             f,
             "SWRESET_BUS {{ XRST_SPIM: {=bool:?}, XRST_SFC: {=bool:?}, XRST_SAKE: {=bool:?}, XRST_UART1: {=bool:?}, XRST_KAKI: {=bool:?}, XRST_HOSTIFC: {=bool:?}, XRST_HOSTIFC_ISOP: {=bool:?}, XRST_UART0: {=bool:?}, XRST_I2CM: {=bool:?}, XRST_PMU_I2CM: {=bool:?} }}",
-            self.XRST_SPIM(), self.XRST_SFC(), self.XRST_SAKE(), self.XRST_UART1(), self
-            .XRST_KAKI(), self.XRST_HOSTIFC(), self.XRST_HOSTIFC_ISOP(), self
-            .XRST_UART0(), self.XRST_I2CM(), self.XRST_PMU_I2CM()
+            self.XRST_SPIM(),
+            self.XRST_SFC(),
+            self.XRST_SAKE(),
+            self.XRST_UART1(),
+            self.XRST_KAKI(),
+            self.XRST_HOSTIFC(),
+            self.XRST_HOSTIFC_ISOP(),
+            self.XRST_UART0(),
+            self.XRST_I2CM(),
+            self.XRST_PMU_I2CM()
         )
     }
 }
@@ -1697,8 +1770,12 @@ impl defmt::Format for SWRESET_SCU {
         defmt::write!(
             f,
             "SWRESET_SCU {{ XRST_SCU_HPADC: {=bool:?}, XRST_SCU_LPADC: {=bool:?}, XRST_SCU_I2C2: {=bool:?}, XRST_SCU_I2C1: {=bool:?}, XRST_SCU_ISOP: {=bool:?}, XRST_SCU_SPI: {=bool:?} }}",
-            self.XRST_SCU_HPADC(), self.XRST_SCU_LPADC(), self.XRST_SCU_I2C2(), self
-            .XRST_SCU_I2C1(), self.XRST_SCU_ISOP(), self.XRST_SCU_SPI()
+            self.XRST_SCU_HPADC(),
+            self.XRST_SCU_LPADC(),
+            self.XRST_SCU_I2C2(),
+            self.XRST_SCU_I2C1(),
+            self.XRST_SCU_ISOP(),
+            self.XRST_SCU_SPI()
         )
     }
 }
@@ -1960,12 +2037,24 @@ impl defmt::Format for SYSIOP_CKEN {
         defmt::write!(
             f,
             "SYSIOP_CKEN {{ CKEN_UART0: {=bool:?}, CKEN_PCLK_UART0: {=bool:?}, CKEN_PCLK_HOSTIFC: {=bool:?}, CKEN_I2CS: {=bool:?}, CKEN_BRG_HOST: {=bool:?}, CKEN_AHB_DMAC0: {=bool:?}, CKEN_AHB_DMAC1: {=bool:?}, CKEN_AHB_DMAC2: {=bool:?}, CKEN_APB: {=bool:?}, CKEN_FREQDIS: {=bool:?}, CKEN_RTC_ORG: {=bool:?}, CKEN_AP_CLK: {=bool:?}, CKEN_RCOSC_OUT: {=bool:?}, CKEN_SYSIOP_RTC: {=bool:?}, CKEN_BRG_SCU: {=bool:?}, CKEN_HOSTIFC_SEQ: {=bool:?}, CKEN_HOSI2C: {=bool:?}, CKEN_HOSSPI: {=bool:?} }}",
-            self.CKEN_UART0(), self.CKEN_PCLK_UART0(), self.CKEN_PCLK_HOSTIFC(), self
-            .CKEN_I2CS(), self.CKEN_BRG_HOST(), self.CKEN_AHB_DMAC0(), self
-            .CKEN_AHB_DMAC1(), self.CKEN_AHB_DMAC2(), self.CKEN_APB(), self
-            .CKEN_FREQDIS(), self.CKEN_RTC_ORG(), self.CKEN_AP_CLK(), self
-            .CKEN_RCOSC_OUT(), self.CKEN_SYSIOP_RTC(), self.CKEN_BRG_SCU(), self
-            .CKEN_HOSTIFC_SEQ(), self.CKEN_HOSI2C(), self.CKEN_HOSSPI()
+            self.CKEN_UART0(),
+            self.CKEN_PCLK_UART0(),
+            self.CKEN_PCLK_HOSTIFC(),
+            self.CKEN_I2CS(),
+            self.CKEN_BRG_HOST(),
+            self.CKEN_AHB_DMAC0(),
+            self.CKEN_AHB_DMAC1(),
+            self.CKEN_AHB_DMAC2(),
+            self.CKEN_APB(),
+            self.CKEN_FREQDIS(),
+            self.CKEN_RTC_ORG(),
+            self.CKEN_AP_CLK(),
+            self.CKEN_RCOSC_OUT(),
+            self.CKEN_SYSIOP_RTC(),
+            self.CKEN_BRG_SCU(),
+            self.CKEN_HOSTIFC_SEQ(),
+            self.CKEN_HOSI2C(),
+            self.CKEN_HOSSPI()
         )
     }
 }
@@ -2017,8 +2106,10 @@ impl core::fmt::Debug for SYS_PLL_CTRL1 {
 impl defmt::Format for SYS_PLL_CTRL1 {
     fn format(&self, f: defmt::Formatter) {
         defmt::write!(
-            f, "SYS_PLL_CTRL1 {{ ENABLE_GPADCLK: {=bool:?}, ENABLE_DSPCLK: {=bool:?} }}",
-            self.ENABLE_GPADCLK(), self.ENABLE_DSPCLK()
+            f,
+            "SYS_PLL_CTRL1 {{ ENABLE_GPADCLK: {=bool:?}, ENABLE_DSPCLK: {=bool:?} }}",
+            self.ENABLE_GPADCLK(),
+            self.ENABLE_DSPCLK()
         )
     }
 }

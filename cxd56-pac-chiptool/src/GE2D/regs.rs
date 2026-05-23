@@ -25,8 +25,7 @@ impl ADDRESS_DESCRIPTOR_START {
     ///Descriptor Address.
     #[inline(always)]
     pub const fn set_DA(&mut self, val: u32) {
-        self.0 = (self.0 & !(0x0fff_ffff << 4usize))
-            | (((val as u32) & 0x0fff_ffff) << 4usize);
+        self.0 = (self.0 & !(0x0fff_ffff << 4usize)) | (((val as u32) & 0x0fff_ffff) << 4usize);
     }
 }
 impl Default for ADDRESS_DESCRIPTOR_START {
@@ -47,8 +46,10 @@ impl core::fmt::Debug for ADDRESS_DESCRIPTOR_START {
 impl defmt::Format for ADDRESS_DESCRIPTOR_START {
     fn format(&self, f: defmt::Formatter) {
         defmt::write!(
-            f, "ADDRESS_DESCRIPTOR_START {{ MSEL: {=bool:?}, DA: {=u32:?} }}", self
-            .MSEL(), self.DA()
+            f,
+            "ADDRESS_DESCRIPTOR_START {{ MSEL: {=bool:?}, DA: {=u32:?} }}",
+            self.MSEL(),
+            self.DA()
         )
     }
 }
@@ -67,8 +68,7 @@ impl CMD_DESCRIPTOR {
     ///Command.
     #[inline(always)]
     pub const fn set_COMMAND(&mut self, val: super::vals::COMMAND) {
-        self.0 = (self.0 & !(0x03 << 0usize))
-            | (((val.to_bits() as u32) & 0x03) << 0usize);
+        self.0 = (self.0 & !(0x03 << 0usize)) | (((val.to_bits() as u32) & 0x03) << 0usize);
     }
 }
 impl Default for CMD_DESCRIPTOR {
@@ -79,7 +79,9 @@ impl Default for CMD_DESCRIPTOR {
 }
 impl core::fmt::Debug for CMD_DESCRIPTOR {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-        f.debug_struct("CMD_DESCRIPTOR").field("COMMAND", &self.COMMAND()).finish()
+        f.debug_struct("CMD_DESCRIPTOR")
+            .field("COMMAND", &self.COMMAND())
+            .finish()
     }
 }
 #[cfg(feature = "defmt")]
@@ -203,7 +205,12 @@ impl defmt::Format for INTR_ENABLE {
         defmt::write!(
             f,
             "INTR_ENABLE {{ HPU: {=bool:?}, NDF: {=bool:?}, NDB: {=bool:?}, NDE: {=bool:?}, DSD: {=bool:?}, RD_ERR: {=bool:?}, WR_ERR: {=bool:?} }}",
-            self.HPU(), self.NDF(), self.NDB(), self.NDE(), self.DSD(), self.RD_ERR(),
+            self.HPU(),
+            self.NDF(),
+            self.NDB(),
+            self.NDE(),
+            self.DSD(),
+            self.RD_ERR(),
             self.WR_ERR()
         )
     }
@@ -284,7 +291,10 @@ impl defmt::Format for STATUS {
         defmt::write!(
             f,
             "STATUS {{ NREQ: {=bool:?}, SREQ: {=bool:?}, NDCR: {=bool:?}, ISER: {=bool:?} }}",
-            self.NREQ(), self.SREQ(), self.NDCR(), self.ISER()
+            self.NREQ(),
+            self.SREQ(),
+            self.NDCR(),
+            self.ISER()
         )
     }
 }

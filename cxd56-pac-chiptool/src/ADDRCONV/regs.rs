@@ -46,7 +46,9 @@ impl core::fmt::Debug for ACNV_P0_DST0 {
 impl defmt::Format for ACNV_P0_DST0 {
     fn format(&self, f: defmt::Formatter) {
         defmt::write!(
-            f, "ACNV_P0_DST0 {{ AREA_0: {=u16:?}, AREA_1: {=u16:?} }}", self.AREA_0(),
+            f,
+            "ACNV_P0_DST0 {{ AREA_0: {=u16:?}, AREA_1: {=u16:?} }}",
+            self.AREA_0(),
             self.AREA_1()
         )
     }
@@ -99,7 +101,9 @@ impl core::fmt::Debug for ACNV_P0_DST1 {
 impl defmt::Format for ACNV_P0_DST1 {
     fn format(&self, f: defmt::Formatter) {
         defmt::write!(
-            f, "ACNV_P0_DST1 {{ AREA_2: {=u16:?}, AREA_3: {=u16:?} }}", self.AREA_2(),
+            f,
+            "ACNV_P0_DST1 {{ AREA_2: {=u16:?}, AREA_3: {=u16:?} }}",
+            self.AREA_2(),
             self.AREA_3()
         )
     }
@@ -152,7 +156,9 @@ impl core::fmt::Debug for ACNV_P0_DST2 {
 impl defmt::Format for ACNV_P0_DST2 {
     fn format(&self, f: defmt::Formatter) {
         defmt::write!(
-            f, "ACNV_P0_DST2 {{ AREA_4: {=u16:?}, AREA_5: {=u16:?} }}", self.AREA_4(),
+            f,
+            "ACNV_P0_DST2 {{ AREA_4: {=u16:?}, AREA_5: {=u16:?} }}",
+            self.AREA_4(),
             self.AREA_5()
         )
     }
@@ -205,7 +211,9 @@ impl core::fmt::Debug for ACNV_P0_DST3 {
 impl defmt::Format for ACNV_P0_DST3 {
     fn format(&self, f: defmt::Formatter) {
         defmt::write!(
-            f, "ACNV_P0_DST3 {{ AREA_6: {=u16:?}, AREA_7: {=u16:?} }}", self.AREA_6(),
+            f,
+            "ACNV_P0_DST3 {{ AREA_6: {=u16:?}, AREA_7: {=u16:?} }}",
+            self.AREA_6(),
             self.AREA_7()
         )
     }
@@ -258,7 +266,9 @@ impl core::fmt::Debug for ACNV_P0_DST4 {
 impl defmt::Format for ACNV_P0_DST4 {
     fn format(&self, f: defmt::Formatter) {
         defmt::write!(
-            f, "ACNV_P0_DST4 {{ AREA_8: {=u16:?}, AREA_9: {=u16:?} }}", self.AREA_8(),
+            f,
+            "ACNV_P0_DST4 {{ AREA_8: {=u16:?}, AREA_9: {=u16:?} }}",
+            self.AREA_8(),
             self.AREA_9()
         )
     }
@@ -311,7 +321,9 @@ impl core::fmt::Debug for ACNV_P0_DST5 {
 impl defmt::Format for ACNV_P0_DST5 {
     fn format(&self, f: defmt::Formatter) {
         defmt::write!(
-            f, "ACNV_P0_DST5 {{ AREA_A: {=u16:?}, AREA_B: {=u16:?} }}", self.AREA_A(),
+            f,
+            "ACNV_P0_DST5 {{ AREA_A: {=u16:?}, AREA_B: {=u16:?} }}",
+            self.AREA_A(),
             self.AREA_B()
         )
     }
@@ -364,7 +376,9 @@ impl core::fmt::Debug for ACNV_P0_DST6 {
 impl defmt::Format for ACNV_P0_DST6 {
     fn format(&self, f: defmt::Formatter) {
         defmt::write!(
-            f, "ACNV_P0_DST6 {{ AREA_C: {=u16:?}, AREA_D: {=u16:?} }}", self.AREA_C(),
+            f,
+            "ACNV_P0_DST6 {{ AREA_C: {=u16:?}, AREA_D: {=u16:?} }}",
+            self.AREA_C(),
             self.AREA_D()
         )
     }
@@ -417,7 +431,9 @@ impl core::fmt::Debug for ACNV_P0_DST7 {
 impl defmt::Format for ACNV_P0_DST7 {
     fn format(&self, f: defmt::Formatter) {
         defmt::write!(
-            f, "ACNV_P0_DST7 {{ AREA_E: {=u16:?}, AREA_F: {=u16:?} }}", self.AREA_E(),
+            f,
+            "ACNV_P0_DST7 {{ AREA_E: {=u16:?}, AREA_F: {=u16:?} }}",
+            self.AREA_E(),
             self.AREA_F()
         )
     }

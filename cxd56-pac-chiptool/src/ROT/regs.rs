@@ -13,8 +13,7 @@ impl COMMAND {
     ///Start rotation.
     #[inline(always)]
     pub const fn set_CMD(&mut self, val: super::vals::CMD) {
-        self.0 = (self.0 & !(0x01 << 0usize))
-            | (((val.to_bits() as u32) & 0x01) << 0usize);
+        self.0 = (self.0 & !(0x01 << 0usize)) | (((val.to_bits() as u32) & 0x01) << 0usize);
     }
 }
 impl Default for COMMAND {
@@ -49,8 +48,7 @@ impl CONV_CTRL {
     ///Convert RGB565 to YCbCr422.
     #[inline(always)]
     pub const fn set_CONV_FORMAT(&mut self, val: super::vals::CONV_FORMAT) {
-        self.0 = (self.0 & !(0x03 << 0usize))
-            | (((val.to_bits() as u32) & 0x03) << 0usize);
+        self.0 = (self.0 & !(0x03 << 0usize)) | (((val.to_bits() as u32) & 0x03) << 0usize);
     }
     ///Scale factor for Cb and Cr.
     #[must_use]
@@ -62,8 +60,7 @@ impl CONV_CTRL {
     ///Scale factor for Cb and Cr.
     #[inline(always)]
     pub const fn set_CONV_CALC_SEL(&mut self, val: super::vals::CONV_CALC_SEL) {
-        self.0 = (self.0 & !(0x01 << 4usize))
-            | (((val.to_bits() as u32) & 0x01) << 4usize);
+        self.0 = (self.0 & !(0x01 << 4usize)) | (((val.to_bits() as u32) & 0x01) << 4usize);
     }
 }
 impl Default for CONV_CTRL {
@@ -84,8 +81,10 @@ impl core::fmt::Debug for CONV_CTRL {
 impl defmt::Format for CONV_CTRL {
     fn format(&self, f: defmt::Formatter) {
         defmt::write!(
-            f, "CONV_CTRL {{ CONV_FORMAT: {:?}, CONV_CALC_SEL: {:?} }}", self
-            .CONV_FORMAT(), self.CONV_CALC_SEL()
+            f,
+            "CONV_CTRL {{ CONV_FORMAT: {:?}, CONV_CALC_SEL: {:?} }}",
+            self.CONV_FORMAT(),
+            self.CONV_CALC_SEL()
         )
     }
 }
@@ -152,7 +151,9 @@ impl defmt::Format for INTR_CLEAR {
         defmt::write!(
             f,
             "INTR_CLEAR {{ END_CLR: {=bool:?}, RD_ERR_CLR: {=bool:?}, WR_ERR_CLR: {=bool:?} }}",
-            self.END_CLR(), self.RD_ERR_CLR(), self.WR_ERR_CLR()
+            self.END_CLR(),
+            self.RD_ERR_CLR(),
+            self.WR_ERR_CLR()
         )
     }
 }
@@ -219,7 +220,9 @@ impl defmt::Format for INTR_DISABLE {
         defmt::write!(
             f,
             "INTR_DISABLE {{ END_DIS: {=bool:?}, RD_ERR_DIS: {=bool:?}, WR_ERR_DIS: {=bool:?} }}",
-            self.END_DIS(), self.RD_ERR_DIS(), self.WR_ERR_DIS()
+            self.END_DIS(),
+            self.RD_ERR_DIS(),
+            self.WR_ERR_DIS()
         )
     }
 }
@@ -238,8 +241,7 @@ impl INTR_ENABLE {
     ///Write Error Enable.
     #[inline(always)]
     pub const fn set_WR_ERR_ENB(&mut self, val: super::vals::WR_ERR_ENB) {
-        self.0 = (self.0 & !(0x01 << 9usize))
-            | (((val.to_bits() as u32) & 0x01) << 9usize);
+        self.0 = (self.0 & !(0x01 << 9usize)) | (((val.to_bits() as u32) & 0x01) << 9usize);
     }
 }
 impl Default for INTR_ENABLE {
@@ -250,7 +252,9 @@ impl Default for INTR_ENABLE {
 }
 impl core::fmt::Debug for INTR_ENABLE {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-        f.debug_struct("INTR_ENABLE").field("WR_ERR_ENB", &self.WR_ERR_ENB()).finish()
+        f.debug_struct("INTR_ENABLE")
+            .field("WR_ERR_ENB", &self.WR_ERR_ENB())
+            .finish()
     }
 }
 #[cfg(feature = "defmt")]
@@ -322,7 +326,9 @@ impl defmt::Format for INTR_STATUS {
         defmt::write!(
             f,
             "INTR_STATUS {{ END_STS: {=bool:?}, RD_ERR_STS: {=bool:?}, WR_ERR_STS: {=bool:?} }}",
-            self.END_STS(), self.RD_ERR_STS(), self.WR_ERR_STS()
+            self.END_STS(),
+            self.RD_ERR_STS(),
+            self.WR_ERR_STS()
         )
     }
 }
@@ -341,8 +347,7 @@ impl RGB_ALIGNMENT {
     ///RGB Format.
     #[inline(always)]
     pub const fn set_FORMAT(&mut self, val: super::vals::FORMAT) {
-        self.0 = (self.0 & !(0x01 << 0usize))
-            | (((val.to_bits() as u32) & 0x01) << 0usize);
+        self.0 = (self.0 & !(0x01 << 0usize)) | (((val.to_bits() as u32) & 0x01) << 0usize);
     }
 }
 impl Default for RGB_ALIGNMENT {
@@ -353,7 +358,9 @@ impl Default for RGB_ALIGNMENT {
 }
 impl core::fmt::Debug for RGB_ALIGNMENT {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-        f.debug_struct("RGB_ALIGNMENT").field("FORMAT", &self.FORMAT()).finish()
+        f.debug_struct("RGB_ALIGNMENT")
+            .field("FORMAT", &self.FORMAT())
+            .finish()
     }
 }
 #[cfg(feature = "defmt")]
@@ -377,8 +384,7 @@ impl SET_DIRECTION {
     ///Rotation Angle.
     #[inline(always)]
     pub const fn set_ROT(&mut self, val: super::vals::ROT) {
-        self.0 = (self.0 & !(0x07 << 0usize))
-            | (((val.to_bits() as u32) & 0x07) << 0usize);
+        self.0 = (self.0 & !(0x07 << 0usize)) | (((val.to_bits() as u32) & 0x07) << 0usize);
     }
 }
 impl Default for SET_DIRECTION {
@@ -389,7 +395,9 @@ impl Default for SET_DIRECTION {
 }
 impl core::fmt::Debug for SET_DIRECTION {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-        f.debug_struct("SET_DIRECTION").field("ROT", &self.ROT()).finish()
+        f.debug_struct("SET_DIRECTION")
+            .field("ROT", &self.ROT())
+            .finish()
     }
 }
 #[cfg(feature = "defmt")]
@@ -422,7 +430,9 @@ impl Default for SET_DST_PITCH {
 }
 impl core::fmt::Debug for SET_DST_PITCH {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-        f.debug_struct("SET_DST_PITCH").field("PITCH", &self.PITCH()).finish()
+        f.debug_struct("SET_DST_PITCH")
+            .field("PITCH", &self.PITCH())
+            .finish()
     }
 }
 #[cfg(feature = "defmt")]
@@ -455,7 +465,9 @@ impl Default for SET_SRC_HSIZE {
 }
 impl core::fmt::Debug for SET_SRC_HSIZE {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-        f.debug_struct("SET_SRC_HSIZE").field("SIZE", &self.SIZE()).finish()
+        f.debug_struct("SET_SRC_HSIZE")
+            .field("SIZE", &self.SIZE())
+            .finish()
     }
 }
 #[cfg(feature = "defmt")]
@@ -488,7 +500,9 @@ impl Default for SET_SRC_PITCH {
 }
 impl core::fmt::Debug for SET_SRC_PITCH {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-        f.debug_struct("SET_SRC_PITCH").field("PITCH", &self.PITCH()).finish()
+        f.debug_struct("SET_SRC_PITCH")
+            .field("PITCH", &self.PITCH())
+            .finish()
     }
 }
 #[cfg(feature = "defmt")]
@@ -521,7 +535,9 @@ impl Default for SET_SRC_VSIZE {
 }
 impl core::fmt::Debug for SET_SRC_VSIZE {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-        f.debug_struct("SET_SRC_VSIZE").field("SIZE", &self.SIZE()).finish()
+        f.debug_struct("SET_SRC_VSIZE")
+            .field("SIZE", &self.SIZE())
+            .finish()
     }
 }
 #[cfg(feature = "defmt")]
@@ -545,8 +561,7 @@ impl STATUS {
     ///Running Status (1 = running).
     #[inline(always)]
     pub const fn set_STATUS(&mut self, val: super::vals::STATUS) {
-        self.0 = (self.0 & !(0x01 << 0usize))
-            | (((val.to_bits() as u32) & 0x01) << 0usize);
+        self.0 = (self.0 & !(0x01 << 0usize)) | (((val.to_bits() as u32) & 0x01) << 0usize);
     }
 }
 impl Default for STATUS {
@@ -557,7 +572,9 @@ impl Default for STATUS {
 }
 impl core::fmt::Debug for STATUS {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-        f.debug_struct("STATUS").field("STATUS", &self.STATUS()).finish()
+        f.debug_struct("STATUS")
+            .field("STATUS", &self.STATUS())
+            .finish()
     }
 }
 #[cfg(feature = "defmt")]

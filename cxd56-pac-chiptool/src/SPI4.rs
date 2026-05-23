@@ -61,9 +61,7 @@ impl SPI4 {
     }
     ///DMA control register.
     #[inline(always)]
-    pub const fn SSPDMACR(
-        self,
-    ) -> crate::common::Reg<regs::SSPDMACR, crate::common::RW> {
+    pub const fn SSPDMACR(self) -> crate::common::Reg<regs::SSPDMACR, crate::common::RW> {
         unsafe { crate::common::Reg::from_ptr(self.ptr.wrapping_add(0x24usize) as _) }
     }
 }

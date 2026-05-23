@@ -16,16 +16,12 @@ impl CPU_FIFO {
     }
     ///TX buffer is full (=1).
     #[inline(always)]
-    pub const fn FIF_PUSH_FULL(
-        self,
-    ) -> crate::common::Reg<regs::FIF_PUSH_FULL, crate::common::R> {
+    pub const fn FIF_PUSH_FULL(self) -> crate::common::Reg<regs::FIF_PUSH_FULL, crate::common::R> {
         unsafe { crate::common::Reg::from_ptr(self.ptr.wrapping_add(0x0usize) as _) }
     }
     ///TX data word 0.
     #[inline(always)]
-    pub const fn FIF_PUSH_WRD0(
-        self,
-    ) -> crate::common::Reg<regs::FIF_PUSH_WRD0, crate::common::RW> {
+    pub const fn FIF_PUSH_WRD0(self) -> crate::common::Reg<regs::FIF_PUSH_WRD0, crate::common::RW> {
         unsafe { crate::common::Reg::from_ptr(self.ptr.wrapping_add(0x04usize) as _) }
     }
     ///TX data word 1.
@@ -35,23 +31,17 @@ impl CPU_FIFO {
     }
     ///TX data write complete.
     #[inline(always)]
-    pub const fn FIF_PUSH_CMP(
-        self,
-    ) -> crate::common::Reg<regs::FIF_PUSH_CMP, crate::common::W> {
+    pub const fn FIF_PUSH_CMP(self) -> crate::common::Reg<regs::FIF_PUSH_CMP, crate::common::W> {
         unsafe { crate::common::Reg::from_ptr(self.ptr.wrapping_add(0x0cusize) as _) }
     }
     ///RX buffer is empty (=1).
     #[inline(always)]
-    pub const fn FIF_PULL_EMP(
-        self,
-    ) -> crate::common::Reg<regs::FIF_PULL_EMP, crate::common::R> {
+    pub const fn FIF_PULL_EMP(self) -> crate::common::Reg<regs::FIF_PULL_EMP, crate::common::R> {
         unsafe { crate::common::Reg::from_ptr(self.ptr.wrapping_add(0x10usize) as _) }
     }
     ///RX data word 0.
     #[inline(always)]
-    pub const fn FIF_PULL_WRD0(
-        self,
-    ) -> crate::common::Reg<regs::FIF_PULL_WRD0, crate::common::RW> {
+    pub const fn FIF_PULL_WRD0(self) -> crate::common::Reg<regs::FIF_PULL_WRD0, crate::common::RW> {
         unsafe { crate::common::Reg::from_ptr(self.ptr.wrapping_add(0x14usize) as _) }
     }
     ///RX data word 1.
@@ -61,9 +51,7 @@ impl CPU_FIFO {
     }
     ///RX data read complete.
     #[inline(always)]
-    pub const fn FIF_PULL_CMP(
-        self,
-    ) -> crate::common::Reg<regs::FIF_PULL_CMP, crate::common::W> {
+    pub const fn FIF_PULL_CMP(self) -> crate::common::Reg<regs::FIF_PULL_CMP, crate::common::W> {
         unsafe { crate::common::Reg::from_ptr(self.ptr.wrapping_add(0x1cusize) as _) }
     }
 }

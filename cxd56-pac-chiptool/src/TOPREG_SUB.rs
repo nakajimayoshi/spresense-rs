@@ -31,16 +31,12 @@ impl TOPREG_SUB {
     }
     ///Application domain clock enables.
     #[inline(always)]
-    pub const fn APP_CKEN(
-        self,
-    ) -> crate::common::Reg<regs::APP_CKEN, crate::common::RW> {
+    pub const fn APP_CKEN(self) -> crate::common::Reg<regs::APP_CKEN, crate::common::RW> {
         unsafe { crate::common::Reg::from_ptr(self.ptr.wrapping_add(0x0414usize) as _) }
     }
     ///Application domain clock source select.
     #[inline(always)]
-    pub const fn APP_CKSEL(
-        self,
-    ) -> crate::common::Reg<regs::APP_CKSEL, crate::common::RW> {
+    pub const fn APP_CKSEL(self) -> crate::common::Reg<regs::APP_CKSEL, crate::common::RW> {
         unsafe { crate::common::Reg::from_ptr(self.ptr.wrapping_add(0x0418usize) as _) }
     }
     ///Application domain clock divider.
@@ -57,9 +53,7 @@ impl TOPREG_SUB {
     }
     ///GNSS DSP clock enables.
     #[inline(always)]
-    pub const fn GNSDSP_CKEN(
-        self,
-    ) -> crate::common::Reg<regs::GNSDSP_CKEN, crate::common::RW> {
+    pub const fn GNSDSP_CKEN(self) -> crate::common::Reg<regs::GNSDSP_CKEN, crate::common::RW> {
         unsafe { crate::common::Reg::from_ptr(self.ptr.wrapping_add(0x0c20usize) as _) }
     }
     ///GNSS clock divider.

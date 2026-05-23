@@ -13,8 +13,7 @@ impl CR {
     ///UART enable.
     #[inline(always)]
     pub const fn set_UARTEN(&mut self, val: super::vals::UARTEN) {
-        self.0 = (self.0 & !(0x01 << 0usize))
-            | (((val.to_bits() as u32) & 0x01) << 0usize);
+        self.0 = (self.0 & !(0x01 << 0usize)) | (((val.to_bits() as u32) & 0x01) << 0usize);
     }
     ///SIR enable.
     #[must_use]
@@ -26,8 +25,7 @@ impl CR {
     ///SIR enable.
     #[inline(always)]
     pub const fn set_SIREN(&mut self, val: super::vals::SIREN) {
-        self.0 = (self.0 & !(0x01 << 1usize))
-            | (((val.to_bits() as u32) & 0x01) << 1usize);
+        self.0 = (self.0 & !(0x01 << 1usize)) | (((val.to_bits() as u32) & 0x01) << 1usize);
     }
     ///SIR low-power IrDA.
     #[must_use]
@@ -39,8 +37,7 @@ impl CR {
     ///SIR low-power IrDA.
     #[inline(always)]
     pub const fn set_SIRLP(&mut self, val: super::vals::SIRLP) {
-        self.0 = (self.0 & !(0x01 << 2usize))
-            | (((val.to_bits() as u32) & 0x01) << 2usize);
+        self.0 = (self.0 & !(0x01 << 2usize)) | (((val.to_bits() as u32) & 0x01) << 2usize);
     }
     ///Loopback enable.
     #[must_use]
@@ -52,8 +49,7 @@ impl CR {
     ///Loopback enable.
     #[inline(always)]
     pub const fn set_LBE(&mut self, val: super::vals::LBE) {
-        self.0 = (self.0 & !(0x01 << 7usize))
-            | (((val.to_bits() as u32) & 0x01) << 7usize);
+        self.0 = (self.0 & !(0x01 << 7usize)) | (((val.to_bits() as u32) & 0x01) << 7usize);
     }
     ///Transmit enable.
     #[must_use]
@@ -65,8 +61,7 @@ impl CR {
     ///Transmit enable.
     #[inline(always)]
     pub const fn set_TXE(&mut self, val: super::vals::TXE) {
-        self.0 = (self.0 & !(0x01 << 8usize))
-            | (((val.to_bits() as u32) & 0x01) << 8usize);
+        self.0 = (self.0 & !(0x01 << 8usize)) | (((val.to_bits() as u32) & 0x01) << 8usize);
     }
     ///Receive enable.
     #[must_use]
@@ -78,8 +73,7 @@ impl CR {
     ///Receive enable.
     #[inline(always)]
     pub const fn set_RXE(&mut self, val: super::vals::RXE) {
-        self.0 = (self.0 & !(0x01 << 9usize))
-            | (((val.to_bits() as u32) & 0x01) << 9usize);
+        self.0 = (self.0 & !(0x01 << 9usize)) | (((val.to_bits() as u32) & 0x01) << 9usize);
     }
     ///Data transmit ready.
     #[must_use]
@@ -91,8 +85,7 @@ impl CR {
     ///Data transmit ready.
     #[inline(always)]
     pub const fn set_DTR(&mut self, val: super::vals::DTR) {
-        self.0 = (self.0 & !(0x01 << 10usize))
-            | (((val.to_bits() as u32) & 0x01) << 10usize);
+        self.0 = (self.0 & !(0x01 << 10usize)) | (((val.to_bits() as u32) & 0x01) << 10usize);
     }
     ///Request to send.
     #[must_use]
@@ -104,8 +97,7 @@ impl CR {
     ///Request to send.
     #[inline(always)]
     pub const fn set_RTS(&mut self, val: super::vals::RTS) {
-        self.0 = (self.0 & !(0x01 << 11usize))
-            | (((val.to_bits() as u32) & 0x01) << 11usize);
+        self.0 = (self.0 & !(0x01 << 11usize)) | (((val.to_bits() as u32) & 0x01) << 11usize);
     }
     ///nUARTOut1 modem status.
     #[must_use]
@@ -117,8 +109,7 @@ impl CR {
     ///nUARTOut1 modem status.
     #[inline(always)]
     pub const fn set_Out1(&mut self, val: super::vals::Out1) {
-        self.0 = (self.0 & !(0x01 << 12usize))
-            | (((val.to_bits() as u32) & 0x01) << 12usize);
+        self.0 = (self.0 & !(0x01 << 12usize)) | (((val.to_bits() as u32) & 0x01) << 12usize);
     }
     ///nUARTOut2 modem status.
     #[must_use]
@@ -130,8 +121,7 @@ impl CR {
     ///nUARTOut2 modem status.
     #[inline(always)]
     pub const fn set_Out2(&mut self, val: super::vals::Out2) {
-        self.0 = (self.0 & !(0x01 << 13usize))
-            | (((val.to_bits() as u32) & 0x01) << 13usize);
+        self.0 = (self.0 & !(0x01 << 13usize)) | (((val.to_bits() as u32) & 0x01) << 13usize);
     }
     ///RTS hardware flow control enable.
     #[must_use]
@@ -143,8 +133,7 @@ impl CR {
     ///RTS hardware flow control enable.
     #[inline(always)]
     pub const fn set_RTSEn(&mut self, val: super::vals::RTSEn) {
-        self.0 = (self.0 & !(0x01 << 14usize))
-            | (((val.to_bits() as u32) & 0x01) << 14usize);
+        self.0 = (self.0 & !(0x01 << 14usize)) | (((val.to_bits() as u32) & 0x01) << 14usize);
     }
     ///CTS hardware flow control enable.
     #[must_use]
@@ -156,8 +145,7 @@ impl CR {
     ///CTS hardware flow control enable.
     #[inline(always)]
     pub const fn set_CTSEn(&mut self, val: super::vals::CTSEn) {
-        self.0 = (self.0 & !(0x01 << 15usize))
-            | (((val.to_bits() as u32) & 0x01) << 15usize);
+        self.0 = (self.0 & !(0x01 << 15usize)) | (((val.to_bits() as u32) & 0x01) << 15usize);
     }
 }
 impl Default for CR {
@@ -190,9 +178,18 @@ impl defmt::Format for CR {
         defmt::write!(
             f,
             "CR {{ UARTEN: {:?}, SIREN: {:?}, SIRLP: {:?}, LBE: {:?}, TXE: {:?}, RXE: {:?}, DTR: {:?}, RTS: {:?}, Out1: {:?}, Out2: {:?}, RTSEn: {:?}, CTSEn: {:?} }}",
-            self.UARTEN(), self.SIREN(), self.SIRLP(), self.LBE(), self.TXE(), self
-            .RXE(), self.DTR(), self.RTS(), self.Out1(), self.Out2(), self.RTSEn(), self
-            .CTSEn()
+            self.UARTEN(),
+            self.SIREN(),
+            self.SIRLP(),
+            self.LBE(),
+            self.TXE(),
+            self.RXE(),
+            self.DTR(),
+            self.RTS(),
+            self.Out1(),
+            self.Out2(),
+            self.RTSEn(),
+            self.CTSEn()
         )
     }
 }
@@ -211,8 +208,7 @@ impl DMACR {
     ///Receive DMA enable.
     #[inline(always)]
     pub const fn set_RXDMAE(&mut self, val: super::vals::RXDMAE) {
-        self.0 = (self.0 & !(0x01 << 0usize))
-            | (((val.to_bits() as u32) & 0x01) << 0usize);
+        self.0 = (self.0 & !(0x01 << 0usize)) | (((val.to_bits() as u32) & 0x01) << 0usize);
     }
     ///Transmit DMA enable.
     #[must_use]
@@ -224,8 +220,7 @@ impl DMACR {
     ///Transmit DMA enable.
     #[inline(always)]
     pub const fn set_TXDMAE(&mut self, val: super::vals::TXDMAE) {
-        self.0 = (self.0 & !(0x01 << 1usize))
-            | (((val.to_bits() as u32) & 0x01) << 1usize);
+        self.0 = (self.0 & !(0x01 << 1usize)) | (((val.to_bits() as u32) & 0x01) << 1usize);
     }
     ///DMA on error.
     #[must_use]
@@ -259,8 +254,11 @@ impl core::fmt::Debug for DMACR {
 impl defmt::Format for DMACR {
     fn format(&self, f: defmt::Formatter) {
         defmt::write!(
-            f, "DMACR {{ RXDMAE: {:?}, TXDMAE: {:?}, DMAONERR: {=bool:?} }}", self
-            .RXDMAE(), self.TXDMAE(), self.DMAONERR()
+            f,
+            "DMACR {{ RXDMAE: {:?}, TXDMAE: {:?}, DMAONERR: {=bool:?} }}",
+            self.RXDMAE(),
+            self.TXDMAE(),
+            self.DMAONERR()
         )
     }
 }
@@ -290,8 +288,7 @@ impl DR {
     ///Framing Error.
     #[inline(always)]
     pub const fn set_FE(&mut self, val: super::vals::FE) {
-        self.0 = (self.0 & !(0x01 << 8usize))
-            | (((val.to_bits() as u32) & 0x01) << 8usize);
+        self.0 = (self.0 & !(0x01 << 8usize)) | (((val.to_bits() as u32) & 0x01) << 8usize);
     }
     ///Parity Error.
     #[must_use]
@@ -303,8 +300,7 @@ impl DR {
     ///Parity Error.
     #[inline(always)]
     pub const fn set_PE(&mut self, val: super::vals::PE) {
-        self.0 = (self.0 & !(0x01 << 9usize))
-            | (((val.to_bits() as u32) & 0x01) << 9usize);
+        self.0 = (self.0 & !(0x01 << 9usize)) | (((val.to_bits() as u32) & 0x01) << 9usize);
     }
     ///Break Error.
     #[must_use]
@@ -316,8 +312,7 @@ impl DR {
     ///Break Error.
     #[inline(always)]
     pub const fn set_BE(&mut self, val: super::vals::BE) {
-        self.0 = (self.0 & !(0x01 << 10usize))
-            | (((val.to_bits() as u32) & 0x01) << 10usize);
+        self.0 = (self.0 & !(0x01 << 10usize)) | (((val.to_bits() as u32) & 0x01) << 10usize);
     }
     ///Overrun Error.
     #[must_use]
@@ -329,8 +324,7 @@ impl DR {
     ///Overrun Error.
     #[inline(always)]
     pub const fn set_OE(&mut self, val: super::vals::OE) {
-        self.0 = (self.0 & !(0x01 << 11usize))
-            | (((val.to_bits() as u32) & 0x01) << 11usize);
+        self.0 = (self.0 & !(0x01 << 11usize)) | (((val.to_bits() as u32) & 0x01) << 11usize);
     }
 }
 impl Default for DR {
@@ -354,8 +348,13 @@ impl core::fmt::Debug for DR {
 impl defmt::Format for DR {
     fn format(&self, f: defmt::Formatter) {
         defmt::write!(
-            f, "DR {{ DATA: {=u8:?}, FE: {:?}, PE: {:?}, BE: {:?}, OE: {:?} }}", self
-            .DATA(), self.FE(), self.PE(), self.BE(), self.OE()
+            f,
+            "DR {{ DATA: {=u8:?}, FE: {:?}, PE: {:?}, BE: {:?}, OE: {:?} }}",
+            self.DATA(),
+            self.FE(),
+            self.PE(),
+            self.BE(),
+            self.OE()
         )
     }
 }
@@ -385,7 +384,9 @@ impl Default for FBRD {
 }
 impl core::fmt::Debug for FBRD {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-        f.debug_struct("FBRD").field("BAUD_DIVFRAC", &self.BAUD_DIVFRAC()).finish()
+        f.debug_struct("FBRD")
+            .field("BAUD_DIVFRAC", &self.BAUD_DIVFRAC())
+            .finish()
     }
 }
 #[cfg(feature = "defmt")]
@@ -535,8 +536,15 @@ impl defmt::Format for FR {
         defmt::write!(
             f,
             "FR {{ CTS: {=bool:?}, DSR: {=bool:?}, DCD: {=bool:?}, BUSY: {=bool:?}, RXFE: {=bool:?}, TXFF: {=bool:?}, RXFF: {=bool:?}, TXFE: {=bool:?}, RI: {=bool:?} }}",
-            self.CTS(), self.DSR(), self.DCD(), self.BUSY(), self.RXFE(), self.TXFF(),
-            self.RXFF(), self.TXFE(), self.RI()
+            self.CTS(),
+            self.DSR(),
+            self.DCD(),
+            self.BUSY(),
+            self.RXFE(),
+            self.TXFF(),
+            self.RXFF(),
+            self.TXFE(),
+            self.RI()
         )
     }
 }
@@ -566,7 +574,9 @@ impl Default for IBRD {
 }
 impl core::fmt::Debug for IBRD {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-        f.debug_struct("IBRD").field("BAUD_DIVINT", &self.BAUD_DIVINT()).finish()
+        f.debug_struct("IBRD")
+            .field("BAUD_DIVINT", &self.BAUD_DIVINT())
+            .finish()
     }
 }
 #[cfg(feature = "defmt")]
@@ -742,8 +752,17 @@ impl defmt::Format for ICR {
         defmt::write!(
             f,
             "ICR {{ RIMIC: {=bool:?}, CTSMIC: {=bool:?}, DCDMIC: {=bool:?}, DSRMIC: {=bool:?}, RXIC: {=bool:?}, TXIC: {=bool:?}, RTIC: {=bool:?}, FEIC: {=bool:?}, PEIC: {=bool:?}, BEIC: {=bool:?}, OEIC: {=bool:?} }}",
-            self.RIMIC(), self.CTSMIC(), self.DCDMIC(), self.DSRMIC(), self.RXIC(), self
-            .TXIC(), self.RTIC(), self.FEIC(), self.PEIC(), self.BEIC(), self.OEIC()
+            self.RIMIC(),
+            self.CTSMIC(),
+            self.DCDMIC(),
+            self.DSRMIC(),
+            self.RXIC(),
+            self.TXIC(),
+            self.RTIC(),
+            self.FEIC(),
+            self.PEIC(),
+            self.BEIC(),
+            self.OEIC()
         )
     }
 }
@@ -762,8 +781,7 @@ impl IFLS {
     ///Transmit interrupt FIFO level select.
     #[inline(always)]
     pub const fn set_TXIFLSEL(&mut self, val: super::vals::TXIFLSEL) {
-        self.0 = (self.0 & !(0x07 << 0usize))
-            | (((val.to_bits() as u32) & 0x07) << 0usize);
+        self.0 = (self.0 & !(0x07 << 0usize)) | (((val.to_bits() as u32) & 0x07) << 0usize);
     }
     ///Receive interrupt FIFO level select.
     #[must_use]
@@ -775,8 +793,7 @@ impl IFLS {
     ///Receive interrupt FIFO level select.
     #[inline(always)]
     pub const fn set_RXIFLSEL(&mut self, val: super::vals::RXIFLSEL) {
-        self.0 = (self.0 & !(0x07 << 3usize))
-            | (((val.to_bits() as u32) & 0x07) << 3usize);
+        self.0 = (self.0 & !(0x07 << 3usize)) | (((val.to_bits() as u32) & 0x07) << 3usize);
     }
 }
 impl Default for IFLS {
@@ -797,8 +814,10 @@ impl core::fmt::Debug for IFLS {
 impl defmt::Format for IFLS {
     fn format(&self, f: defmt::Formatter) {
         defmt::write!(
-            f, "IFLS {{ TXIFLSEL: {:?}, RXIFLSEL: {:?} }}", self.TXIFLSEL(), self
-            .RXIFLSEL()
+            f,
+            "IFLS {{ TXIFLSEL: {:?}, RXIFLSEL: {:?} }}",
+            self.TXIFLSEL(),
+            self.RXIFLSEL()
         )
     }
 }
@@ -828,7 +847,9 @@ impl Default for ILPR {
 }
 impl core::fmt::Debug for ILPR {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-        f.debug_struct("ILPR").field("ILPDVSR", &self.ILPDVSR()).finish()
+        f.debug_struct("ILPR")
+            .field("ILPDVSR", &self.ILPDVSR())
+            .finish()
     }
 }
 #[cfg(feature = "defmt")]
@@ -1004,8 +1025,17 @@ impl defmt::Format for IMSC {
         defmt::write!(
             f,
             "IMSC {{ RIMIM: {=bool:?}, CTSMIM: {=bool:?}, DCDMIM: {=bool:?}, DSRMIM: {=bool:?}, RXIM: {=bool:?}, TXIM: {=bool:?}, RTIM: {=bool:?}, FEIM: {=bool:?}, PEIM: {=bool:?}, BEIM: {=bool:?}, OEIM: {=bool:?} }}",
-            self.RIMIM(), self.CTSMIM(), self.DCDMIM(), self.DSRMIM(), self.RXIM(), self
-            .TXIM(), self.RTIM(), self.FEIM(), self.PEIM(), self.BEIM(), self.OEIM()
+            self.RIMIM(),
+            self.CTSMIM(),
+            self.DCDMIM(),
+            self.DSRMIM(),
+            self.RXIM(),
+            self.TXIM(),
+            self.RTIM(),
+            self.FEIM(),
+            self.PEIM(),
+            self.BEIM(),
+            self.OEIM()
         )
     }
 }
@@ -1024,8 +1054,7 @@ impl LCR_H {
     ///Send break.
     #[inline(always)]
     pub const fn set_BRK(&mut self, val: super::vals::BRK) {
-        self.0 = (self.0 & !(0x01 << 0usize))
-            | (((val.to_bits() as u32) & 0x01) << 0usize);
+        self.0 = (self.0 & !(0x01 << 0usize)) | (((val.to_bits() as u32) & 0x01) << 0usize);
     }
     ///Parity enable.
     #[must_use]
@@ -1037,8 +1066,7 @@ impl LCR_H {
     ///Parity enable.
     #[inline(always)]
     pub const fn set_PEN(&mut self, val: super::vals::PEN) {
-        self.0 = (self.0 & !(0x01 << 1usize))
-            | (((val.to_bits() as u32) & 0x01) << 1usize);
+        self.0 = (self.0 & !(0x01 << 1usize)) | (((val.to_bits() as u32) & 0x01) << 1usize);
     }
     ///Even parity select.
     #[must_use]
@@ -1050,8 +1078,7 @@ impl LCR_H {
     ///Even parity select.
     #[inline(always)]
     pub const fn set_EPS(&mut self, val: super::vals::EPS) {
-        self.0 = (self.0 & !(0x01 << 2usize))
-            | (((val.to_bits() as u32) & 0x01) << 2usize);
+        self.0 = (self.0 & !(0x01 << 2usize)) | (((val.to_bits() as u32) & 0x01) << 2usize);
     }
     ///Two stop bits select.
     #[must_use]
@@ -1063,8 +1090,7 @@ impl LCR_H {
     ///Two stop bits select.
     #[inline(always)]
     pub const fn set_STP2(&mut self, val: super::vals::STP2) {
-        self.0 = (self.0 & !(0x01 << 3usize))
-            | (((val.to_bits() as u32) & 0x01) << 3usize);
+        self.0 = (self.0 & !(0x01 << 3usize)) | (((val.to_bits() as u32) & 0x01) << 3usize);
     }
     ///Enable FIFOs.
     #[must_use]
@@ -1076,8 +1102,7 @@ impl LCR_H {
     ///Enable FIFOs.
     #[inline(always)]
     pub const fn set_FEN(&mut self, val: super::vals::FEN) {
-        self.0 = (self.0 & !(0x01 << 4usize))
-            | (((val.to_bits() as u32) & 0x01) << 4usize);
+        self.0 = (self.0 & !(0x01 << 4usize)) | (((val.to_bits() as u32) & 0x01) << 4usize);
     }
     ///Word Length.
     #[must_use]
@@ -1089,8 +1114,7 @@ impl LCR_H {
     ///Word Length.
     #[inline(always)]
     pub const fn set_WLEN(&mut self, val: super::vals::WLEN) {
-        self.0 = (self.0 & !(0x03 << 5usize))
-            | (((val.to_bits() as u32) & 0x03) << 5usize);
+        self.0 = (self.0 & !(0x03 << 5usize)) | (((val.to_bits() as u32) & 0x03) << 5usize);
     }
     ///Stick parity select.
     #[must_use]
@@ -1102,8 +1126,7 @@ impl LCR_H {
     ///Stick parity select.
     #[inline(always)]
     pub const fn set_SPS(&mut self, val: super::vals::SPS) {
-        self.0 = (self.0 & !(0x01 << 7usize))
-            | (((val.to_bits() as u32) & 0x01) << 7usize);
+        self.0 = (self.0 & !(0x01 << 7usize)) | (((val.to_bits() as u32) & 0x01) << 7usize);
     }
 }
 impl Default for LCR_H {
@@ -1131,7 +1154,12 @@ impl defmt::Format for LCR_H {
         defmt::write!(
             f,
             "LCR_H {{ BRK: {:?}, PEN: {:?}, EPS: {:?}, STP2: {:?}, FEN: {:?}, WLEN: {:?}, SPS: {:?} }}",
-            self.BRK(), self.PEN(), self.EPS(), self.STP2(), self.FEN(), self.WLEN(),
+            self.BRK(),
+            self.PEN(),
+            self.EPS(),
+            self.STP2(),
+            self.FEN(),
+            self.WLEN(),
             self.SPS()
         )
     }
@@ -1303,9 +1331,17 @@ impl defmt::Format for MIS {
         defmt::write!(
             f,
             "MIS {{ RIMMIS: {=bool:?}, CTSMMIS: {=bool:?}, DCDMMIS: {=bool:?}, DSRMMIS: {=bool:?}, RXMIS: {=bool:?}, TXMIS: {=bool:?}, RTMIS: {=bool:?}, FEMIS: {=bool:?}, PEMIS: {=bool:?}, BEMIS: {=bool:?}, OEMIS: {=bool:?} }}",
-            self.RIMMIS(), self.CTSMMIS(), self.DCDMMIS(), self.DSRMMIS(), self.RXMIS(),
-            self.TXMIS(), self.RTMIS(), self.FEMIS(), self.PEMIS(), self.BEMIS(), self
-            .OEMIS()
+            self.RIMMIS(),
+            self.CTSMMIS(),
+            self.DCDMMIS(),
+            self.DSRMMIS(),
+            self.RXMIS(),
+            self.TXMIS(),
+            self.RTMIS(),
+            self.FEMIS(),
+            self.PEMIS(),
+            self.BEMIS(),
+            self.OEMIS()
         )
     }
 }
@@ -1476,9 +1512,17 @@ impl defmt::Format for RIS {
         defmt::write!(
             f,
             "RIS {{ RIRRIS: {=bool:?}, CTSMRIS: {=bool:?}, DCDMRIS: {=bool:?}, DSRMRIS: {=bool:?}, RXRIS: {=bool:?}, TXRIS: {=bool:?}, RTRIS: {=bool:?}, FERIS: {=bool:?}, PERIS: {=bool:?}, BERIS: {=bool:?}, OERIS: {=bool:?} }}",
-            self.RIRRIS(), self.CTSMRIS(), self.DCDMRIS(), self.DSRMRIS(), self.RXRIS(),
-            self.TXRIS(), self.RTRIS(), self.FERIS(), self.PERIS(), self.BERIS(), self
-            .OERIS()
+            self.RIRRIS(),
+            self.CTSMRIS(),
+            self.DCDMRIS(),
+            self.DSRMRIS(),
+            self.RXRIS(),
+            self.TXRIS(),
+            self.RTRIS(),
+            self.FERIS(),
+            self.PERIS(),
+            self.BERIS(),
+            self.OERIS()
         )
     }
 }
@@ -1497,8 +1541,7 @@ impl RSR {
     ///Framing Error.
     #[inline(always)]
     pub const fn set_RFE(&mut self, val: super::vals::RFE) {
-        self.0 = (self.0 & !(0x01 << 0usize))
-            | (((val.to_bits() as u32) & 0x01) << 0usize);
+        self.0 = (self.0 & !(0x01 << 0usize)) | (((val.to_bits() as u32) & 0x01) << 0usize);
     }
     ///Parity Error.
     #[must_use]
@@ -1510,8 +1553,7 @@ impl RSR {
     ///Parity Error.
     #[inline(always)]
     pub const fn set_RPE(&mut self, val: super::vals::RPE) {
-        self.0 = (self.0 & !(0x01 << 1usize))
-            | (((val.to_bits() as u32) & 0x01) << 1usize);
+        self.0 = (self.0 & !(0x01 << 1usize)) | (((val.to_bits() as u32) & 0x01) << 1usize);
     }
     ///Break Error.
     #[must_use]
@@ -1523,8 +1565,7 @@ impl RSR {
     ///Break Error.
     #[inline(always)]
     pub const fn set_RBE(&mut self, val: super::vals::RBE) {
-        self.0 = (self.0 & !(0x01 << 2usize))
-            | (((val.to_bits() as u32) & 0x01) << 2usize);
+        self.0 = (self.0 & !(0x01 << 2usize)) | (((val.to_bits() as u32) & 0x01) << 2usize);
     }
     ///Overrun Error.
     #[must_use]
@@ -1536,8 +1577,7 @@ impl RSR {
     ///Overrun Error.
     #[inline(always)]
     pub const fn set_ROE(&mut self, val: super::vals::ROE) {
-        self.0 = (self.0 & !(0x01 << 3usize))
-            | (((val.to_bits() as u32) & 0x01) << 3usize);
+        self.0 = (self.0 & !(0x01 << 3usize)) | (((val.to_bits() as u32) & 0x01) << 3usize);
     }
 }
 impl Default for RSR {
@@ -1560,8 +1600,12 @@ impl core::fmt::Debug for RSR {
 impl defmt::Format for RSR {
     fn format(&self, f: defmt::Formatter) {
         defmt::write!(
-            f, "RSR {{ RFE: {:?}, RPE: {:?}, RBE: {:?}, ROE: {:?} }}", self.RFE(), self
-            .RPE(), self.RBE(), self.ROE()
+            f,
+            "RSR {{ RFE: {:?}, RPE: {:?}, RBE: {:?}, ROE: {:?} }}",
+            self.RFE(),
+            self.RPE(),
+            self.RBE(),
+            self.ROE()
         )
     }
 }

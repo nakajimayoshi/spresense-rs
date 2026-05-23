@@ -13,8 +13,7 @@ impl FIF_PULL_CMP {
     ///RX data read complete.
     #[inline(always)]
     pub const fn set_PULL_CMP(&mut self, val: super::vals::PULL_CMP) {
-        self.0 = (self.0 & !(0x01 << 0usize))
-            | (((val.to_bits() as u32) & 0x01) << 0usize);
+        self.0 = (self.0 & !(0x01 << 0usize)) | (((val.to_bits() as u32) & 0x01) << 0usize);
     }
 }
 impl Default for FIF_PULL_CMP {
@@ -25,7 +24,9 @@ impl Default for FIF_PULL_CMP {
 }
 impl core::fmt::Debug for FIF_PULL_CMP {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-        f.debug_struct("FIF_PULL_CMP").field("PULL_CMP", &self.PULL_CMP()).finish()
+        f.debug_struct("FIF_PULL_CMP")
+            .field("PULL_CMP", &self.PULL_CMP())
+            .finish()
     }
 }
 #[cfg(feature = "defmt")]
@@ -49,8 +50,7 @@ impl FIF_PULL_EMP {
     ///RX buffer is empty.
     #[inline(always)]
     pub const fn set_EMPTY_FLAG(&mut self, val: super::vals::EMPTY_FLAG) {
-        self.0 = (self.0 & !(0x01 << 0usize))
-            | (((val.to_bits() as u32) & 0x01) << 0usize);
+        self.0 = (self.0 & !(0x01 << 0usize)) | (((val.to_bits() as u32) & 0x01) << 0usize);
     }
 }
 impl Default for FIF_PULL_EMP {
@@ -61,7 +61,9 @@ impl Default for FIF_PULL_EMP {
 }
 impl core::fmt::Debug for FIF_PULL_EMP {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-        f.debug_struct("FIF_PULL_EMP").field("EMPTY_FLAG", &self.EMPTY_FLAG()).finish()
+        f.debug_struct("FIF_PULL_EMP")
+            .field("EMPTY_FLAG", &self.EMPTY_FLAG())
+            .finish()
     }
 }
 #[cfg(feature = "defmt")]
@@ -85,8 +87,7 @@ impl FIF_PULL_WRD0 {
     ///RX data word 0.
     #[inline(always)]
     pub const fn set_DATA_0(&mut self, val: u32) {
-        self.0 = (self.0 & !(0x0fff_ffff << 0usize))
-            | (((val as u32) & 0x0fff_ffff) << 0usize);
+        self.0 = (self.0 & !(0x0fff_ffff << 0usize)) | (((val as u32) & 0x0fff_ffff) << 0usize);
     }
     ///Sender ID.
     #[must_use]
@@ -119,7 +120,9 @@ impl core::fmt::Debug for FIF_PULL_WRD0 {
 impl defmt::Format for FIF_PULL_WRD0 {
     fn format(&self, f: defmt::Formatter) {
         defmt::write!(
-            f, "FIF_PULL_WRD0 {{ DATA_0: {=u32:?}, SENDER_ID: {=u8:?} }}", self.DATA_0(),
+            f,
+            "FIF_PULL_WRD0 {{ DATA_0: {=u32:?}, SENDER_ID: {=u8:?} }}",
+            self.DATA_0(),
             self.SENDER_ID()
         )
     }
@@ -139,8 +142,7 @@ impl FIF_PUSH_CMP {
     ///TX data write complete.
     #[inline(always)]
     pub const fn set_PUSH_CMP(&mut self, val: super::vals::PUSH_CMP) {
-        self.0 = (self.0 & !(0x01 << 0usize))
-            | (((val.to_bits() as u32) & 0x01) << 0usize);
+        self.0 = (self.0 & !(0x01 << 0usize)) | (((val.to_bits() as u32) & 0x01) << 0usize);
     }
 }
 impl Default for FIF_PUSH_CMP {
@@ -151,7 +153,9 @@ impl Default for FIF_PUSH_CMP {
 }
 impl core::fmt::Debug for FIF_PUSH_CMP {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-        f.debug_struct("FIF_PUSH_CMP").field("PUSH_CMP", &self.PUSH_CMP()).finish()
+        f.debug_struct("FIF_PUSH_CMP")
+            .field("PUSH_CMP", &self.PUSH_CMP())
+            .finish()
     }
 }
 #[cfg(feature = "defmt")]
@@ -175,8 +179,7 @@ impl FIF_PUSH_FULL {
     ///TX buffer is full.
     #[inline(always)]
     pub const fn set_FULL_FLAG(&mut self, val: super::vals::FULL_FLAG) {
-        self.0 = (self.0 & !(0x01 << 0usize))
-            | (((val.to_bits() as u32) & 0x01) << 0usize);
+        self.0 = (self.0 & !(0x01 << 0usize)) | (((val.to_bits() as u32) & 0x01) << 0usize);
     }
 }
 impl Default for FIF_PUSH_FULL {
@@ -187,7 +190,9 @@ impl Default for FIF_PUSH_FULL {
 }
 impl core::fmt::Debug for FIF_PUSH_FULL {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-        f.debug_struct("FIF_PUSH_FULL").field("FULL_FLAG", &self.FULL_FLAG()).finish()
+        f.debug_struct("FIF_PUSH_FULL")
+            .field("FULL_FLAG", &self.FULL_FLAG())
+            .finish()
     }
 }
 #[cfg(feature = "defmt")]
@@ -211,8 +216,7 @@ impl FIF_PUSH_WRD0 {
     ///TX data word 0.
     #[inline(always)]
     pub const fn set_DATA_0(&mut self, val: u32) {
-        self.0 = (self.0 & !(0x0fff_ffff << 0usize))
-            | (((val as u32) & 0x0fff_ffff) << 0usize);
+        self.0 = (self.0 & !(0x0fff_ffff << 0usize)) | (((val as u32) & 0x0fff_ffff) << 0usize);
     }
     ///Target ID.
     #[must_use]
@@ -245,8 +249,10 @@ impl core::fmt::Debug for FIF_PUSH_WRD0 {
 impl defmt::Format for FIF_PUSH_WRD0 {
     fn format(&self, f: defmt::Formatter) {
         defmt::write!(
-            f, "FIF_PUSH_WRD0 {{ DATA_0: {=u32:?}, RECEIVER_ID: {=u8:?} }}", self
-            .DATA_0(), self.RECEIVER_ID()
+            f,
+            "FIF_PUSH_WRD0 {{ DATA_0: {=u32:?}, RECEIVER_ID: {=u8:?} }}",
+            self.DATA_0(),
+            self.RECEIVER_ID()
         )
     }
 }

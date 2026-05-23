@@ -61,7 +61,9 @@ impl defmt::Format for APP_CKEN {
         defmt::write!(
             f,
             "APP_CKEN {{ APP_CPU: {=bool:?}, APP_MCLK: {=bool:?}, APP_AHB: {=bool:?} }}",
-            self.APP_CPU(), self.APP_MCLK(), self.APP_AHB()
+            self.APP_CPU(),
+            self.APP_MCLK(),
+            self.APP_AHB()
         )
     }
 }
@@ -91,7 +93,9 @@ impl Default for APP_CKSEL {
 }
 impl core::fmt::Debug for APP_CKSEL {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-        f.debug_struct("APP_CKSEL").field("AUD_MCLK", &self.AUD_MCLK()).finish()
+        f.debug_struct("APP_CKSEL")
+            .field("AUD_MCLK", &self.AUD_MCLK())
+            .finish()
     }
 }
 #[cfg(feature = "defmt")]
@@ -148,8 +152,10 @@ impl core::fmt::Debug for GNSDSP_CKEN {
 impl defmt::Format for GNSDSP_CKEN {
     fn format(&self, f: defmt::Formatter) {
         defmt::write!(
-            f, "GNSDSP_CKEN {{ GNSDSP_P1: {=bool:?}, GNSDSP_COP: {=bool:?} }}", self
-            .GNSDSP_P1(), self.GNSDSP_COP()
+            f,
+            "GNSDSP_CKEN {{ GNSDSP_P1: {=bool:?}, GNSDSP_COP: {=bool:?} }}",
+            self.GNSDSP_P1(),
+            self.GNSDSP_COP()
         )
     }
 }
@@ -320,10 +326,17 @@ impl defmt::Format for SYSIOP_SUB_CKEN {
         defmt::write!(
             f,
             "SYSIOP_SUB_CKEN {{ CK_AHB_BRG_COMIF: {=bool:?}, CK_COM_BRG: {=bool:?}, CK_AHB_DMAC3: {=bool:?}, CK_UART1: {=bool:?}, CK_SPIM: {=bool:?}, CK_I2CM: {=bool:?}, CK_HCLK_SAKE: {=bool:?}, CK_SFC_HCLK: {=bool:?}, CK_SFC_SFCLK: {=bool:?}, CK_SFC_HCLK_LOW: {=bool:?}, CK_COM_UART_PCLK: {=bool:?} }}",
-            self.CK_AHB_BRG_COMIF(), self.CK_COM_BRG(), self.CK_AHB_DMAC3(), self
-            .CK_UART1(), self.CK_SPIM(), self.CK_I2CM(), self.CK_HCLK_SAKE(), self
-            .CK_SFC_HCLK(), self.CK_SFC_SFCLK(), self.CK_SFC_HCLK_LOW(), self
-            .CK_COM_UART_PCLK()
+            self.CK_AHB_BRG_COMIF(),
+            self.CK_COM_BRG(),
+            self.CK_AHB_DMAC3(),
+            self.CK_UART1(),
+            self.CK_SPIM(),
+            self.CK_I2CM(),
+            self.CK_HCLK_SAKE(),
+            self.CK_SFC_HCLK(),
+            self.CK_SFC_SFCLK(),
+            self.CK_SFC_HCLK_LOW(),
+            self.CK_COM_UART_PCLK()
         )
     }
 }

@@ -16,23 +16,17 @@ impl CISIF {
     }
     ///Interrupt status register.
     #[inline(always)]
-    pub const fn INTR_STAT(
-        self,
-    ) -> crate::common::Reg<regs::INTR_STAT, crate::common::R> {
+    pub const fn INTR_STAT(self) -> crate::common::Reg<regs::INTR_STAT, crate::common::R> {
         unsafe { crate::common::Reg::from_ptr(self.ptr.wrapping_add(0x0usize) as _) }
     }
     ///Input data enable register.
     #[inline(always)]
-    pub const fn DIN_ENABLE(
-        self,
-    ) -> crate::common::Reg<regs::DIN_ENABLE, crate::common::RW> {
+    pub const fn DIN_ENABLE(self) -> crate::common::Reg<regs::DIN_ENABLE, crate::common::RW> {
         unsafe { crate::common::Reg::from_ptr(self.ptr.wrapping_add(0x20usize) as _) }
     }
     ///CIS input activa area size setting register.
     #[inline(always)]
-    pub const fn CIS_SIZE(
-        self,
-    ) -> crate::common::Reg<regs::CIS_SIZE, crate::common::RW> {
+    pub const fn CIS_SIZE(self) -> crate::common::Reg<regs::CIS_SIZE, crate::common::RW> {
         unsafe { crate::common::Reg::from_ptr(self.ptr.wrapping_add(0x24usize) as _) }
     }
     ///Active area position setting register.
@@ -42,9 +36,7 @@ impl CISIF {
     }
     ///Active area size setting register.
     #[inline(always)]
-    pub const fn ACT_SIZE(
-        self,
-    ) -> crate::common::Reg<regs::ACT_SIZE, crate::common::RW> {
+    pub const fn ACT_SIZE(self) -> crate::common::Reg<regs::ACT_SIZE, crate::common::RW> {
         unsafe { crate::common::Reg::from_ptr(self.ptr.wrapping_add(0x2cusize) as _) }
     }
     ///CIS input mode register.

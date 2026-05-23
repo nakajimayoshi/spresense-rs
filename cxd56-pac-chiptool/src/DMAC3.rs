@@ -15,9 +15,7 @@ impl DMAC3 {
         self.ptr as _
     }
     #[inline(always)]
-    pub const fn DMACIntStatus(
-        self,
-    ) -> crate::common::Reg<regs::DMACIntStatus, crate::common::R> {
+    pub const fn DMACIntStatus(self) -> crate::common::Reg<regs::DMACIntStatus, crate::common::R> {
         unsafe { crate::common::Reg::from_ptr(self.ptr.wrapping_add(0x0usize) as _) }
     }
     #[inline(always)]
@@ -39,9 +37,7 @@ impl DMAC3 {
         unsafe { crate::common::Reg::from_ptr(self.ptr.wrapping_add(0x0cusize) as _) }
     }
     #[inline(always)]
-    pub const fn DMACIntErrClr(
-        self,
-    ) -> crate::common::Reg<regs::DMACIntErrClr, crate::common::W> {
+    pub const fn DMACIntErrClr(self) -> crate::common::Reg<regs::DMACIntErrClr, crate::common::W> {
         unsafe { crate::common::Reg::from_ptr(self.ptr.wrapping_add(0x10usize) as _) }
     }
     #[inline(always)]
@@ -57,33 +53,23 @@ impl DMAC3 {
         unsafe { crate::common::Reg::from_ptr(self.ptr.wrapping_add(0x18usize) as _) }
     }
     #[inline(always)]
-    pub const fn DMACEnbldChns(
-        self,
-    ) -> crate::common::Reg<regs::DMACEnbldChns, crate::common::R> {
+    pub const fn DMACEnbldChns(self) -> crate::common::Reg<regs::DMACEnbldChns, crate::common::R> {
         unsafe { crate::common::Reg::from_ptr(self.ptr.wrapping_add(0x1cusize) as _) }
     }
     #[inline(always)]
-    pub const fn DMACSoftBReq(
-        self,
-    ) -> crate::common::Reg<regs::DMACSoftBReq, crate::common::RW> {
+    pub const fn DMACSoftBReq(self) -> crate::common::Reg<regs::DMACSoftBReq, crate::common::RW> {
         unsafe { crate::common::Reg::from_ptr(self.ptr.wrapping_add(0x20usize) as _) }
     }
     #[inline(always)]
-    pub const fn DMACSoftSReq(
-        self,
-    ) -> crate::common::Reg<regs::DMACSoftSReq, crate::common::RW> {
+    pub const fn DMACSoftSReq(self) -> crate::common::Reg<regs::DMACSoftSReq, crate::common::RW> {
         unsafe { crate::common::Reg::from_ptr(self.ptr.wrapping_add(0x24usize) as _) }
     }
     #[inline(always)]
-    pub const fn DMACSoftLBReq(
-        self,
-    ) -> crate::common::Reg<regs::DMACSoftLBReq, crate::common::RW> {
+    pub const fn DMACSoftLBReq(self) -> crate::common::Reg<regs::DMACSoftLBReq, crate::common::RW> {
         unsafe { crate::common::Reg::from_ptr(self.ptr.wrapping_add(0x28usize) as _) }
     }
     #[inline(always)]
-    pub const fn DMACSoftLSReq(
-        self,
-    ) -> crate::common::Reg<regs::DMACSoftLSReq, crate::common::RW> {
+    pub const fn DMACSoftLSReq(self) -> crate::common::Reg<regs::DMACSoftLSReq, crate::common::RW> {
         unsafe { crate::common::Reg::from_ptr(self.ptr.wrapping_add(0x2cusize) as _) }
     }
     #[inline(always)]
@@ -93,21 +79,15 @@ impl DMAC3 {
         unsafe { crate::common::Reg::from_ptr(self.ptr.wrapping_add(0x30usize) as _) }
     }
     #[inline(always)]
-    pub const fn DMACSync(
-        self,
-    ) -> crate::common::Reg<regs::DMACSync, crate::common::RW> {
+    pub const fn DMACSync(self) -> crate::common::Reg<regs::DMACSync, crate::common::RW> {
         unsafe { crate::common::Reg::from_ptr(self.ptr.wrapping_add(0x34usize) as _) }
     }
     #[inline(always)]
-    pub const fn DMACSREQMask(
-        self,
-    ) -> crate::common::Reg<regs::DMACSREQMask, crate::common::RW> {
+    pub const fn DMACSREQMask(self) -> crate::common::Reg<regs::DMACSREQMask, crate::common::RW> {
         unsafe { crate::common::Reg::from_ptr(self.ptr.wrapping_add(0x38usize) as _) }
     }
     #[inline(always)]
-    pub const fn DMACC0SrcAddr(
-        self,
-    ) -> crate::common::Reg<regs::DMACC0SrcAddr, crate::common::RW> {
+    pub const fn DMACC0SrcAddr(self) -> crate::common::Reg<regs::DMACC0SrcAddr, crate::common::RW> {
         unsafe { crate::common::Reg::from_ptr(self.ptr.wrapping_add(0x0100usize) as _) }
     }
     #[inline(always)]
@@ -117,27 +97,19 @@ impl DMAC3 {
         unsafe { crate::common::Reg::from_ptr(self.ptr.wrapping_add(0x0104usize) as _) }
     }
     #[inline(always)]
-    pub const fn DMACC0LLI(
-        self,
-    ) -> crate::common::Reg<regs::DMACC0LLI, crate::common::RW> {
+    pub const fn DMACC0LLI(self) -> crate::common::Reg<regs::DMACC0LLI, crate::common::RW> {
         unsafe { crate::common::Reg::from_ptr(self.ptr.wrapping_add(0x0108usize) as _) }
     }
     #[inline(always)]
-    pub const fn DMACC0Control(
-        self,
-    ) -> crate::common::Reg<regs::DMACC0Control, crate::common::RW> {
+    pub const fn DMACC0Control(self) -> crate::common::Reg<regs::DMACC0Control, crate::common::RW> {
         unsafe { crate::common::Reg::from_ptr(self.ptr.wrapping_add(0x010cusize) as _) }
     }
     #[inline(always)]
-    pub const fn DMACC0Configuration(
-        self,
-    ) -> crate::common::Reg<u32, crate::common::RW> {
+    pub const fn DMACC0Configuration(self) -> crate::common::Reg<u32, crate::common::RW> {
         unsafe { crate::common::Reg::from_ptr(self.ptr.wrapping_add(0x0110usize) as _) }
     }
     #[inline(always)]
-    pub const fn DMACC0DefLLI(
-        self,
-    ) -> crate::common::Reg<regs::DMACC0DefLLI, crate::common::RW> {
+    pub const fn DMACC0DefLLI(self) -> crate::common::Reg<regs::DMACC0DefLLI, crate::common::RW> {
         unsafe { crate::common::Reg::from_ptr(self.ptr.wrapping_add(0x0114usize) as _) }
     }
 }

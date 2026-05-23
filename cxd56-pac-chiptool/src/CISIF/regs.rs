@@ -42,8 +42,10 @@ impl core::fmt::Debug for ACT_POS {
 impl defmt::Format for ACT_POS {
     fn format(&self, f: defmt::Formatter) {
         defmt::write!(
-            f, "ACT_POS {{ act_hst: {=u16:?}, act_vst: {=u16:?} }}", self.act_hst(), self
-            .act_vst()
+            f,
+            "ACT_POS {{ act_hst: {=u16:?}, act_vst: {=u16:?} }}",
+            self.act_hst(),
+            self.act_vst()
         )
     }
 }
@@ -91,7 +93,9 @@ impl core::fmt::Debug for ACT_SIZE {
 impl defmt::Format for ACT_SIZE {
     fn format(&self, f: defmt::Formatter) {
         defmt::write!(
-            f, "ACT_SIZE {{ act_hsz: {=u16:?}, act_vsz: {=u16:?} }}", self.act_hsz(),
+            f,
+            "ACT_SIZE {{ act_hsz: {=u16:?}, act_vsz: {=u16:?} }}",
+            self.act_hsz(),
             self.act_vsz()
         )
     }
@@ -140,7 +144,9 @@ impl core::fmt::Debug for CIS_SIZE {
 impl defmt::Format for CIS_SIZE {
     fn format(&self, f: defmt::Formatter) {
         defmt::write!(
-            f, "CIS_SIZE {{ cis_hst: {=u16:?}, cis_vst: {=u16:?} }}", self.cis_hst(),
+            f,
+            "CIS_SIZE {{ cis_hst: {=u16:?}, cis_vst: {=u16:?} }}",
+            self.cis_hst(),
             self.cis_vst()
         )
     }
@@ -169,13 +175,19 @@ impl Default for DIN_ENABLE {
 }
 impl core::fmt::Debug for DIN_ENABLE {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-        f.debug_struct("DIN_ENABLE").field("ycin_enable", &self.ycin_enable()).finish()
+        f.debug_struct("DIN_ENABLE")
+            .field("ycin_enable", &self.ycin_enable())
+            .finish()
     }
 }
 #[cfg(feature = "defmt")]
 impl defmt::Format for DIN_ENABLE {
     fn format(&self, f: defmt::Formatter) {
-        defmt::write!(f, "DIN_ENABLE {{ ycin_enable: {=bool:?} }}", self.ycin_enable())
+        defmt::write!(
+            f,
+            "DIN_ENABLE {{ ycin_enable: {=bool:?} }}",
+            self.ycin_enable()
+        )
     }
 }
 ///Execution command register.
@@ -202,7 +214,9 @@ impl Default for EXE_CMD {
 }
 impl core::fmt::Debug for EXE_CMD {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-        f.debug_struct("EXE_CMD").field("exe_cmd", &self.exe_cmd()).finish()
+        f.debug_struct("EXE_CMD")
+            .field("exe_cmd", &self.exe_cmd())
+            .finish()
     }
 }
 #[cfg(feature = "defmt")]
@@ -224,8 +238,7 @@ impl FORMAT {
     }
     #[inline(always)]
     pub const fn set_yc_order(&mut self, val: super::vals::yc_order) {
-        self.0 = (self.0 & !(0x03 << 0usize))
-            | (((val.to_bits() as u32) & 0x03) << 0usize);
+        self.0 = (self.0 & !(0x03 << 0usize)) | (((val.to_bits() as u32) & 0x03) << 0usize);
     }
 }
 impl Default for FORMAT {
@@ -236,7 +249,9 @@ impl Default for FORMAT {
 }
 impl core::fmt::Debug for FORMAT {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-        f.debug_struct("FORMAT").field("yc_order", &self.yc_order()).finish()
+        f.debug_struct("FORMAT")
+            .field("yc_order", &self.yc_order())
+            .finish()
     }
 }
 #[cfg(feature = "defmt")]
@@ -311,8 +326,12 @@ impl core::fmt::Debug for ILCODE {
 impl defmt::Format for ILCODE {
     fn format(&self, f: defmt::Formatter) {
         defmt::write!(
-            f, "ILCODE {{ sosi: {=u8:?}, eosi: {=u8:?}, soy: {=u8:?}, eoy: {=u8:?} }}",
-            self.sosi(), self.eosi(), self.soy(), self.eoy()
+            f,
+            "ILCODE {{ sosi: {=u8:?}, eosi: {=u8:?}, soy: {=u8:?}, eoy: {=u8:?} }}",
+            self.sosi(),
+            self.eosi(),
+            self.soy(),
+            self.eoy()
         )
     }
 }
@@ -615,14 +634,31 @@ impl defmt::Format for INTR_STAT {
         defmt::write!(
             f,
             "INTR_STAT {{ vs_int: {=bool:?}, eoy_int: {=bool:?}, soy_int: {=bool:?}, eoi_int: {=bool:?}, soi_int: {=bool:?}, ycc_vact_end_int: {=bool:?}, jpg_vact_end_int: {=bool:?}, ycc_axi_trdn_int: {=bool:?}, ycc_nstorage_int: {=bool:?}, ycc_darea_end_int: {=bool:?}, jpg_axi_trdn_int: {=bool:?}, jpg_nstorage_int: {=bool:?}, jpg_darea_end_int: {=bool:?}, vlatch_int: {=bool:?}, size_over_int: {=bool:?}, size_under_int: {=bool:?}, ycc_marker_err_int: {=bool:?}, ycc_axi_trerr__int: {=bool:?}, ycc_fifo_ovf_int: {=bool:?}, ycc_mem_ovf_int: {=bool:?}, jpg_marker_err_int: {=bool:?}, jpg_axi_trerr_int: {=bool:?}, jpg_fifo_ovf_int: {=bool:?}, jpg_mem_ovf_int: {=bool:?}, jpg_err_status_int: {=bool:?} }}",
-            self.vs_int(), self.eoy_int(), self.soy_int(), self.eoi_int(), self
-            .soi_int(), self.ycc_vact_end_int(), self.jpg_vact_end_int(), self
-            .ycc_axi_trdn_int(), self.ycc_nstorage_int(), self.ycc_darea_end_int(), self
-            .jpg_axi_trdn_int(), self.jpg_nstorage_int(), self.jpg_darea_end_int(), self
-            .vlatch_int(), self.size_over_int(), self.size_under_int(), self
-            .ycc_marker_err_int(), self.ycc_axi_trerr__int(), self.ycc_fifo_ovf_int(),
-            self.ycc_mem_ovf_int(), self.jpg_marker_err_int(), self.jpg_axi_trerr_int(),
-            self.jpg_fifo_ovf_int(), self.jpg_mem_ovf_int(), self.jpg_err_status_int()
+            self.vs_int(),
+            self.eoy_int(),
+            self.soy_int(),
+            self.eoi_int(),
+            self.soi_int(),
+            self.ycc_vact_end_int(),
+            self.jpg_vact_end_int(),
+            self.ycc_axi_trdn_int(),
+            self.ycc_nstorage_int(),
+            self.ycc_darea_end_int(),
+            self.jpg_axi_trdn_int(),
+            self.jpg_nstorage_int(),
+            self.jpg_darea_end_int(),
+            self.vlatch_int(),
+            self.size_over_int(),
+            self.size_under_int(),
+            self.ycc_marker_err_int(),
+            self.ycc_axi_trerr__int(),
+            self.ycc_fifo_ovf_int(),
+            self.ycc_mem_ovf_int(),
+            self.jpg_marker_err_int(),
+            self.jpg_axi_trerr_int(),
+            self.jpg_fifo_ovf_int(),
+            self.jpg_mem_ovf_int(),
+            self.jpg_err_status_int()
         )
     }
 }
@@ -694,7 +730,10 @@ impl defmt::Format for MODE {
         defmt::write!(
             f,
             "MODE {{ cis_mode: {=u8:?}, ycc_trns_en: {=bool:?}, jpg_trns_en: {=bool:?}, jpg_cap_mode: {=bool:?} }}",
-            self.cis_mode(), self.ycc_trns_en(), self.jpg_trns_en(), self.jpg_cap_mode()
+            self.cis_mode(),
+            self.ycc_trns_en(),
+            self.jpg_trns_en(),
+            self.jpg_cap_mode()
         )
     }
 }
@@ -711,8 +750,7 @@ impl POL {
     }
     #[inline(always)]
     pub const fn set_hpol(&mut self, val: super::vals::hpol) {
-        self.0 = (self.0 & !(0x01 << 0usize))
-            | (((val.to_bits() as u32) & 0x01) << 0usize);
+        self.0 = (self.0 & !(0x01 << 0usize)) | (((val.to_bits() as u32) & 0x01) << 0usize);
     }
     #[must_use]
     #[inline(always)]
@@ -722,8 +760,7 @@ impl POL {
     }
     #[inline(always)]
     pub const fn set_vpol(&mut self, val: super::vals::vpol) {
-        self.0 = (self.0 & !(0x01 << 1usize))
-            | (((val.to_bits() as u32) & 0x01) << 1usize);
+        self.0 = (self.0 & !(0x01 << 1usize)) | (((val.to_bits() as u32) & 0x01) << 1usize);
     }
 }
 impl Default for POL {
@@ -743,6 +780,11 @@ impl core::fmt::Debug for POL {
 #[cfg(feature = "defmt")]
 impl defmt::Format for POL {
     fn format(&self, f: defmt::Formatter) {
-        defmt::write!(f, "POL {{ hpol: {:?}, vpol: {:?} }}", self.hpol(), self.vpol())
+        defmt::write!(
+            f,
+            "POL {{ hpol: {:?}, vpol: {:?} }}",
+            self.hpol(),
+            self.vpol()
+        )
     }
 }

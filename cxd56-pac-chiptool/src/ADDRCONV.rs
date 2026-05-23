@@ -16,58 +16,42 @@ impl ADDRCONV {
     }
     ///CPU 0 address conversion area 0/1.
     #[inline(always)]
-    pub const fn ACNV_P0_DST0(
-        self,
-    ) -> crate::common::Reg<regs::ACNV_P0_DST0, crate::common::RW> {
+    pub const fn ACNV_P0_DST0(self) -> crate::common::Reg<regs::ACNV_P0_DST0, crate::common::RW> {
         unsafe { crate::common::Reg::from_ptr(self.ptr.wrapping_add(0x04usize) as _) }
     }
     ///CPU 0 address conversion area 2/3.
     #[inline(always)]
-    pub const fn ACNV_P0_DST1(
-        self,
-    ) -> crate::common::Reg<regs::ACNV_P0_DST1, crate::common::RW> {
+    pub const fn ACNV_P0_DST1(self) -> crate::common::Reg<regs::ACNV_P0_DST1, crate::common::RW> {
         unsafe { crate::common::Reg::from_ptr(self.ptr.wrapping_add(0x08usize) as _) }
     }
     ///CPU 0 address conversion area 4/5.
     #[inline(always)]
-    pub const fn ACNV_P0_DST2(
-        self,
-    ) -> crate::common::Reg<regs::ACNV_P0_DST2, crate::common::RW> {
+    pub const fn ACNV_P0_DST2(self) -> crate::common::Reg<regs::ACNV_P0_DST2, crate::common::RW> {
         unsafe { crate::common::Reg::from_ptr(self.ptr.wrapping_add(0x0cusize) as _) }
     }
     ///CPU 0 address conversion area 6/7.
     #[inline(always)]
-    pub const fn ACNV_P0_DST3(
-        self,
-    ) -> crate::common::Reg<regs::ACNV_P0_DST3, crate::common::RW> {
+    pub const fn ACNV_P0_DST3(self) -> crate::common::Reg<regs::ACNV_P0_DST3, crate::common::RW> {
         unsafe { crate::common::Reg::from_ptr(self.ptr.wrapping_add(0x10usize) as _) }
     }
     ///CPU 0 address conversion area 8/9.
     #[inline(always)]
-    pub const fn ACNV_P0_DST4(
-        self,
-    ) -> crate::common::Reg<regs::ACNV_P0_DST4, crate::common::RW> {
+    pub const fn ACNV_P0_DST4(self) -> crate::common::Reg<regs::ACNV_P0_DST4, crate::common::RW> {
         unsafe { crate::common::Reg::from_ptr(self.ptr.wrapping_add(0x14usize) as _) }
     }
     ///CPU 0 address conversion area A/B.
     #[inline(always)]
-    pub const fn ACNV_P0_DST5(
-        self,
-    ) -> crate::common::Reg<regs::ACNV_P0_DST5, crate::common::RW> {
+    pub const fn ACNV_P0_DST5(self) -> crate::common::Reg<regs::ACNV_P0_DST5, crate::common::RW> {
         unsafe { crate::common::Reg::from_ptr(self.ptr.wrapping_add(0x18usize) as _) }
     }
     ///CPU 0 address conversion area C/D.
     #[inline(always)]
-    pub const fn ACNV_P0_DST6(
-        self,
-    ) -> crate::common::Reg<regs::ACNV_P0_DST6, crate::common::RW> {
+    pub const fn ACNV_P0_DST6(self) -> crate::common::Reg<regs::ACNV_P0_DST6, crate::common::RW> {
         unsafe { crate::common::Reg::from_ptr(self.ptr.wrapping_add(0x1cusize) as _) }
     }
     ///CPU 0 address conversion area E/F.
     #[inline(always)]
-    pub const fn ACNV_P0_DST7(
-        self,
-    ) -> crate::common::Reg<regs::ACNV_P0_DST7, crate::common::RW> {
+    pub const fn ACNV_P0_DST7(self) -> crate::common::Reg<regs::ACNV_P0_DST7, crate::common::RW> {
         unsafe { crate::common::Reg::from_ptr(self.ptr.wrapping_add(0x20usize) as _) }
     }
 }

@@ -24,8 +24,7 @@ impl DMACC0Control {
     ///Destination burst size.
     #[inline(always)]
     pub const fn set_DBSize(&mut self, val: super::vals::DBSize) {
-        self.0 = (self.0 & !(0x07 << 15usize))
-            | (((val.to_bits() as u32) & 0x07) << 15usize);
+        self.0 = (self.0 & !(0x07 << 15usize)) | (((val.to_bits() as u32) & 0x07) << 15usize);
     }
     ///Destination transfer width.
     #[must_use]
@@ -37,8 +36,7 @@ impl DMACC0Control {
     ///Destination transfer width.
     #[inline(always)]
     pub const fn set_DWidth(&mut self, val: super::vals::DWidth) {
-        self.0 = (self.0 & !(0x07 << 21usize))
-            | (((val.to_bits() as u32) & 0x07) << 21usize);
+        self.0 = (self.0 & !(0x07 << 21usize)) | (((val.to_bits() as u32) & 0x07) << 21usize);
     }
     ///Source AHB master select.
     #[must_use]
@@ -50,8 +48,7 @@ impl DMACC0Control {
     ///Source AHB master select.
     #[inline(always)]
     pub const fn set_S(&mut self, val: super::vals::S) {
-        self.0 = (self.0 & !(0x01 << 24usize))
-            | (((val.to_bits() as u32) & 0x01) << 24usize);
+        self.0 = (self.0 & !(0x01 << 24usize)) | (((val.to_bits() as u32) & 0x01) << 24usize);
     }
     ///Destination AHB master select.
     #[must_use]
@@ -63,8 +60,7 @@ impl DMACC0Control {
     ///Destination AHB master select.
     #[inline(always)]
     pub const fn set_D(&mut self, val: super::vals::D) {
-        self.0 = (self.0 & !(0x01 << 25usize))
-            | (((val.to_bits() as u32) & 0x01) << 25usize);
+        self.0 = (self.0 & !(0x01 << 25usize)) | (((val.to_bits() as u32) & 0x01) << 25usize);
     }
     ///Source increment.
     #[must_use]
@@ -76,8 +72,7 @@ impl DMACC0Control {
     ///Source increment.
     #[inline(always)]
     pub const fn set_SI(&mut self, val: super::vals::SI) {
-        self.0 = (self.0 & !(0x01 << 26usize))
-            | (((val.to_bits() as u32) & 0x01) << 26usize);
+        self.0 = (self.0 & !(0x01 << 26usize)) | (((val.to_bits() as u32) & 0x01) << 26usize);
     }
     ///Destination increment.
     #[must_use]
@@ -89,8 +84,7 @@ impl DMACC0Control {
     ///Destination increment.
     #[inline(always)]
     pub const fn set_DI(&mut self, val: super::vals::DI) {
-        self.0 = (self.0 & !(0x01 << 27usize))
-            | (((val.to_bits() as u32) & 0x01) << 27usize);
+        self.0 = (self.0 & !(0x01 << 27usize)) | (((val.to_bits() as u32) & 0x01) << 27usize);
     }
     ///Protection.
     #[must_use]
@@ -114,8 +108,7 @@ impl DMACC0Control {
     ///Terminal count interrupt enable.
     #[inline(always)]
     pub const fn set_I(&mut self, val: super::vals::I) {
-        self.0 = (self.0 & !(0x01 << 31usize))
-            | (((val.to_bits() as u32) & 0x01) << 31usize);
+        self.0 = (self.0 & !(0x01 << 31usize)) | (((val.to_bits() as u32) & 0x01) << 31usize);
     }
 }
 impl Default for DMACC0Control {
@@ -145,8 +138,15 @@ impl defmt::Format for DMACC0Control {
         defmt::write!(
             f,
             "DMACC0Control {{ TransferSize: {=u16:?}, DBSize: {:?}, DWidth: {:?}, S: {:?}, D: {:?}, SI: {:?}, DI: {:?}, Prot: {=u8:?}, I: {:?} }}",
-            self.TransferSize(), self.DBSize(), self.DWidth(), self.S(), self.D(), self
-            .SI(), self.DI(), self.Prot(), self.I()
+            self.TransferSize(),
+            self.DBSize(),
+            self.DWidth(),
+            self.S(),
+            self.D(),
+            self.SI(),
+            self.DI(),
+            self.Prot(),
+            self.I()
         )
     }
 }
@@ -164,8 +164,7 @@ impl DMACC0DestAddr {
     ///DMA destination address.
     #[inline(always)]
     pub const fn set_DestAddr(&mut self, val: u32) {
-        self.0 = (self.0 & !(0xffff_ffff << 0usize))
-            | (((val as u32) & 0xffff_ffff) << 0usize);
+        self.0 = (self.0 & !(0xffff_ffff << 0usize)) | (((val as u32) & 0xffff_ffff) << 0usize);
     }
 }
 impl Default for DMACC0DestAddr {
@@ -176,13 +175,19 @@ impl Default for DMACC0DestAddr {
 }
 impl core::fmt::Debug for DMACC0DestAddr {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-        f.debug_struct("DMACC0DestAddr").field("DestAddr", &self.DestAddr()).finish()
+        f.debug_struct("DMACC0DestAddr")
+            .field("DestAddr", &self.DestAddr())
+            .finish()
     }
 }
 #[cfg(feature = "defmt")]
 impl defmt::Format for DMACC0DestAddr {
     fn format(&self, f: defmt::Formatter) {
-        defmt::write!(f, "DMACC0DestAddr {{ DestAddr: {=u32:?} }}", self.DestAddr())
+        defmt::write!(
+            f,
+            "DMACC0DestAddr {{ DestAddr: {=u32:?} }}",
+            self.DestAddr()
+        )
     }
 }
 #[repr(transparent)]
@@ -199,8 +204,7 @@ impl DMACC0LLI {
     ///AHB master select for loading the next LLI.
     #[inline(always)]
     pub const fn set_LM(&mut self, val: super::vals::LM) {
-        self.0 = (self.0 & !(0x01 << 0usize))
-            | (((val.to_bits() as u32) & 0x01) << 0usize);
+        self.0 = (self.0 & !(0x01 << 0usize)) | (((val.to_bits() as u32) & 0x01) << 0usize);
     }
     ///Linked list item.
     #[must_use]
@@ -212,8 +216,7 @@ impl DMACC0LLI {
     ///Linked list item.
     #[inline(always)]
     pub const fn set_LLI(&mut self, val: u32) {
-        self.0 = (self.0 & !(0x3fff_ffff << 2usize))
-            | (((val as u32) & 0x3fff_ffff) << 2usize);
+        self.0 = (self.0 & !(0x3fff_ffff << 2usize)) | (((val as u32) & 0x3fff_ffff) << 2usize);
     }
 }
 impl Default for DMACC0LLI {
@@ -234,7 +237,10 @@ impl core::fmt::Debug for DMACC0LLI {
 impl defmt::Format for DMACC0LLI {
     fn format(&self, f: defmt::Formatter) {
         defmt::write!(
-            f, "DMACC0LLI {{ LM: {:?}, LLI: {=u32:?} }}", self.LM(), self.LLI()
+            f,
+            "DMACC0LLI {{ LM: {:?}, LLI: {=u32:?} }}",
+            self.LM(),
+            self.LLI()
         )
     }
 }
@@ -252,8 +258,7 @@ impl DMACC0SrcAddr {
     ///DMA source address.
     #[inline(always)]
     pub const fn set_SrcAddr(&mut self, val: u32) {
-        self.0 = (self.0 & !(0xffff_ffff << 0usize))
-            | (((val as u32) & 0xffff_ffff) << 0usize);
+        self.0 = (self.0 & !(0xffff_ffff << 0usize)) | (((val as u32) & 0xffff_ffff) << 0usize);
     }
 }
 impl Default for DMACC0SrcAddr {
@@ -264,7 +269,9 @@ impl Default for DMACC0SrcAddr {
 }
 impl core::fmt::Debug for DMACC0SrcAddr {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-        f.debug_struct("DMACC0SrcAddr").field("SrcAddr", &self.SrcAddr()).finish()
+        f.debug_struct("DMACC0SrcAddr")
+            .field("SrcAddr", &self.SrcAddr())
+            .finish()
     }
 }
 #[cfg(feature = "defmt")]
@@ -287,8 +294,7 @@ impl DMACConfiguration {
     ///DMAC enable.
     #[inline(always)]
     pub const fn set_E(&mut self, val: super::vals::E) {
-        self.0 = (self.0 & !(0x01 << 0usize))
-            | (((val.to_bits() as u32) & 0x01) << 0usize);
+        self.0 = (self.0 & !(0x01 << 0usize)) | (((val.to_bits() as u32) & 0x01) << 0usize);
     }
     ///AHB Master 1 endianess configuration.
     #[must_use]
@@ -300,8 +306,7 @@ impl DMACConfiguration {
     ///AHB Master 1 endianess configuration.
     #[inline(always)]
     pub const fn set_M1(&mut self, val: super::vals::M1) {
-        self.0 = (self.0 & !(0x01 << 1usize))
-            | (((val.to_bits() as u32) & 0x01) << 1usize);
+        self.0 = (self.0 & !(0x01 << 1usize)) | (((val.to_bits() as u32) & 0x01) << 1usize);
     }
     ///AHB Master 2 endianess configuration.
     #[must_use]
@@ -313,8 +318,7 @@ impl DMACConfiguration {
     ///AHB Master 2 endianess configuration.
     #[inline(always)]
     pub const fn set_M2(&mut self, val: super::vals::M2) {
-        self.0 = (self.0 & !(0x01 << 2usize))
-            | (((val.to_bits() as u32) & 0x01) << 2usize);
+        self.0 = (self.0 & !(0x01 << 2usize)) | (((val.to_bits() as u32) & 0x01) << 2usize);
     }
 }
 impl Default for DMACConfiguration {
@@ -336,8 +340,11 @@ impl core::fmt::Debug for DMACConfiguration {
 impl defmt::Format for DMACConfiguration {
     fn format(&self, f: defmt::Formatter) {
         defmt::write!(
-            f, "DMACConfiguration {{ E: {:?}, M1: {:?}, M2: {:?} }}", self.E(), self
-            .M1(), self.M2()
+            f,
+            "DMACConfiguration {{ E: {:?}, M1: {:?}, M2: {:?} }}",
+            self.E(),
+            self.M1(),
+            self.M2()
         )
     }
 }
@@ -375,7 +382,9 @@ impl core::fmt::Debug for DMACEnbldChns {
 impl defmt::Format for DMACEnbldChns {
     fn format(&self, f: defmt::Formatter) {
         defmt::write!(
-            f, "DMACEnbldChns {{ EnabledChannels: {=u8:?} }}", self.EnabledChannels()
+            f,
+            "DMACEnbldChns {{ EnabledChannels: {=u8:?} }}",
+            self.EnabledChannels()
         )
     }
 }
@@ -404,13 +413,19 @@ impl Default for DMACIntErrClr {
 }
 impl core::fmt::Debug for DMACIntErrClr {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-        f.debug_struct("DMACIntErrClr").field("IntErrClr", &self.IntErrClr()).finish()
+        f.debug_struct("DMACIntErrClr")
+            .field("IntErrClr", &self.IntErrClr())
+            .finish()
     }
 }
 #[cfg(feature = "defmt")]
 impl defmt::Format for DMACIntErrClr {
     fn format(&self, f: defmt::Formatter) {
-        defmt::write!(f, "DMACIntErrClr {{ IntErrClr: {=u8:?} }}", self.IntErrClr())
+        defmt::write!(
+            f,
+            "DMACIntErrClr {{ IntErrClr: {=u8:?} }}",
+            self.IntErrClr()
+        )
     }
 }
 #[repr(transparent)]
@@ -447,7 +462,9 @@ impl core::fmt::Debug for DMACIntErrorStatus {
 impl defmt::Format for DMACIntErrorStatus {
     fn format(&self, f: defmt::Formatter) {
         defmt::write!(
-            f, "DMACIntErrorStatus {{ IntErrorStatus: {=u8:?} }}", self.IntErrorStatus()
+            f,
+            "DMACIntErrorStatus {{ IntErrorStatus: {=u8:?} }}",
+            self.IntErrorStatus()
         )
     }
 }
@@ -476,13 +493,19 @@ impl Default for DMACIntStatus {
 }
 impl core::fmt::Debug for DMACIntStatus {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-        f.debug_struct("DMACIntStatus").field("IntStatus", &self.IntStatus()).finish()
+        f.debug_struct("DMACIntStatus")
+            .field("IntStatus", &self.IntStatus())
+            .finish()
     }
 }
 #[cfg(feature = "defmt")]
 impl defmt::Format for DMACIntStatus {
     fn format(&self, f: defmt::Formatter) {
-        defmt::write!(f, "DMACIntStatus {{ IntStatus: {=u8:?} }}", self.IntStatus())
+        defmt::write!(
+            f,
+            "DMACIntStatus {{ IntStatus: {=u8:?} }}",
+            self.IntStatus()
+        )
     }
 }
 #[repr(transparent)]
@@ -510,13 +533,19 @@ impl Default for DMACIntTCClear {
 }
 impl core::fmt::Debug for DMACIntTCClear {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-        f.debug_struct("DMACIntTCClear").field("IntTCClear", &self.IntTCClear()).finish()
+        f.debug_struct("DMACIntTCClear")
+            .field("IntTCClear", &self.IntTCClear())
+            .finish()
     }
 }
 #[cfg(feature = "defmt")]
 impl defmt::Format for DMACIntTCClear {
     fn format(&self, f: defmt::Formatter) {
-        defmt::write!(f, "DMACIntTCClear {{ IntTCClear: {=u8:?} }}", self.IntTCClear())
+        defmt::write!(
+            f,
+            "DMACIntTCClear {{ IntTCClear: {=u8:?} }}",
+            self.IntTCClear()
+        )
     }
 }
 #[repr(transparent)]
@@ -553,7 +582,9 @@ impl core::fmt::Debug for DMACIntTCStatus {
 impl defmt::Format for DMACIntTCStatus {
     fn format(&self, f: defmt::Formatter) {
         defmt::write!(
-            f, "DMACIntTCStatus {{ IntTCStatus: {=u8:?} }}", self.IntTCStatus()
+            f,
+            "DMACIntTCStatus {{ IntTCStatus: {=u8:?} }}",
+            self.IntTCStatus()
         )
     }
 }
@@ -591,8 +622,9 @@ impl core::fmt::Debug for DMACRawIntErrorStatus {
 impl defmt::Format for DMACRawIntErrorStatus {
     fn format(&self, f: defmt::Formatter) {
         defmt::write!(
-            f, "DMACRawIntErrorStatus {{ RawIntErrorStatus: {=u8:?} }}", self
-            .RawIntErrorStatus()
+            f,
+            "DMACRawIntErrorStatus {{ RawIntErrorStatus: {=u8:?} }}",
+            self.RawIntErrorStatus()
         )
     }
 }
@@ -630,7 +662,9 @@ impl core::fmt::Debug for DMACRawIntTCStatus {
 impl defmt::Format for DMACRawIntTCStatus {
     fn format(&self, f: defmt::Formatter) {
         defmt::write!(
-            f, "DMACRawIntTCStatus {{ RawIntTCStatus: {=u8:?} }}", self.RawIntTCStatus()
+            f,
+            "DMACRawIntTCStatus {{ RawIntTCStatus: {=u8:?} }}",
+            self.RawIntTCStatus()
         )
     }
 }
@@ -659,7 +693,9 @@ impl Default for DMACSoftBReq {
 }
 impl core::fmt::Debug for DMACSoftBReq {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-        f.debug_struct("DMACSoftBReq").field("SoftBReq", &self.SoftBReq()).finish()
+        f.debug_struct("DMACSoftBReq")
+            .field("SoftBReq", &self.SoftBReq())
+            .finish()
     }
 }
 #[cfg(feature = "defmt")]
@@ -693,13 +729,19 @@ impl Default for DMACSoftLBReq {
 }
 impl core::fmt::Debug for DMACSoftLBReq {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-        f.debug_struct("DMACSoftLBReq").field("SoftLBReq", &self.SoftLBReq()).finish()
+        f.debug_struct("DMACSoftLBReq")
+            .field("SoftLBReq", &self.SoftLBReq())
+            .finish()
     }
 }
 #[cfg(feature = "defmt")]
 impl defmt::Format for DMACSoftLBReq {
     fn format(&self, f: defmt::Formatter) {
-        defmt::write!(f, "DMACSoftLBReq {{ SoftLBReq: {=u16:?} }}", self.SoftLBReq())
+        defmt::write!(
+            f,
+            "DMACSoftLBReq {{ SoftLBReq: {=u16:?} }}",
+            self.SoftLBReq()
+        )
     }
 }
 #[repr(transparent)]
@@ -727,13 +769,19 @@ impl Default for DMACSoftLSReq {
 }
 impl core::fmt::Debug for DMACSoftLSReq {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-        f.debug_struct("DMACSoftLSReq").field("SoftLSReq", &self.SoftLSReq()).finish()
+        f.debug_struct("DMACSoftLSReq")
+            .field("SoftLSReq", &self.SoftLSReq())
+            .finish()
     }
 }
 #[cfg(feature = "defmt")]
 impl defmt::Format for DMACSoftLSReq {
     fn format(&self, f: defmt::Formatter) {
-        defmt::write!(f, "DMACSoftLSReq {{ SoftLSReq: {=u16:?} }}", self.SoftLSReq())
+        defmt::write!(
+            f,
+            "DMACSoftLSReq {{ SoftLSReq: {=u16:?} }}",
+            self.SoftLSReq()
+        )
     }
 }
 #[repr(transparent)]
@@ -761,7 +809,9 @@ impl Default for DMACSoftSReq {
 }
 impl core::fmt::Debug for DMACSoftSReq {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-        f.debug_struct("DMACSoftSReq").field("SoftSReq", &self.SoftSReq()).finish()
+        f.debug_struct("DMACSoftSReq")
+            .field("SoftSReq", &self.SoftSReq())
+            .finish()
     }
 }
 #[cfg(feature = "defmt")]
@@ -795,7 +845,9 @@ impl Default for DMACSync {
 }
 impl core::fmt::Debug for DMACSync {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-        f.debug_struct("DMACSync").field("DMACSync", &self.DMACSync()).finish()
+        f.debug_struct("DMACSync")
+            .field("DMACSync", &self.DMACSync())
+            .finish()
     }
 }
 #[cfg(feature = "defmt")]
