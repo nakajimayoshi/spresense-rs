@@ -6181,6 +6181,1129 @@
       </interrupt>
     </peripheral>
     <peripheral>
+      <name>TOPREG</name>
+      <description>Top-of-chip clock / PMU / oscillator / PLL controller</description>
+      <baseAddress>0x04100000</baseAddress>
+      <addressBlock>
+        <offset>0x0</offset>
+        <size>0x800</size>
+        <usage>registers</usage>
+      </addressBlock>
+      <registers>
+        <register>
+          <name>PWD_CTL</name>
+          <description>Power-domain control (1 = powered on)</description>
+          <addressOffset>0x0</addressOffset>
+          <access>read-write</access>
+          <resetValue>0x00000000</resetValue>
+          <fields>
+            <field>
+              <name>SCU</name>
+              <description>Sensor Control Unit domain</description>
+              <bitOffset>0</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>CORE</name>
+              <description>Core domain</description>
+              <bitOffset>4</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>SYSIOP</name>
+              <description>SYSIOP domain</description>
+              <bitOffset>5</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>SYSIOP_SUB</name>
+              <description>SYSIOP sub-domain</description>
+              <bitOffset>6</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>APP</name>
+              <description>Application domain</description>
+              <bitOffset>8</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>APP_DSP</name>
+              <description>Application DSP domain</description>
+              <bitOffset>9</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>APP_SUB</name>
+              <description>Application sub-domain</description>
+              <bitOffset>10</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>GNSS_ITP</name>
+              <description>GNSS ITP domain</description>
+              <bitOffset>12</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>GNSS</name>
+              <description>GNSS domain</description>
+              <bitOffset>13</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>APP_AUDIO</name>
+              <description>Application audio domain</description>
+              <bitOffset>14</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+          </fields>
+        </register>
+        <register>
+          <name>ANA_PW_CTL</name>
+          <description>Analog circuit power control (1 = powered on)</description>
+          <addressOffset>0x4</addressOffset>
+          <access>read-write</access>
+          <resetValue>0x00000000</resetValue>
+          <fields>
+            <field>
+              <name>RCOSC</name>
+              <description>RC oscillator</description>
+              <bitOffset>0</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>XOSC</name>
+              <description>Crystal oscillator</description>
+              <bitOffset>1</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>SYSPLL</name>
+              <description>System PLL</description>
+              <bitOffset>2</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>RF_LNA</name>
+              <description>RF LNA</description>
+              <bitOffset>4</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>RF_MIX</name>
+              <description>RF mixer</description>
+              <bitOffset>5</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>RF_IF</name>
+              <description>RF IF block</description>
+              <bitOffset>6</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>RF_ADC</name>
+              <description>RF ADC</description>
+              <bitOffset>7</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>RF_LO</name>
+              <description>RF local oscillator</description>
+              <bitOffset>8</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>RF_PLL</name>
+              <description>RF PLL</description>
+              <bitOffset>9</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>HPADC</name>
+              <description>High-precision ADC</description>
+              <bitOffset>12</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>LPADC</name>
+              <description>Low-power ADC</description>
+              <bitOffset>13</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+          </fields>
+        </register>
+        <register>
+          <name>ANA_EN_CTL</name>
+          <description>Analog enable control (paired set/clear bits — use raw write)</description>
+          <addressOffset>0x8</addressOffset>
+          <access>read-write</access>
+          <resetValue>0x00000000</resetValue>
+        </register>
+        <register>
+          <name>PWD_RESET0</name>
+          <description>Per-domain power reset control</description>
+          <addressOffset>0x60</addressOffset>
+          <access>read-write</access>
+          <resetValue>0x00000000</resetValue>
+        </register>
+        <register>
+          <name>PWD_STAT</name>
+          <description>Power-domain status (read-only mirror of PWD_CTL)</description>
+          <addressOffset>0x200</addressOffset>
+          <access>read-only</access>
+          <resetValue>0x00000000</resetValue>
+          <fields>
+            <field>
+              <name>SCU</name>
+              <description>Sensor Control Unit domain powered on</description>
+              <bitOffset>0</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>CORE</name>
+              <description>Core domain powered on</description>
+              <bitOffset>4</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>SYSIOP</name>
+              <description>SYSIOP domain powered on</description>
+              <bitOffset>5</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>SYSIOP_SUB</name>
+              <description>SYSIOP sub-domain powered on</description>
+              <bitOffset>6</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>APP</name>
+              <description>Application domain powered on</description>
+              <bitOffset>8</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>APP_DSP</name>
+              <description>Application DSP domain powered on</description>
+              <bitOffset>9</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>APP_SUB</name>
+              <description>Application sub-domain powered on</description>
+              <bitOffset>10</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>GNSS_ITP</name>
+              <description>GNSS ITP domain powered on</description>
+              <bitOffset>12</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>GNSS</name>
+              <description>GNSS domain powered on</description>
+              <bitOffset>13</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>APP_AUDIO</name>
+              <description>Application audio domain powered on</description>
+              <bitOffset>14</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+          </fields>
+        </register>
+        <register>
+          <name>ANA_PW_STAT</name>
+          <description>Analog power status (read-only mirror of ANA_PW_CTL)</description>
+          <addressOffset>0x208</addressOffset>
+          <access>read-only</access>
+          <resetValue>0x00000000</resetValue>
+          <fields>
+            <field>
+              <name>RCOSC</name>
+              <description>RC oscillator powered on</description>
+              <bitOffset>0</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>XOSC</name>
+              <description>Crystal oscillator powered on</description>
+              <bitOffset>1</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>SYSPLL</name>
+              <description>System PLL powered on</description>
+              <bitOffset>2</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>RF_LNA</name>
+              <description>RF LNA powered on</description>
+              <bitOffset>4</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>RF_MIX</name>
+              <description>RF mixer powered on</description>
+              <bitOffset>5</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>RF_IF</name>
+              <description>RF IF block powered on</description>
+              <bitOffset>6</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>RF_ADC</name>
+              <description>RF ADC powered on</description>
+              <bitOffset>7</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>RF_LO</name>
+              <description>RF LO powered on</description>
+              <bitOffset>8</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>RF_PLL</name>
+              <description>RF PLL powered on</description>
+              <bitOffset>9</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>HPADC</name>
+              <description>High-precision ADC powered on</description>
+              <bitOffset>12</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>LPADC</name>
+              <description>Low-power ADC powered on</description>
+              <bitOffset>13</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+          </fields>
+        </register>
+        <register>
+          <name>CLSELDIV_WAKE</name>
+          <description>Clock select/divider setting used on wake from sleep</description>
+          <addressOffset>0x414</addressOffset>
+          <access>read-write</access>
+          <resetValue>0x00000000</resetValue>
+        </register>
+        <register>
+          <name>CKDIV_CPU_DSP_BUS_WAKE</name>
+          <description>CPU/DSP/bus clock divider used on wake from sleep</description>
+          <addressOffset>0x418</addressOffset>
+          <access>read-write</access>
+          <resetValue>0x00000000</resetValue>
+        </register>
+        <register>
+          <name>CKSEL_ROOT_WAKE</name>
+          <description>Root clock source select used on wake from sleep</description>
+          <addressOffset>0x41C</addressOffset>
+          <access>read-write</access>
+          <resetValue>0x00000000</resetValue>
+        </register>
+        <register>
+          <name>PMU_CORE_CKEN</name>
+          <description>PMU core clock enable</description>
+          <addressOffset>0x4C0</addressOffset>
+          <access>read-write</access>
+          <resetValue>0x00000000</resetValue>
+        </register>
+        <register>
+          <name>CKSEL_ROOT</name>
+          <description>Root clock source select and RTC status</description>
+          <addressOffset>0x4C4</addressOffset>
+          <access>read-write</access>
+          <resetValue>0x00000000</resetValue>
+          <fields>
+            <field>
+              <name>ENABLE_RF_PLL1</name>
+              <description>Enable RF PLL1 as clock source</description>
+              <bitOffset>4</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>ENABLE_SOURCE_SEL</name>
+              <description>Enable clock source selection</description>
+              <bitOffset>16</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>STATUS_RTC</name>
+              <description>RTC clock source status (read)</description>
+              <bitOffset>30</bitOffset>
+              <bitWidth>2</bitWidth>
+            </field>
+          </fields>
+        </register>
+        <register>
+          <name>CKSEL_PMU</name>
+          <description>PMU clock source select</description>
+          <addressOffset>0x4C8</addressOffset>
+          <access>read-write</access>
+          <resetValue>0x00000000</resetValue>
+        </register>
+        <register>
+          <name>CKSEL_SYSIOP</name>
+          <description>SYSIOP clock source select</description>
+          <addressOffset>0x4CC</addressOffset>
+          <access>read-write</access>
+          <resetValue>0x00000000</resetValue>
+        </register>
+        <register>
+          <name>CKSEL_SYSIOP_SUB</name>
+          <description>SYSIOP sub-domain clock source select</description>
+          <addressOffset>0x4D0</addressOffset>
+          <access>read-write</access>
+          <resetValue>0x00000000</resetValue>
+        </register>
+        <register>
+          <name>CKSEL_SCU</name>
+          <description>SCU clock source select</description>
+          <addressOffset>0x4D4</addressOffset>
+          <access>read-write</access>
+          <resetValue>0x00000000</resetValue>
+        </register>
+        <register>
+          <name>CKDIV_CPU_DSP_BUS</name>
+          <description>CPU / DSP / bus clock divider</description>
+          <addressOffset>0x4D8</addressOffset>
+          <access>read-write</access>
+          <resetValue>0x00000000</resetValue>
+        </register>
+        <register>
+          <name>CKDIV_COM</name>
+          <description>COM clock divider</description>
+          <addressOffset>0x4DC</addressOffset>
+          <access>read-write</access>
+          <resetValue>0x00000000</resetValue>
+        </register>
+        <register>
+          <name>CKDIV_HOSTIFC</name>
+          <description>Host interface clock divider</description>
+          <addressOffset>0x4E0</addressOffset>
+          <access>read-write</access>
+          <resetValue>0x00000000</resetValue>
+        </register>
+        <register>
+          <name>CKDIV_SCU</name>
+          <description>SCU clock divider</description>
+          <addressOffset>0x4E4</addressOffset>
+          <access>read-write</access>
+          <resetValue>0x00000000</resetValue>
+        </register>
+        <register>
+          <name>CKDIV_PMU</name>
+          <description>PMU clock divider</description>
+          <addressOffset>0x4E8</addressOffset>
+          <access>read-write</access>
+          <resetValue>0x00000000</resetValue>
+        </register>
+        <register>
+          <name>CRG_INT_CLR0</name>
+          <description>TOPREG clock-ready interrupt clear 0 (write 1 to clear)</description>
+          <addressOffset>0x4EC</addressOffset>
+          <access>read-write</access>
+          <resetValue>0x00000000</resetValue>
+          <fields>
+            <field>
+              <name>CK_PCLK_UART0</name>
+              <description>UART0 PCLK ready</description>
+              <bitOffset>0</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>CK_UART0</name>
+              <description>UART0 clock ready</description>
+              <bitOffset>1</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>CK_BRG_HOST</name>
+              <description>Host bridge clock ready</description>
+              <bitOffset>2</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>CK_PCLK_HOSTIFC</name>
+              <description>Host interface PCLK ready</description>
+              <bitOffset>3</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>CK_HOSTIFC_SEQ</name>
+              <description>Host interface sequencer clock ready</description>
+              <bitOffset>4</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>CK_I2CS</name>
+              <description>I2C slave clock ready</description>
+              <bitOffset>5</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>CK_RTC_ORG</name>
+              <description>RTC origin clock ready</description>
+              <bitOffset>6</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>CK_SYSIOP_RTC</name>
+              <description>SYSIOP RTC clock ready</description>
+              <bitOffset>7</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>CK_BRG_SCU</name>
+              <description>SCU bridge clock ready</description>
+              <bitOffset>8</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>CK_SCU</name>
+              <description>SCU clock ready</description>
+              <bitOffset>9</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>CK_SCU_SPI</name>
+              <description>SCU SPI clock ready</description>
+              <bitOffset>10</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>CK_SCU_I2C0</name>
+              <description>SCU I2C0 clock ready</description>
+              <bitOffset>11</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>CK_SCU_I2C1</name>
+              <description>SCU I2C1 clock ready</description>
+              <bitOffset>12</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>CK_SCU_SEQ</name>
+              <description>SCU sequencer clock ready</description>
+              <bitOffset>13</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>CK_SCU_SC</name>
+              <description>SCU SC clock ready</description>
+              <bitOffset>14</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>CK_32K</name>
+              <description>32 kHz clock ready</description>
+              <bitOffset>15</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>CK_U32KH</name>
+              <description>U32K high clock ready</description>
+              <bitOffset>16</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>CK_U32KL</name>
+              <description>U32K low clock ready</description>
+              <bitOffset>17</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>CK_TADC</name>
+              <description>Temperature ADC clock ready</description>
+              <bitOffset>18</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>CK_RTC_PCLK</name>
+              <description>RTC PCLK ready</description>
+              <bitOffset>19</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>CK_PMU_RTC_PCLK</name>
+              <description>PMU RTC PCLK ready</description>
+              <bitOffset>20</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>CK_APP</name>
+              <description>APP domain clock ready</description>
+              <bitOffset>21</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+          </fields>
+        </register>
+        <register>
+          <name>CRG_INT_MASK0</name>
+          <description>TOPREG clock-ready interrupt mask 0</description>
+          <addressOffset>0x4F0</addressOffset>
+          <access>read-write</access>
+          <resetValue>0x00000000</resetValue>
+        </register>
+        <register>
+          <name>CRG_INT_STAT_MSK0</name>
+          <description>TOPREG clock-ready masked interrupt status 0 (read-only)</description>
+          <addressOffset>0x4F4</addressOffset>
+          <access>read-only</access>
+          <resetValue>0x00000000</resetValue>
+        </register>
+        <register>
+          <name>CRG_INT_STAT_RAW0</name>
+          <description>TOPREG clock-ready raw interrupt status 0 (read-only)</description>
+          <addressOffset>0x4F8</addressOffset>
+          <access>read-only</access>
+          <resetValue>0x00000000</resetValue>
+        </register>
+        <register>
+          <name>CRG_INT_CLR1</name>
+          <description>TOPREG clock-ready interrupt clear 1 (write 1 to clear)</description>
+          <addressOffset>0x4FC</addressOffset>
+          <access>read-write</access>
+          <resetValue>0x00000000</resetValue>
+          <fields>
+            <field>
+              <name>CK_CPU_BUS</name>
+              <description>CPU bus clock ready</description>
+              <bitOffset>0</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>CK_CPU_BUS_TO</name>
+              <description>CPU bus clock timeout</description>
+              <bitOffset>1</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>CK_RFPLL1</name>
+              <description>RF PLL1 clock ready</description>
+              <bitOffset>2</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>CK_RFPLL1_TO</name>
+              <description>RF PLL1 clock timeout</description>
+              <bitOffset>3</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>CK_RTC_PRE</name>
+              <description>RTC pre-divider clock ready</description>
+              <bitOffset>4</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>CK_RTC_PRE_TO</name>
+              <description>RTC pre-divider clock timeout</description>
+              <bitOffset>5</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>CK_APP_PRE</name>
+              <description>APP pre-divider clock ready</description>
+              <bitOffset>6</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>CK_APP_PRE_TO</name>
+              <description>APP pre-divider clock timeout</description>
+              <bitOffset>7</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>CK_SEL_SP</name>
+              <description>SP clock select ready</description>
+              <bitOffset>8</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>CK_SEL_SP_TO</name>
+              <description>SP clock select timeout</description>
+              <bitOffset>9</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>CK_SEL_RO_RTC</name>
+              <description>RO RTC clock select ready</description>
+              <bitOffset>10</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>CRG_FREQFIX_ERR</name>
+              <description>Frequency fix error</description>
+              <bitOffset>11</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+          </fields>
+        </register>
+        <register>
+          <name>CRG_INT_MASK1</name>
+          <description>TOPREG clock-ready interrupt mask 1</description>
+          <addressOffset>0x500</addressOffset>
+          <access>read-write</access>
+          <resetValue>0x00000000</resetValue>
+        </register>
+        <register>
+          <name>CRG_INT_STAT_MSK1</name>
+          <description>TOPREG clock-ready masked interrupt status 1 (read-only)</description>
+          <addressOffset>0x504</addressOffset>
+          <access>read-only</access>
+          <resetValue>0x00000000</resetValue>
+        </register>
+        <register>
+          <name>CRG_INT_STAT_RAW1</name>
+          <description>TOPREG clock-ready raw interrupt status 1 (read-only)</description>
+          <addressOffset>0x508</addressOffset>
+          <access>read-only</access>
+          <resetValue>0x00000000</resetValue>
+        </register>
+        <register>
+          <name>CPU_GATECLK</name>
+          <description>CPU clock gating control</description>
+          <addressOffset>0x50C</addressOffset>
+          <access>read-write</access>
+          <resetValue>0x00000000</resetValue>
+        </register>
+        <register>
+          <name>USBPHY_CKEN</name>
+          <description>USB PHY clock enable</description>
+          <addressOffset>0x510</addressOffset>
+          <access>read-write</access>
+          <resetValue>0x00000000</resetValue>
+        </register>
+        <register>
+          <name>CRG_MON</name>
+          <description>CRG monitor status (read-only)</description>
+          <addressOffset>0x514</addressOffset>
+          <access>read-only</access>
+          <resetValue>0x00000000</resetValue>
+        </register>
+        <register>
+          <name>GEAR_STAT</name>
+          <description>Clock gear status (read-only)</description>
+          <addressOffset>0x518</addressOffset>
+          <access>read-only</access>
+          <resetValue>0x00000000</resetValue>
+        </register>
+        <register>
+          <name>XOSC_CTRL</name>
+          <description>Crystal oscillator control</description>
+          <addressOffset>0x580</addressOffset>
+          <access>read-write</access>
+          <resetValue>0x00000000</resetValue>
+        </register>
+        <register>
+          <name>XOSC_CTRL2</name>
+          <description>Crystal oscillator control 2</description>
+          <addressOffset>0x584</addressOffset>
+          <access>read-write</access>
+          <resetValue>0x00000000</resetValue>
+        </register>
+        <register>
+          <name>SYS_PLL_CTRL1</name>
+          <description>System PLL control 1</description>
+          <addressOffset>0x588</addressOffset>
+          <access>read-write</access>
+          <resetValue>0x00000000</resetValue>
+          <fields>
+            <field>
+              <name>ENABLE_GPADCLK</name>
+              <description>Enable GP ADC clock from PLL</description>
+              <bitOffset>1</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>ENABLE_DSPCLK</name>
+              <description>Enable DSP clock from PLL</description>
+              <bitOffset>3</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+          </fields>
+        </register>
+        <register>
+          <name>SYS_PLL_CTRL2</name>
+          <description>System PLL control 2 (division ratios)</description>
+          <addressOffset>0x58C</addressOffset>
+          <access>read-write</access>
+          <resetValue>0x00000000</resetValue>
+        </register>
+        <register>
+          <name>RCOSC_CTRL1</name>
+          <description>RC oscillator control 1</description>
+          <addressOffset>0x590</addressOffset>
+          <access>read-write</access>
+          <resetValue>0x00000000</resetValue>
+        </register>
+        <register>
+          <name>RCOSC_CTRL2</name>
+          <description>RC oscillator control 2</description>
+          <addressOffset>0x594</addressOffset>
+          <access>read-write</access>
+          <resetValue>0x00000000</resetValue>
+          <fields>
+            <field>
+              <name>DISABLE_LOGICLK</name>
+              <description>Disable RCOSC logic clock output (1 = disabled)</description>
+              <bitOffset>13</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>DISABLE_SENSCLK</name>
+              <description>Disable RCOSC sensor clock output (1 = disabled)</description>
+              <bitOffset>14</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+          </fields>
+        </register>
+        <register>
+          <name>RF_GPMBI_EN</name>
+          <description>RF GP MBI enable</description>
+          <addressOffset>0x598</addressOffset>
+          <access>read-write</access>
+          <resetValue>0x00000000</resetValue>
+        </register>
+        <register>
+          <name>FORCE_CKEN</name>
+          <description>Force clock enable (overrides gating)</description>
+          <addressOffset>0x644</addressOffset>
+          <access>read-write</access>
+          <resetValue>0x00000000</resetValue>
+        </register>
+        <register>
+          <name>CKGATE_CTL</name>
+          <description>Clock gate control</description>
+          <addressOffset>0x660</addressOffset>
+          <access>read-write</access>
+          <resetValue>0x00000000</resetValue>
+        </register>
+        <register>
+          <name>SWRESET_BUS</name>
+          <description>Bus peripheral software reset (0 = held in reset, 1 = released)</description>
+          <addressOffset>0x700</addressOffset>
+          <access>read-write</access>
+          <resetValue>0x00000000</resetValue>
+          <fields>
+            <field>
+              <name>XRST_SPIM</name>
+              <description>SPI master reset</description>
+              <bitOffset>0</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>XRST_SFC</name>
+              <description>Serial flash controller reset</description>
+              <bitOffset>1</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>XRST_SAKE</name>
+              <description>SAKE reset</description>
+              <bitOffset>2</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>XRST_UART1</name>
+              <description>UART1 reset</description>
+              <bitOffset>5</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>XRST_KAKI</name>
+              <description>KAKI reset</description>
+              <bitOffset>6</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>XRST_HOSTIFC</name>
+              <description>Host interface reset</description>
+              <bitOffset>8</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>XRST_HOSTIFC_ISOP</name>
+              <description>Host interface ISOP reset</description>
+              <bitOffset>9</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>XRST_UART0</name>
+              <description>UART0 reset</description>
+              <bitOffset>10</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>XRST_I2CM</name>
+              <description>I2C master reset</description>
+              <bitOffset>11</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>XRST_PMU_I2CM</name>
+              <description>PMU I2C master reset</description>
+              <bitOffset>16</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+          </fields>
+        </register>
+        <register>
+          <name>SWRESET_SCU</name>
+          <description>SCU peripheral software reset (0 = held in reset, 1 = released)</description>
+          <addressOffset>0x704</addressOffset>
+          <access>read-write</access>
+          <resetValue>0x00000000</resetValue>
+          <fields>
+            <field>
+              <name>XRST_SCU_HPADC</name>
+              <description>SCU high-precision ADC reset</description>
+              <bitOffset>2</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>XRST_SCU_LPADC</name>
+              <description>SCU low-power ADC reset</description>
+              <bitOffset>4</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>XRST_SCU_I2C2</name>
+              <description>SCU I2C2 reset</description>
+              <bitOffset>5</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>XRST_SCU_I2C1</name>
+              <description>SCU I2C1 reset</description>
+              <bitOffset>6</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>XRST_SCU_ISOP</name>
+              <description>SCU ISOP reset</description>
+              <bitOffset>7</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>XRST_SCU_SPI</name>
+              <description>SCU SPI reset</description>
+              <bitOffset>8</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+          </fields>
+        </register>
+        <register>
+          <name>BUSROM_CKEN</name>
+          <description>Bus ROM clock enable</description>
+          <addressOffset>0x710</addressOffset>
+          <access>read-write</access>
+          <resetValue>0x00000000</resetValue>
+        </register>
+        <register>
+          <name>SYSIOP_CKEN</name>
+          <description>SYSIOP peripheral clock enables</description>
+          <addressOffset>0x714</addressOffset>
+          <access>read-write</access>
+          <resetValue>0x00000000</resetValue>
+          <fields>
+            <field>
+              <name>CKEN_UART0</name>
+              <description>UART0 clock enable</description>
+              <bitOffset>0</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>CKEN_PCLK_UART0</name>
+              <description>UART0 PCLK enable</description>
+              <bitOffset>1</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>CKEN_PCLK_HOSTIFC</name>
+              <description>Host interface PCLK enable</description>
+              <bitOffset>2</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>CKEN_I2CS</name>
+              <description>I2C slave clock enable</description>
+              <bitOffset>3</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>CKEN_BRG_HOST</name>
+              <description>Host bridge clock enable</description>
+              <bitOffset>4</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>CKEN_AHB_DMAC0</name>
+              <description>AHB DMAC0 clock enable</description>
+              <bitOffset>5</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>CKEN_AHB_DMAC1</name>
+              <description>AHB DMAC1 clock enable</description>
+              <bitOffset>6</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>CKEN_AHB_DMAC2</name>
+              <description>AHB DMAC2 clock enable</description>
+              <bitOffset>7</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>CKEN_APB</name>
+              <description>APB clock enable</description>
+              <bitOffset>8</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>CKEN_FREQDIS</name>
+              <description>Frequency discriminator clock enable</description>
+              <bitOffset>9</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>CKEN_RTC_ORG</name>
+              <description>RTC origin clock enable</description>
+              <bitOffset>10</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>CKEN_AP_CLK</name>
+              <description>AP clock enable</description>
+              <bitOffset>11</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>CKEN_RCOSC_OUT</name>
+              <description>RCOSC output clock enable</description>
+              <bitOffset>12</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>CKEN_SYSIOP_RTC</name>
+              <description>SYSIOP RTC clock enable</description>
+              <bitOffset>13</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>CKEN_BRG_SCU</name>
+              <description>SCU bridge clock enable</description>
+              <bitOffset>14</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>CKEN_HOSTIFC_SEQ</name>
+              <description>Host interface sequencer clock enable</description>
+              <bitOffset>15</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>CKEN_HOSI2C</name>
+              <description>Host I2C clock enable</description>
+              <bitOffset>16</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>CKEN_HOSSPI</name>
+              <description>Host SPI clock enable</description>
+              <bitOffset>17</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+          </fields>
+        </register>
+        <register>
+          <name>SCU_CKEN</name>
+          <description>SCU peripheral clock enables</description>
+          <addressOffset>0x71C</addressOffset>
+          <access>read-write</access>
+          <resetValue>0x00000000</resetValue>
+          <fields>
+            <field>
+              <name>SCU_SCU</name>
+              <description>SCU core clock enable</description>
+              <bitOffset>0</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>SCU_I2C0</name>
+              <description>SCU I2C0 clock enable</description>
+              <bitOffset>1</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>SCU_I2C1</name>
+              <description>SCU I2C1 clock enable</description>
+              <bitOffset>2</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>SCU_SPI</name>
+              <description>SCU SPI clock enable</description>
+              <bitOffset>3</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>SCU_SEQ</name>
+              <description>SCU sequencer clock enable</description>
+              <bitOffset>4</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>SCU_32K</name>
+              <description>SCU 32 kHz clock enable</description>
+              <bitOffset>5</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>SCU_U32KL</name>
+              <description>SCU U32K low clock enable</description>
+              <bitOffset>6</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>SCU_U32KH</name>
+              <description>SCU U32K high clock enable</description>
+              <bitOffset>7</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>SCU_SC</name>
+              <description>SCU SC clock enable</description>
+              <bitOffset>8</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+          </fields>
+        </register>
+        <register>
+          <name>RTC0_CTL</name>
+          <description>RTC0 control</description>
+          <addressOffset>0x730</addressOffset>
+          <access>read-write</access>
+          <resetValue>0x00000000</resetValue>
+        </register>
+      </registers>
+    </peripheral>
+    <peripheral>
       <name>GPIO0</name>
       <description>GPIO Port 0 — GP_* output-enable/data registers</description>
       <baseAddress>0x04102000</baseAddress>
@@ -6243,6 +7366,191 @@
               <bitWidth>1</bitWidth>
             </field>
           </fields>
+        </register>
+      </registers>
+    </peripheral>
+    <peripheral>
+      <name>TOPREG_SUB</name>
+      <description>APP / GNSS sub-domain clock and reset controller</description>
+      <baseAddress>0x04103000</baseAddress>
+      <addressBlock>
+        <offset>0x0</offset>
+        <size>0x1000</size>
+        <usage>registers</usage>
+      </addressBlock>
+      <registers>
+        <register>
+          <name>SWRESET_GNSDSP</name>
+          <description>GNSS DSP software reset</description>
+          <addressOffset>0x404</addressOffset>
+          <access>read-write</access>
+          <resetValue>0x00000000</resetValue>
+        </register>
+        <register>
+          <name>SWRESET_APP</name>
+          <description>Application domain software reset</description>
+          <addressOffset>0x408</addressOffset>
+          <access>read-write</access>
+          <resetValue>0x00000000</resetValue>
+        </register>
+        <register>
+          <name>SYSCPU_CKEN</name>
+          <description>System CPU clock enable</description>
+          <addressOffset>0x410</addressOffset>
+          <access>read-write</access>
+          <resetValue>0x00000000</resetValue>
+        </register>
+        <register>
+          <name>APP_CKEN</name>
+          <description>Application domain clock enables</description>
+          <addressOffset>0x414</addressOffset>
+          <access>read-write</access>
+          <resetValue>0x00000000</resetValue>
+          <fields>
+            <field>
+              <name>APP_CPU</name>
+              <description>APP CPU clock enable</description>
+              <bitOffset>0</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>APP_MCLK</name>
+              <description>APP MCLK enable</description>
+              <bitOffset>1</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>APP_AHB</name>
+              <description>APP AHB clock enable</description>
+              <bitOffset>3</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+          </fields>
+        </register>
+        <register>
+          <name>APP_CKSEL</name>
+          <description>Application domain clock source select</description>
+          <addressOffset>0x418</addressOffset>
+          <access>read-write</access>
+          <resetValue>0x00000000</resetValue>
+          <fields>
+            <field>
+              <name>AUD_MCLK</name>
+              <description>Audio MCLK source select</description>
+              <bitOffset>16</bitOffset>
+              <bitWidth>2</bitWidth>
+            </field>
+          </fields>
+        </register>
+        <register>
+          <name>APP_DIV</name>
+          <description>Application domain clock divider</description>
+          <addressOffset>0x41C</addressOffset>
+          <access>read-write</access>
+          <resetValue>0x00000000</resetValue>
+        </register>
+        <register>
+          <name>SYSIOP_SUB_CKEN</name>
+          <description>SYSIOP sub-domain peripheral clock enables</description>
+          <addressOffset>0x420</addressOffset>
+          <access>read-write</access>
+          <resetValue>0x00000000</resetValue>
+          <fields>
+            <field>
+              <name>CK_AHB_BRG_COMIF</name>
+              <description>AHB bridge COMIF clock enable</description>
+              <bitOffset>0</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>CK_COM_BRG</name>
+              <description>COM bridge clock enable</description>
+              <bitOffset>1</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>CK_AHB_DMAC3</name>
+              <description>AHB DMAC3 clock enable</description>
+              <bitOffset>2</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>CK_UART1</name>
+              <description>UART1 clock enable</description>
+              <bitOffset>3</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>CK_SPIM</name>
+              <description>SPI master clock enable</description>
+              <bitOffset>4</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>CK_I2CM</name>
+              <description>I2C master clock enable</description>
+              <bitOffset>5</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>CK_HCLK_SAKE</name>
+              <description>SAKE HCLK enable</description>
+              <bitOffset>6</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>CK_SFC_HCLK</name>
+              <description>Serial flash controller HCLK enable</description>
+              <bitOffset>7</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>CK_SFC_SFCLK</name>
+              <description>Serial flash controller SFCLK enable</description>
+              <bitOffset>8</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>CK_SFC_HCLK_LOW</name>
+              <description>Serial flash controller HCLK low-speed enable</description>
+              <bitOffset>9</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>CK_COM_UART_PCLK</name>
+              <description>COM UART PCLK enable</description>
+              <bitOffset>16</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+          </fields>
+        </register>
+        <register>
+          <name>GNSDSP_CKEN</name>
+          <description>GNSS DSP clock enables</description>
+          <addressOffset>0xC20</addressOffset>
+          <access>read-write</access>
+          <resetValue>0x00000000</resetValue>
+          <fields>
+            <field>
+              <name>GNSDSP_P1</name>
+              <description>GNSS DSP P1 clock enable</description>
+              <bitOffset>5</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>GNSDSP_COP</name>
+              <description>GNSS DSP coprocessor clock enable</description>
+              <bitOffset>7</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+          </fields>
+        </register>
+        <register>
+          <name>GNSS_DIV</name>
+          <description>GNSS clock divider</description>
+          <addressOffset>0xC28</addressOffset>
+          <access>read-write</access>
+          <resetValue>0x00000000</resetValue>
         </register>
       </registers>
     </peripheral>

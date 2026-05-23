@@ -159,3 +159,1500 @@ _add:
               - name: High
                 description: ""
                 value: 1
+
+  # TOPREG: top-of-chip clock / PMU / oscillator / PLL controller.
+  # Base: CXD56_SYS_MIRROR(0x04000000) + 0x00100000 = 0x04100000.
+  # addressBlock covers clock-relevant registers (0x000–0x730) only.
+  # Pin-mux / GP_* registers start at 0x2000 and are in GPIO0 / future patches.
+  # Source: nuttx/arch/arm/src/cxd56xx/hardware/cxd5602_topreg.h
+  TOPREG:
+    description: "Top-of-chip clock / PMU / oscillator / PLL controller"
+    baseAddress: 0x04100000
+    addressBlock:
+      offset: 0x0
+      size: 0x800
+      usage: "registers"
+    registers:
+      PWD_CTL:
+        description: "Power-domain control (1 = powered on)"
+        addressOffset: 0x000
+        access: read-write
+        resetValue: 0x00000000
+        fields:
+          SCU:
+            description: "Sensor Control Unit domain"
+            bitOffset: 0
+            bitWidth: 1
+            enumeratedValues:
+              - name: PoweredDown
+                description: ""
+                value: 0
+              - name: PoweredOn
+                description: ""
+                value: 1
+          CORE:
+            description: "Core domain"
+            bitOffset: 4
+            bitWidth: 1
+            enumeratedValues:
+              - name: PoweredDown
+                description: ""
+                value: 0
+              - name: PoweredOn
+                description: ""
+                value: 1
+          SYSIOP:
+            description: "SYSIOP domain"
+            bitOffset: 5
+            bitWidth: 1
+            enumeratedValues:
+              - name: PoweredDown
+                description: ""
+                value: 0
+              - name: PoweredOn
+                description: ""
+                value: 1
+          SYSIOP_SUB:
+            description: "SYSIOP sub-domain"
+            bitOffset: 6
+            bitWidth: 1
+            enumeratedValues:
+              - name: PoweredDown
+                description: ""
+                value: 0
+              - name: PoweredOn
+                description: ""
+                value: 1
+          APP:
+            description: "Application domain"
+            bitOffset: 8
+            bitWidth: 1
+            enumeratedValues:
+              - name: PoweredDown
+                description: ""
+                value: 0
+              - name: PoweredOn
+                description: ""
+                value: 1
+          APP_DSP:
+            description: "Application DSP domain"
+            bitOffset: 9
+            bitWidth: 1
+            enumeratedValues:
+              - name: PoweredDown
+                description: ""
+                value: 0
+              - name: PoweredOn
+                description: ""
+                value: 1
+          APP_SUB:
+            description: "Application sub-domain"
+            bitOffset: 10
+            bitWidth: 1
+            enumeratedValues:
+              - name: PoweredDown
+                description: ""
+                value: 0
+              - name: PoweredOn
+                description: ""
+                value: 1
+          GNSS_ITP:
+            description: "GNSS ITP domain"
+            bitOffset: 12
+            bitWidth: 1
+            enumeratedValues:
+              - name: PoweredDown
+                description: ""
+                value: 0
+              - name: PoweredOn
+                description: ""
+                value: 1
+          GNSS:
+            description: "GNSS domain"
+            bitOffset: 13
+            bitWidth: 1
+            enumeratedValues:
+              - name: PoweredDown
+                description: ""
+                value: 0
+              - name: PoweredOn
+                description: ""
+                value: 1
+          APP_AUDIO:
+            description: "Application audio domain"
+            bitOffset: 14
+            bitWidth: 1
+            enumeratedValues:
+              - name: PoweredDown
+                description: ""
+                value: 0
+              - name: PoweredOn
+                description: ""
+                value: 1
+      ANA_PW_CTL:
+        description: "Analog circuit power control (1 = powered on)"
+        addressOffset: 0x004
+        access: read-write
+        resetValue: 0x00000000
+        fields:
+          RCOSC:
+            description: "RC oscillator"
+            bitOffset: 0
+            bitWidth: 1
+            enumeratedValues:
+              - name: PoweredDown
+                description: ""
+                value: 0
+              - name: PoweredOn
+                description: ""
+                value: 1
+          XOSC:
+            description: "Crystal oscillator"
+            bitOffset: 1
+            bitWidth: 1
+            enumeratedValues:
+              - name: PoweredDown
+                description: ""
+                value: 0
+              - name: PoweredOn
+                description: ""
+                value: 1
+          SYSPLL:
+            description: "System PLL"
+            bitOffset: 2
+            bitWidth: 1
+            enumeratedValues:
+              - name: PoweredDown
+                description: ""
+                value: 0
+              - name: PoweredOn
+                description: ""
+                value: 1
+          RF_LNA:
+            description: "RF LNA"
+            bitOffset: 4
+            bitWidth: 1
+            enumeratedValues:
+              - name: PoweredDown
+                description: ""
+                value: 0
+              - name: PoweredOn
+                description: ""
+                value: 1
+          RF_MIX:
+            description: "RF mixer"
+            bitOffset: 5
+            bitWidth: 1
+            enumeratedValues:
+              - name: PoweredDown
+                description: ""
+                value: 0
+              - name: PoweredOn
+                description: ""
+                value: 1
+          RF_IF:
+            description: "RF IF block"
+            bitOffset: 6
+            bitWidth: 1
+            enumeratedValues:
+              - name: PoweredDown
+                description: ""
+                value: 0
+              - name: PoweredOn
+                description: ""
+                value: 1
+          RF_ADC:
+            description: "RF ADC"
+            bitOffset: 7
+            bitWidth: 1
+            enumeratedValues:
+              - name: PoweredDown
+                description: ""
+                value: 0
+              - name: PoweredOn
+                description: ""
+                value: 1
+          RF_LO:
+            description: "RF local oscillator"
+            bitOffset: 8
+            bitWidth: 1
+            enumeratedValues:
+              - name: PoweredDown
+                description: ""
+                value: 0
+              - name: PoweredOn
+                description: ""
+                value: 1
+          RF_PLL:
+            description: "RF PLL"
+            bitOffset: 9
+            bitWidth: 1
+            enumeratedValues:
+              - name: PoweredDown
+                description: ""
+                value: 0
+              - name: PoweredOn
+                description: ""
+                value: 1
+          HPADC:
+            description: "High-precision ADC"
+            bitOffset: 12
+            bitWidth: 1
+            enumeratedValues:
+              - name: PoweredDown
+                description: ""
+                value: 0
+              - name: PoweredOn
+                description: ""
+                value: 1
+          LPADC:
+            description: "Low-power ADC"
+            bitOffset: 13
+            bitWidth: 1
+            enumeratedValues:
+              - name: PoweredDown
+                description: ""
+                value: 0
+              - name: PoweredOn
+                description: ""
+                value: 1
+      ANA_EN_CTL:
+        # Write-1-to-set / write-1-to-clear paired bits (ON_*_SET / OFF_*_CLR).
+        # Access as a raw 32-bit value; use the HAL for typed set/clear helpers.
+        description: "Analog enable control (paired set/clear bits — use raw write)"
+        addressOffset: 0x008
+        access: read-write
+        resetValue: 0x00000000
+      PWD_RESET0:
+        description: "Per-domain power reset control"
+        addressOffset: 0x060
+        access: read-write
+        resetValue: 0x00000000
+      PWD_STAT:
+        description: "Power-domain status (read-only mirror of PWD_CTL)"
+        addressOffset: 0x200
+        access: read-only
+        resetValue: 0x00000000
+        fields:
+          SCU:
+            description: "Sensor Control Unit domain powered on"
+            bitOffset: 0
+            bitWidth: 1
+          CORE:
+            description: "Core domain powered on"
+            bitOffset: 4
+            bitWidth: 1
+          SYSIOP:
+            description: "SYSIOP domain powered on"
+            bitOffset: 5
+            bitWidth: 1
+          SYSIOP_SUB:
+            description: "SYSIOP sub-domain powered on"
+            bitOffset: 6
+            bitWidth: 1
+          APP:
+            description: "Application domain powered on"
+            bitOffset: 8
+            bitWidth: 1
+          APP_DSP:
+            description: "Application DSP domain powered on"
+            bitOffset: 9
+            bitWidth: 1
+          APP_SUB:
+            description: "Application sub-domain powered on"
+            bitOffset: 10
+            bitWidth: 1
+          GNSS_ITP:
+            description: "GNSS ITP domain powered on"
+            bitOffset: 12
+            bitWidth: 1
+          GNSS:
+            description: "GNSS domain powered on"
+            bitOffset: 13
+            bitWidth: 1
+          APP_AUDIO:
+            description: "Application audio domain powered on"
+            bitOffset: 14
+            bitWidth: 1
+      ANA_PW_STAT:
+        description: "Analog power status (read-only mirror of ANA_PW_CTL)"
+        addressOffset: 0x208
+        access: read-only
+        resetValue: 0x00000000
+        fields:
+          RCOSC:
+            description: "RC oscillator powered on"
+            bitOffset: 0
+            bitWidth: 1
+          XOSC:
+            description: "Crystal oscillator powered on"
+            bitOffset: 1
+            bitWidth: 1
+          SYSPLL:
+            description: "System PLL powered on"
+            bitOffset: 2
+            bitWidth: 1
+          RF_LNA:
+            description: "RF LNA powered on"
+            bitOffset: 4
+            bitWidth: 1
+          RF_MIX:
+            description: "RF mixer powered on"
+            bitOffset: 5
+            bitWidth: 1
+          RF_IF:
+            description: "RF IF block powered on"
+            bitOffset: 6
+            bitWidth: 1
+          RF_ADC:
+            description: "RF ADC powered on"
+            bitOffset: 7
+            bitWidth: 1
+          RF_LO:
+            description: "RF LO powered on"
+            bitOffset: 8
+            bitWidth: 1
+          RF_PLL:
+            description: "RF PLL powered on"
+            bitOffset: 9
+            bitWidth: 1
+          HPADC:
+            description: "High-precision ADC powered on"
+            bitOffset: 12
+            bitWidth: 1
+          LPADC:
+            description: "Low-power ADC powered on"
+            bitOffset: 13
+            bitWidth: 1
+      CLSELDIV_WAKE:
+        description: "Clock select/divider setting used on wake from sleep"
+        addressOffset: 0x414
+        access: read-write
+        resetValue: 0x00000000
+      CKDIV_CPU_DSP_BUS_WAKE:
+        description: "CPU/DSP/bus clock divider used on wake from sleep"
+        addressOffset: 0x418
+        access: read-write
+        resetValue: 0x00000000
+      CKSEL_ROOT_WAKE:
+        description: "Root clock source select used on wake from sleep"
+        addressOffset: 0x41c
+        access: read-write
+        resetValue: 0x00000000
+      PMU_CORE_CKEN:
+        description: "PMU core clock enable"
+        addressOffset: 0x4c0
+        access: read-write
+        resetValue: 0x00000000
+      CKSEL_ROOT:
+        description: "Root clock source select and RTC status"
+        addressOffset: 0x4c4
+        access: read-write
+        resetValue: 0x00000000
+        fields:
+          ENABLE_RF_PLL1:
+            description: "Enable RF PLL1 as clock source"
+            bitOffset: 4
+            bitWidth: 1
+            enumeratedValues:
+              - name: Disabled
+                description: ""
+                value: 0
+              - name: Enabled
+                description: ""
+                value: 1
+          ENABLE_SOURCE_SEL:
+            description: "Enable clock source selection"
+            bitOffset: 16
+            bitWidth: 1
+            enumeratedValues:
+              - name: Disabled
+                description: ""
+                value: 0
+              - name: Enabled
+                description: ""
+                value: 1
+          STATUS_RTC:
+            description: "RTC clock source status (read)"
+            bitOffset: 30
+            bitWidth: 2
+      CKSEL_PMU:
+        description: "PMU clock source select"
+        addressOffset: 0x4c8
+        access: read-write
+        resetValue: 0x00000000
+      CKSEL_SYSIOP:
+        description: "SYSIOP clock source select"
+        addressOffset: 0x4cc
+        access: read-write
+        resetValue: 0x00000000
+      CKSEL_SYSIOP_SUB:
+        description: "SYSIOP sub-domain clock source select"
+        addressOffset: 0x4d0
+        access: read-write
+        resetValue: 0x00000000
+      CKSEL_SCU:
+        description: "SCU clock source select"
+        addressOffset: 0x4d4
+        access: read-write
+        resetValue: 0x00000000
+      CKDIV_CPU_DSP_BUS:
+        description: "CPU / DSP / bus clock divider"
+        addressOffset: 0x4d8
+        access: read-write
+        resetValue: 0x00000000
+      CKDIV_COM:
+        description: "COM clock divider"
+        addressOffset: 0x4dc
+        access: read-write
+        resetValue: 0x00000000
+      CKDIV_HOSTIFC:
+        description: "Host interface clock divider"
+        addressOffset: 0x4e0
+        access: read-write
+        resetValue: 0x00000000
+      CKDIV_SCU:
+        description: "SCU clock divider"
+        addressOffset: 0x4e4
+        access: read-write
+        resetValue: 0x00000000
+      CKDIV_PMU:
+        description: "PMU clock divider"
+        addressOffset: 0x4e8
+        access: read-write
+        resetValue: 0x00000000
+      CRG_INT_CLR0:
+        description: "TOPREG clock-ready interrupt clear 0 (write 1 to clear)"
+        addressOffset: 0x4ec
+        access: read-write
+        resetValue: 0x00000000
+        fields:
+          CK_PCLK_UART0:
+            description: "UART0 PCLK ready"
+            bitOffset: 0
+            bitWidth: 1
+          CK_UART0:
+            description: "UART0 clock ready"
+            bitOffset: 1
+            bitWidth: 1
+          CK_BRG_HOST:
+            description: "Host bridge clock ready"
+            bitOffset: 2
+            bitWidth: 1
+          CK_PCLK_HOSTIFC:
+            description: "Host interface PCLK ready"
+            bitOffset: 3
+            bitWidth: 1
+          CK_HOSTIFC_SEQ:
+            description: "Host interface sequencer clock ready"
+            bitOffset: 4
+            bitWidth: 1
+          CK_I2CS:
+            description: "I2C slave clock ready"
+            bitOffset: 5
+            bitWidth: 1
+          CK_RTC_ORG:
+            description: "RTC origin clock ready"
+            bitOffset: 6
+            bitWidth: 1
+          CK_SYSIOP_RTC:
+            description: "SYSIOP RTC clock ready"
+            bitOffset: 7
+            bitWidth: 1
+          CK_BRG_SCU:
+            description: "SCU bridge clock ready"
+            bitOffset: 8
+            bitWidth: 1
+          CK_SCU:
+            description: "SCU clock ready"
+            bitOffset: 9
+            bitWidth: 1
+          CK_SCU_SPI:
+            description: "SCU SPI clock ready"
+            bitOffset: 10
+            bitWidth: 1
+          CK_SCU_I2C0:
+            description: "SCU I2C0 clock ready"
+            bitOffset: 11
+            bitWidth: 1
+          CK_SCU_I2C1:
+            description: "SCU I2C1 clock ready"
+            bitOffset: 12
+            bitWidth: 1
+          CK_SCU_SEQ:
+            description: "SCU sequencer clock ready"
+            bitOffset: 13
+            bitWidth: 1
+          CK_SCU_SC:
+            description: "SCU SC clock ready"
+            bitOffset: 14
+            bitWidth: 1
+          CK_32K:
+            description: "32 kHz clock ready"
+            bitOffset: 15
+            bitWidth: 1
+          CK_U32KH:
+            description: "U32K high clock ready"
+            bitOffset: 16
+            bitWidth: 1
+          CK_U32KL:
+            description: "U32K low clock ready"
+            bitOffset: 17
+            bitWidth: 1
+          CK_TADC:
+            description: "Temperature ADC clock ready"
+            bitOffset: 18
+            bitWidth: 1
+          CK_RTC_PCLK:
+            description: "RTC PCLK ready"
+            bitOffset: 19
+            bitWidth: 1
+          CK_PMU_RTC_PCLK:
+            description: "PMU RTC PCLK ready"
+            bitOffset: 20
+            bitWidth: 1
+          CK_APP:
+            description: "APP domain clock ready"
+            bitOffset: 21
+            bitWidth: 1
+      CRG_INT_MASK0:
+        description: "TOPREG clock-ready interrupt mask 0"
+        addressOffset: 0x4f0
+        access: read-write
+        resetValue: 0x00000000
+      CRG_INT_STAT_MSK0:
+        description: "TOPREG clock-ready masked interrupt status 0 (read-only)"
+        addressOffset: 0x4f4
+        access: read-only
+        resetValue: 0x00000000
+      CRG_INT_STAT_RAW0:
+        description: "TOPREG clock-ready raw interrupt status 0 (read-only)"
+        addressOffset: 0x4f8
+        access: read-only
+        resetValue: 0x00000000
+      CRG_INT_CLR1:
+        description: "TOPREG clock-ready interrupt clear 1 (write 1 to clear)"
+        addressOffset: 0x4fc
+        access: read-write
+        resetValue: 0x00000000
+        fields:
+          CK_CPU_BUS:
+            description: "CPU bus clock ready"
+            bitOffset: 0
+            bitWidth: 1
+          CK_CPU_BUS_TO:
+            description: "CPU bus clock timeout"
+            bitOffset: 1
+            bitWidth: 1
+          CK_RFPLL1:
+            description: "RF PLL1 clock ready"
+            bitOffset: 2
+            bitWidth: 1
+          CK_RFPLL1_TO:
+            description: "RF PLL1 clock timeout"
+            bitOffset: 3
+            bitWidth: 1
+          CK_RTC_PRE:
+            description: "RTC pre-divider clock ready"
+            bitOffset: 4
+            bitWidth: 1
+          CK_RTC_PRE_TO:
+            description: "RTC pre-divider clock timeout"
+            bitOffset: 5
+            bitWidth: 1
+          CK_APP_PRE:
+            description: "APP pre-divider clock ready"
+            bitOffset: 6
+            bitWidth: 1
+          CK_APP_PRE_TO:
+            description: "APP pre-divider clock timeout"
+            bitOffset: 7
+            bitWidth: 1
+          CK_SEL_SP:
+            description: "SP clock select ready"
+            bitOffset: 8
+            bitWidth: 1
+          CK_SEL_SP_TO:
+            description: "SP clock select timeout"
+            bitOffset: 9
+            bitWidth: 1
+          CK_SEL_RO_RTC:
+            description: "RO RTC clock select ready"
+            bitOffset: 10
+            bitWidth: 1
+          CRG_FREQFIX_ERR:
+            description: "Frequency fix error"
+            bitOffset: 11
+            bitWidth: 1
+      CRG_INT_MASK1:
+        description: "TOPREG clock-ready interrupt mask 1"
+        addressOffset: 0x500
+        access: read-write
+        resetValue: 0x00000000
+      CRG_INT_STAT_MSK1:
+        description: "TOPREG clock-ready masked interrupt status 1 (read-only)"
+        addressOffset: 0x504
+        access: read-only
+        resetValue: 0x00000000
+      CRG_INT_STAT_RAW1:
+        description: "TOPREG clock-ready raw interrupt status 1 (read-only)"
+        addressOffset: 0x508
+        access: read-only
+        resetValue: 0x00000000
+      CPU_GATECLK:
+        description: "CPU clock gating control"
+        addressOffset: 0x50c
+        access: read-write
+        resetValue: 0x00000000
+      USBPHY_CKEN:
+        description: "USB PHY clock enable"
+        addressOffset: 0x510
+        access: read-write
+        resetValue: 0x00000000
+      CRG_MON:
+        description: "CRG monitor status (read-only)"
+        addressOffset: 0x514
+        access: read-only
+        resetValue: 0x00000000
+      GEAR_STAT:
+        description: "Clock gear status (read-only)"
+        addressOffset: 0x518
+        access: read-only
+        resetValue: 0x00000000
+      XOSC_CTRL:
+        description: "Crystal oscillator control"
+        addressOffset: 0x580
+        access: read-write
+        resetValue: 0x00000000
+      XOSC_CTRL2:
+        description: "Crystal oscillator control 2"
+        addressOffset: 0x584
+        access: read-write
+        resetValue: 0x00000000
+      SYS_PLL_CTRL1:
+        description: "System PLL control 1"
+        addressOffset: 0x588
+        access: read-write
+        resetValue: 0x00000000
+        fields:
+          ENABLE_GPADCLK:
+            description: "Enable GP ADC clock from PLL"
+            bitOffset: 1
+            bitWidth: 1
+            enumeratedValues:
+              - name: Disabled
+                description: ""
+                value: 0
+              - name: Enabled
+                description: ""
+                value: 1
+          ENABLE_DSPCLK:
+            description: "Enable DSP clock from PLL"
+            bitOffset: 3
+            bitWidth: 1
+            enumeratedValues:
+              - name: Disabled
+                description: ""
+                value: 0
+              - name: Enabled
+                description: ""
+                value: 1
+      SYS_PLL_CTRL2:
+        description: "System PLL control 2 (division ratios)"
+        addressOffset: 0x58c
+        access: read-write
+        resetValue: 0x00000000
+      RCOSC_CTRL1:
+        description: "RC oscillator control 1"
+        addressOffset: 0x590
+        access: read-write
+        resetValue: 0x00000000
+      RCOSC_CTRL2:
+        description: "RC oscillator control 2"
+        addressOffset: 0x594
+        access: read-write
+        resetValue: 0x00000000
+        fields:
+          DISABLE_LOGICLK:
+            # Polarity: 1 = disable the logic clock output from RCOSC
+            description: "Disable RCOSC logic clock output (1 = disabled)"
+            bitOffset: 13
+            bitWidth: 1
+          DISABLE_SENSCLK:
+            # Polarity: 1 = disable the sensor clock output from RCOSC
+            description: "Disable RCOSC sensor clock output (1 = disabled)"
+            bitOffset: 14
+            bitWidth: 1
+      RF_GPMBI_EN:
+        description: "RF GP MBI enable"
+        addressOffset: 0x598
+        access: read-write
+        resetValue: 0x00000000
+      FORCE_CKEN:
+        description: "Force clock enable (overrides gating)"
+        addressOffset: 0x644
+        access: read-write
+        resetValue: 0x00000000
+      CKGATE_CTL:
+        description: "Clock gate control"
+        addressOffset: 0x660
+        access: read-write
+        resetValue: 0x00000000
+      SWRESET_BUS:
+        description: "Bus peripheral software reset (0 = held in reset, 1 = released)"
+        addressOffset: 0x700
+        access: read-write
+        resetValue: 0x00000000
+        fields:
+          XRST_SPIM:
+            description: "SPI master reset"
+            bitOffset: 0
+            bitWidth: 1
+            enumeratedValues:
+              - name: Reset
+                description: "Held in reset"
+                value: 0
+              - name: Active
+                description: "Released"
+                value: 1
+          XRST_SFC:
+            description: "Serial flash controller reset"
+            bitOffset: 1
+            bitWidth: 1
+            enumeratedValues:
+              - name: Reset
+                description: "Held in reset"
+                value: 0
+              - name: Active
+                description: "Released"
+                value: 1
+          XRST_SAKE:
+            description: "SAKE reset"
+            bitOffset: 2
+            bitWidth: 1
+            enumeratedValues:
+              - name: Reset
+                description: "Held in reset"
+                value: 0
+              - name: Active
+                description: "Released"
+                value: 1
+          XRST_UART1:
+            description: "UART1 reset"
+            bitOffset: 5
+            bitWidth: 1
+            enumeratedValues:
+              - name: Reset
+                description: "Held in reset"
+                value: 0
+              - name: Active
+                description: "Released"
+                value: 1
+          XRST_KAKI:
+            description: "KAKI reset"
+            bitOffset: 6
+            bitWidth: 1
+            enumeratedValues:
+              - name: Reset
+                description: "Held in reset"
+                value: 0
+              - name: Active
+                description: "Released"
+                value: 1
+          XRST_HOSTIFC:
+            description: "Host interface reset"
+            bitOffset: 8
+            bitWidth: 1
+            enumeratedValues:
+              - name: Reset
+                description: "Held in reset"
+                value: 0
+              - name: Active
+                description: "Released"
+                value: 1
+          XRST_HOSTIFC_ISOP:
+            description: "Host interface ISOP reset"
+            bitOffset: 9
+            bitWidth: 1
+            enumeratedValues:
+              - name: Reset
+                description: "Held in reset"
+                value: 0
+              - name: Active
+                description: "Released"
+                value: 1
+          XRST_UART0:
+            description: "UART0 reset"
+            bitOffset: 10
+            bitWidth: 1
+            enumeratedValues:
+              - name: Reset
+                description: "Held in reset"
+                value: 0
+              - name: Active
+                description: "Released"
+                value: 1
+          XRST_I2CM:
+            description: "I2C master reset"
+            bitOffset: 11
+            bitWidth: 1
+            enumeratedValues:
+              - name: Reset
+                description: "Held in reset"
+                value: 0
+              - name: Active
+                description: "Released"
+                value: 1
+          XRST_PMU_I2CM:
+            description: "PMU I2C master reset"
+            bitOffset: 16
+            bitWidth: 1
+            enumeratedValues:
+              - name: Reset
+                description: "Held in reset"
+                value: 0
+              - name: Active
+                description: "Released"
+                value: 1
+      SWRESET_SCU:
+        description: "SCU peripheral software reset (0 = held in reset, 1 = released)"
+        addressOffset: 0x704
+        access: read-write
+        resetValue: 0x00000000
+        fields:
+          XRST_SCU_HPADC:
+            description: "SCU high-precision ADC reset"
+            bitOffset: 2
+            bitWidth: 1
+            enumeratedValues:
+              - name: Reset
+                description: "Held in reset"
+                value: 0
+              - name: Active
+                description: "Released"
+                value: 1
+          XRST_SCU_LPADC:
+            description: "SCU low-power ADC reset"
+            bitOffset: 4
+            bitWidth: 1
+            enumeratedValues:
+              - name: Reset
+                description: "Held in reset"
+                value: 0
+              - name: Active
+                description: "Released"
+                value: 1
+          XRST_SCU_I2C2:
+            description: "SCU I2C2 reset"
+            bitOffset: 5
+            bitWidth: 1
+            enumeratedValues:
+              - name: Reset
+                description: "Held in reset"
+                value: 0
+              - name: Active
+                description: "Released"
+                value: 1
+          XRST_SCU_I2C1:
+            description: "SCU I2C1 reset"
+            bitOffset: 6
+            bitWidth: 1
+            enumeratedValues:
+              - name: Reset
+                description: "Held in reset"
+                value: 0
+              - name: Active
+                description: "Released"
+                value: 1
+          XRST_SCU_ISOP:
+            description: "SCU ISOP reset"
+            bitOffset: 7
+            bitWidth: 1
+            enumeratedValues:
+              - name: Reset
+                description: "Held in reset"
+                value: 0
+              - name: Active
+                description: "Released"
+                value: 1
+          XRST_SCU_SPI:
+            description: "SCU SPI reset"
+            bitOffset: 8
+            bitWidth: 1
+            enumeratedValues:
+              - name: Reset
+                description: "Held in reset"
+                value: 0
+              - name: Active
+                description: "Released"
+                value: 1
+      BUSROM_CKEN:
+        description: "Bus ROM clock enable"
+        addressOffset: 0x710
+        access: read-write
+        resetValue: 0x00000000
+      SYSIOP_CKEN:
+        description: "SYSIOP peripheral clock enables"
+        addressOffset: 0x714
+        access: read-write
+        resetValue: 0x00000000
+        fields:
+          CKEN_UART0:
+            description: "UART0 clock enable"
+            bitOffset: 0
+            bitWidth: 1
+            enumeratedValues:
+              - name: Disabled
+                description: ""
+                value: 0
+              - name: Enabled
+                description: ""
+                value: 1
+          CKEN_PCLK_UART0:
+            description: "UART0 PCLK enable"
+            bitOffset: 1
+            bitWidth: 1
+            enumeratedValues:
+              - name: Disabled
+                description: ""
+                value: 0
+              - name: Enabled
+                description: ""
+                value: 1
+          CKEN_PCLK_HOSTIFC:
+            description: "Host interface PCLK enable"
+            bitOffset: 2
+            bitWidth: 1
+            enumeratedValues:
+              - name: Disabled
+                description: ""
+                value: 0
+              - name: Enabled
+                description: ""
+                value: 1
+          CKEN_I2CS:
+            description: "I2C slave clock enable"
+            bitOffset: 3
+            bitWidth: 1
+            enumeratedValues:
+              - name: Disabled
+                description: ""
+                value: 0
+              - name: Enabled
+                description: ""
+                value: 1
+          CKEN_BRG_HOST:
+            description: "Host bridge clock enable"
+            bitOffset: 4
+            bitWidth: 1
+            enumeratedValues:
+              - name: Disabled
+                description: ""
+                value: 0
+              - name: Enabled
+                description: ""
+                value: 1
+          CKEN_AHB_DMAC0:
+            description: "AHB DMAC0 clock enable"
+            bitOffset: 5
+            bitWidth: 1
+            enumeratedValues:
+              - name: Disabled
+                description: ""
+                value: 0
+              - name: Enabled
+                description: ""
+                value: 1
+          CKEN_AHB_DMAC1:
+            description: "AHB DMAC1 clock enable"
+            bitOffset: 6
+            bitWidth: 1
+            enumeratedValues:
+              - name: Disabled
+                description: ""
+                value: 0
+              - name: Enabled
+                description: ""
+                value: 1
+          CKEN_AHB_DMAC2:
+            description: "AHB DMAC2 clock enable"
+            bitOffset: 7
+            bitWidth: 1
+            enumeratedValues:
+              - name: Disabled
+                description: ""
+                value: 0
+              - name: Enabled
+                description: ""
+                value: 1
+          CKEN_APB:
+            description: "APB clock enable"
+            bitOffset: 8
+            bitWidth: 1
+            enumeratedValues:
+              - name: Disabled
+                description: ""
+                value: 0
+              - name: Enabled
+                description: ""
+                value: 1
+          CKEN_FREQDIS:
+            description: "Frequency discriminator clock enable"
+            bitOffset: 9
+            bitWidth: 1
+            enumeratedValues:
+              - name: Disabled
+                description: ""
+                value: 0
+              - name: Enabled
+                description: ""
+                value: 1
+          CKEN_RTC_ORG:
+            description: "RTC origin clock enable"
+            bitOffset: 10
+            bitWidth: 1
+            enumeratedValues:
+              - name: Disabled
+                description: ""
+                value: 0
+              - name: Enabled
+                description: ""
+                value: 1
+          CKEN_AP_CLK:
+            description: "AP clock enable"
+            bitOffset: 11
+            bitWidth: 1
+            enumeratedValues:
+              - name: Disabled
+                description: ""
+                value: 0
+              - name: Enabled
+                description: ""
+                value: 1
+          CKEN_RCOSC_OUT:
+            description: "RCOSC output clock enable"
+            bitOffset: 12
+            bitWidth: 1
+            enumeratedValues:
+              - name: Disabled
+                description: ""
+                value: 0
+              - name: Enabled
+                description: ""
+                value: 1
+          CKEN_SYSIOP_RTC:
+            description: "SYSIOP RTC clock enable"
+            bitOffset: 13
+            bitWidth: 1
+            enumeratedValues:
+              - name: Disabled
+                description: ""
+                value: 0
+              - name: Enabled
+                description: ""
+                value: 1
+          CKEN_BRG_SCU:
+            description: "SCU bridge clock enable"
+            bitOffset: 14
+            bitWidth: 1
+            enumeratedValues:
+              - name: Disabled
+                description: ""
+                value: 0
+              - name: Enabled
+                description: ""
+                value: 1
+          CKEN_HOSTIFC_SEQ:
+            description: "Host interface sequencer clock enable"
+            bitOffset: 15
+            bitWidth: 1
+            enumeratedValues:
+              - name: Disabled
+                description: ""
+                value: 0
+              - name: Enabled
+                description: ""
+                value: 1
+          CKEN_HOSI2C:
+            description: "Host I2C clock enable"
+            bitOffset: 16
+            bitWidth: 1
+            enumeratedValues:
+              - name: Disabled
+                description: ""
+                value: 0
+              - name: Enabled
+                description: ""
+                value: 1
+          CKEN_HOSSPI:
+            description: "Host SPI clock enable"
+            bitOffset: 17
+            bitWidth: 1
+            enumeratedValues:
+              - name: Disabled
+                description: ""
+                value: 0
+              - name: Enabled
+                description: ""
+                value: 1
+      SCU_CKEN:
+        description: "SCU peripheral clock enables"
+        addressOffset: 0x71c
+        access: read-write
+        resetValue: 0x00000000
+        fields:
+          SCU_SCU:
+            description: "SCU core clock enable"
+            bitOffset: 0
+            bitWidth: 1
+            enumeratedValues:
+              - name: Disabled
+                description: ""
+                value: 0
+              - name: Enabled
+                description: ""
+                value: 1
+          SCU_I2C0:
+            description: "SCU I2C0 clock enable"
+            bitOffset: 1
+            bitWidth: 1
+            enumeratedValues:
+              - name: Disabled
+                description: ""
+                value: 0
+              - name: Enabled
+                description: ""
+                value: 1
+          SCU_I2C1:
+            description: "SCU I2C1 clock enable"
+            bitOffset: 2
+            bitWidth: 1
+            enumeratedValues:
+              - name: Disabled
+                description: ""
+                value: 0
+              - name: Enabled
+                description: ""
+                value: 1
+          SCU_SPI:
+            description: "SCU SPI clock enable"
+            bitOffset: 3
+            bitWidth: 1
+            enumeratedValues:
+              - name: Disabled
+                description: ""
+                value: 0
+              - name: Enabled
+                description: ""
+                value: 1
+          SCU_SEQ:
+            description: "SCU sequencer clock enable"
+            bitOffset: 4
+            bitWidth: 1
+            enumeratedValues:
+              - name: Disabled
+                description: ""
+                value: 0
+              - name: Enabled
+                description: ""
+                value: 1
+          SCU_32K:
+            description: "SCU 32 kHz clock enable"
+            bitOffset: 5
+            bitWidth: 1
+            enumeratedValues:
+              - name: Disabled
+                description: ""
+                value: 0
+              - name: Enabled
+                description: ""
+                value: 1
+          SCU_U32KL:
+            description: "SCU U32K low clock enable"
+            bitOffset: 6
+            bitWidth: 1
+            enumeratedValues:
+              - name: Disabled
+                description: ""
+                value: 0
+              - name: Enabled
+                description: ""
+                value: 1
+          SCU_U32KH:
+            description: "SCU U32K high clock enable"
+            bitOffset: 7
+            bitWidth: 1
+            enumeratedValues:
+              - name: Disabled
+                description: ""
+                value: 0
+              - name: Enabled
+                description: ""
+                value: 1
+          SCU_SC:
+            description: "SCU SC clock enable"
+            bitOffset: 8
+            bitWidth: 1
+            enumeratedValues:
+              - name: Disabled
+                description: ""
+                value: 0
+              - name: Enabled
+                description: ""
+                value: 1
+      RTC0_CTL:
+        description: "RTC0 control"
+        addressOffset: 0x730
+        access: read-write
+        resetValue: 0x00000000
+
+  # TOPREG_SUB: APP / GNSS sub-domain clock controller.
+  # Base: CXD56_SYS_MIRROR(0x04000000) + 0x00103000 = 0x04103000.
+  # Source: nuttx/arch/arm/src/cxd56xx/hardware/cxd5602_topreg.h
+  TOPREG_SUB:
+    description: "APP / GNSS sub-domain clock and reset controller"
+    baseAddress: 0x04103000
+    addressBlock:
+      offset: 0x0
+      size: 0x1000
+      usage: "registers"
+    registers:
+      SWRESET_GNSDSP:
+        description: "GNSS DSP software reset"
+        addressOffset: 0x404
+        access: read-write
+        resetValue: 0x00000000
+      SWRESET_APP:
+        description: "Application domain software reset"
+        addressOffset: 0x408
+        access: read-write
+        resetValue: 0x00000000
+      SYSCPU_CKEN:
+        description: "System CPU clock enable"
+        addressOffset: 0x410
+        access: read-write
+        resetValue: 0x00000000
+      APP_CKEN:
+        description: "Application domain clock enables"
+        addressOffset: 0x414
+        access: read-write
+        resetValue: 0x00000000
+        fields:
+          APP_CPU:
+            description: "APP CPU clock enable"
+            bitOffset: 0
+            bitWidth: 1
+            enumeratedValues:
+              - name: Disabled
+                description: ""
+                value: 0
+              - name: Enabled
+                description: ""
+                value: 1
+          APP_MCLK:
+            description: "APP MCLK enable"
+            bitOffset: 1
+            bitWidth: 1
+            enumeratedValues:
+              - name: Disabled
+                description: ""
+                value: 0
+              - name: Enabled
+                description: ""
+                value: 1
+          APP_AHB:
+            description: "APP AHB clock enable"
+            bitOffset: 3
+            bitWidth: 1
+            enumeratedValues:
+              - name: Disabled
+                description: ""
+                value: 0
+              - name: Enabled
+                description: ""
+                value: 1
+      APP_CKSEL:
+        description: "Application domain clock source select"
+        addressOffset: 0x418
+        access: read-write
+        resetValue: 0x00000000
+        fields:
+          AUD_MCLK:
+            description: "Audio MCLK source select"
+            bitOffset: 16
+            bitWidth: 2
+            enumeratedValues:
+              - name: Ext
+                description: "External XTAL"
+                value: 0
+              - name: Xosc
+                description: "Internal XOSC"
+                value: 1
+              - name: Rcosc
+                description: "Internal RCOSC"
+                value: 2
+      APP_DIV:
+        description: "Application domain clock divider"
+        addressOffset: 0x41c
+        access: read-write
+        resetValue: 0x00000000
+      SYSIOP_SUB_CKEN:
+        description: "SYSIOP sub-domain peripheral clock enables"
+        addressOffset: 0x420
+        access: read-write
+        resetValue: 0x00000000
+        fields:
+          CK_AHB_BRG_COMIF:
+            description: "AHB bridge COMIF clock enable"
+            bitOffset: 0
+            bitWidth: 1
+            enumeratedValues:
+              - name: Disabled
+                description: ""
+                value: 0
+              - name: Enabled
+                description: ""
+                value: 1
+          CK_COM_BRG:
+            description: "COM bridge clock enable"
+            bitOffset: 1
+            bitWidth: 1
+            enumeratedValues:
+              - name: Disabled
+                description: ""
+                value: 0
+              - name: Enabled
+                description: ""
+                value: 1
+          CK_AHB_DMAC3:
+            description: "AHB DMAC3 clock enable"
+            bitOffset: 2
+            bitWidth: 1
+            enumeratedValues:
+              - name: Disabled
+                description: ""
+                value: 0
+              - name: Enabled
+                description: ""
+                value: 1
+          CK_UART1:
+            description: "UART1 clock enable"
+            bitOffset: 3
+            bitWidth: 1
+            enumeratedValues:
+              - name: Disabled
+                description: ""
+                value: 0
+              - name: Enabled
+                description: ""
+                value: 1
+          CK_SPIM:
+            description: "SPI master clock enable"
+            bitOffset: 4
+            bitWidth: 1
+            enumeratedValues:
+              - name: Disabled
+                description: ""
+                value: 0
+              - name: Enabled
+                description: ""
+                value: 1
+          CK_I2CM:
+            description: "I2C master clock enable"
+            bitOffset: 5
+            bitWidth: 1
+            enumeratedValues:
+              - name: Disabled
+                description: ""
+                value: 0
+              - name: Enabled
+                description: ""
+                value: 1
+          CK_HCLK_SAKE:
+            description: "SAKE HCLK enable"
+            bitOffset: 6
+            bitWidth: 1
+            enumeratedValues:
+              - name: Disabled
+                description: ""
+                value: 0
+              - name: Enabled
+                description: ""
+                value: 1
+          CK_SFC_HCLK:
+            description: "Serial flash controller HCLK enable"
+            bitOffset: 7
+            bitWidth: 1
+            enumeratedValues:
+              - name: Disabled
+                description: ""
+                value: 0
+              - name: Enabled
+                description: ""
+                value: 1
+          CK_SFC_SFCLK:
+            description: "Serial flash controller SFCLK enable"
+            bitOffset: 8
+            bitWidth: 1
+            enumeratedValues:
+              - name: Disabled
+                description: ""
+                value: 0
+              - name: Enabled
+                description: ""
+                value: 1
+          CK_SFC_HCLK_LOW:
+            description: "Serial flash controller HCLK low-speed enable"
+            bitOffset: 9
+            bitWidth: 1
+            enumeratedValues:
+              - name: Disabled
+                description: ""
+                value: 0
+              - name: Enabled
+                description: ""
+                value: 1
+          CK_COM_UART_PCLK:
+            description: "COM UART PCLK enable"
+            bitOffset: 16
+            bitWidth: 1
+            enumeratedValues:
+              - name: Disabled
+                description: ""
+                value: 0
+              - name: Enabled
+                description: ""
+                value: 1
+      GNSDSP_CKEN:
+        description: "GNSS DSP clock enables"
+        addressOffset: 0xc20
+        access: read-write
+        resetValue: 0x00000000
+        fields:
+          GNSDSP_P1:
+            description: "GNSS DSP P1 clock enable"
+            bitOffset: 5
+            bitWidth: 1
+            enumeratedValues:
+              - name: Disabled
+                description: ""
+                value: 0
+              - name: Enabled
+                description: ""
+                value: 1
+          GNSDSP_COP:
+            description: "GNSS DSP coprocessor clock enable"
+            bitOffset: 7
+            bitWidth: 1
+            enumeratedValues:
+              - name: Disabled
+                description: ""
+                value: 0
+              - name: Enabled
+                description: ""
+                value: 1
+      GNSS_DIV:
+        description: "GNSS clock divider"
+        addressOffset: 0xc28
+        access: read-write
+        resetValue: 0x00000000
