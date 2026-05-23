@@ -59,68 +59,68 @@ where
 }
 ///0=Gated, 1=Ungated
 pub use CkGateAud as CkGateImg;
-///Field `CK_GATE_IMG` reader - 0=Gated, 1=Ungated
-pub use CkGateAudR as CkGateImgR;
-///Field `CK_GATE_IMG` writer - 0=Gated, 1=Ungated
-pub use CkGateAudW as CkGateImgW;
 ///0=Gated, 1=Ungated
 pub use CkGateAud as CkGateUsb;
-///Field `CK_GATE_USB` reader - 0=Gated, 1=Ungated
-pub use CkGateAudR as CkGateUsbR;
-///Field `CK_GATE_USB` writer - 0=Gated, 1=Ungated
-pub use CkGateAudW as CkGateUsbW;
 ///0=Gated, 1=Ungated
 pub use CkGateAud as CkGateSdio;
-///Field `CK_GATE_SDIO` reader - 0=Gated, 1=Ungated
-pub use CkGateAudR as CkGateSdioR;
-///Field `CK_GATE_SDIO` writer - 0=Gated, 1=Ungated
-pub use CkGateAudW as CkGateSdioW;
 ///0=Gated, 1=Ungated
 pub use CkGateAud as CkGateMmc;
-///Field `CK_GATE_MMC` reader - 0=Gated, 1=Ungated
-pub use CkGateAudR as CkGateMmcR;
-///Field `CK_GATE_MMC` writer - 0=Gated, 1=Ungated
-pub use CkGateAudW as CkGateMmcW;
 ///0=Gated, 1=Ungated
 pub use CkGateAud as CkGateDsp0;
-///Field `CK_GATE_DSP0` reader - 0=Gated, 1=Ungated
-pub use CkGateAudR as CkGateDsp0R;
-///Field `CK_GATE_DSP0` writer - 0=Gated, 1=Ungated
-pub use CkGateAudW as CkGateDsp0W;
 ///0=Gated, 1=Ungated
 pub use CkGateAud as CkGateDsp1;
-///Field `CK_GATE_DSP1` reader - 0=Gated, 1=Ungated
-pub use CkGateAudR as CkGateDsp1R;
-///Field `CK_GATE_DSP1` writer - 0=Gated, 1=Ungated
-pub use CkGateAudW as CkGateDsp1W;
 ///0=Gated, 1=Ungated
 pub use CkGateAud as CkGateDsp2;
-///Field `CK_GATE_DSP2` reader - 0=Gated, 1=Ungated
-pub use CkGateAudR as CkGateDsp2R;
-///Field `CK_GATE_DSP2` writer - 0=Gated, 1=Ungated
-pub use CkGateAudW as CkGateDsp2W;
 ///0=Gated, 1=Ungated
 pub use CkGateAud as CkGateDsp3;
-///Field `CK_GATE_DSP3` reader - 0=Gated, 1=Ungated
-pub use CkGateAudR as CkGateDsp3R;
-///Field `CK_GATE_DSP3` writer - 0=Gated, 1=Ungated
-pub use CkGateAudW as CkGateDsp3W;
 ///0=Gated, 1=Ungated
 pub use CkGateAud as CkGateDsp4;
-///Field `CK_GATE_DSP4` reader - 0=Gated, 1=Ungated
-pub use CkGateAudR as CkGateDsp4R;
-///Field `CK_GATE_DSP4` writer - 0=Gated, 1=Ungated
-pub use CkGateAudW as CkGateDsp4W;
 ///0=Gated, 1=Ungated
 pub use CkGateAud as CkGateDsp5;
-///Field `CK_GATE_DSP5` reader - 0=Gated, 1=Ungated
-pub use CkGateAudR as CkGateDsp5R;
-///Field `CK_GATE_DSP5` writer - 0=Gated, 1=Ungated
-pub use CkGateAudW as CkGateDsp5W;
 ///0=Gated, 1=Ungated
 pub use CkGateAud as CkGateDmac;
+///Field `CK_GATE_IMG` reader - 0=Gated, 1=Ungated
+pub use CkGateAudR as CkGateImgR;
+///Field `CK_GATE_USB` reader - 0=Gated, 1=Ungated
+pub use CkGateAudR as CkGateUsbR;
+///Field `CK_GATE_SDIO` reader - 0=Gated, 1=Ungated
+pub use CkGateAudR as CkGateSdioR;
+///Field `CK_GATE_MMC` reader - 0=Gated, 1=Ungated
+pub use CkGateAudR as CkGateMmcR;
+///Field `CK_GATE_DSP0` reader - 0=Gated, 1=Ungated
+pub use CkGateAudR as CkGateDsp0R;
+///Field `CK_GATE_DSP1` reader - 0=Gated, 1=Ungated
+pub use CkGateAudR as CkGateDsp1R;
+///Field `CK_GATE_DSP2` reader - 0=Gated, 1=Ungated
+pub use CkGateAudR as CkGateDsp2R;
+///Field `CK_GATE_DSP3` reader - 0=Gated, 1=Ungated
+pub use CkGateAudR as CkGateDsp3R;
+///Field `CK_GATE_DSP4` reader - 0=Gated, 1=Ungated
+pub use CkGateAudR as CkGateDsp4R;
+///Field `CK_GATE_DSP5` reader - 0=Gated, 1=Ungated
+pub use CkGateAudR as CkGateDsp5R;
 ///Field `CK_GATE_DMAC` reader - 0=Gated, 1=Ungated
 pub use CkGateAudR as CkGateDmacR;
+///Field `CK_GATE_IMG` writer - 0=Gated, 1=Ungated
+pub use CkGateAudW as CkGateImgW;
+///Field `CK_GATE_USB` writer - 0=Gated, 1=Ungated
+pub use CkGateAudW as CkGateUsbW;
+///Field `CK_GATE_SDIO` writer - 0=Gated, 1=Ungated
+pub use CkGateAudW as CkGateSdioW;
+///Field `CK_GATE_MMC` writer - 0=Gated, 1=Ungated
+pub use CkGateAudW as CkGateMmcW;
+///Field `CK_GATE_DSP0` writer - 0=Gated, 1=Ungated
+pub use CkGateAudW as CkGateDsp0W;
+///Field `CK_GATE_DSP1` writer - 0=Gated, 1=Ungated
+pub use CkGateAudW as CkGateDsp1W;
+///Field `CK_GATE_DSP2` writer - 0=Gated, 1=Ungated
+pub use CkGateAudW as CkGateDsp2W;
+///Field `CK_GATE_DSP3` writer - 0=Gated, 1=Ungated
+pub use CkGateAudW as CkGateDsp3W;
+///Field `CK_GATE_DSP4` writer - 0=Gated, 1=Ungated
+pub use CkGateAudW as CkGateDsp4W;
+///Field `CK_GATE_DSP5` writer - 0=Gated, 1=Ungated
+pub use CkGateAudW as CkGateDsp5W;
 ///Field `CK_GATE_DMAC` writer - 0=Gated, 1=Ungated
 pub use CkGateAudW as CkGateDmacW;
 impl R {

@@ -63,15 +63,14 @@ impl R {
     ///<div class="warning">`n` is number of field in register. `n == 0` corresponds to `TILE0_CLK_GATING_ENB` field.</div>
     #[inline(always)]
     pub fn tile_clk_gating_enb(&self, n: u8) -> TileClkGatingEnbR {
-        #[allow(clippy::no_effect)] [(); 12][n as usize];
+        #[allow(clippy::no_effect)]
+        [(); 12][n as usize];
         TileClkGatingEnbR::new(((self.bits >> n) & 1) != 0)
     }
     ///Iterator for array of:
     ///Enable clock gating
     #[inline(always)]
-    pub fn tile_clk_gating_enb_iter(
-        &self,
-    ) -> impl Iterator<Item = TileClkGatingEnbR> + '_ {
+    pub fn tile_clk_gating_enb_iter(&self) -> impl Iterator<Item = TileClkGatingEnbR> + '_ {
         (0..12).map(move |n| TileClkGatingEnbR::new(((self.bits >> n) & 1) != 0))
     }
     ///Bit 0 - Enable clock gating
@@ -140,95 +139,69 @@ impl W {
     ///
     ///<div class="warning">`n` is number of field in register. `n == 0` corresponds to `TILE0_CLK_GATING_ENB` field.</div>
     #[inline(always)]
-    pub fn tile_clk_gating_enb(
-        &mut self,
-        n: u8,
-    ) -> TileClkGatingEnbW<'_, AppTileClkGatingEnbSpec> {
-        #[allow(clippy::no_effect)] [(); 12][n as usize];
+    pub fn tile_clk_gating_enb(&mut self, n: u8) -> TileClkGatingEnbW<'_, AppTileClkGatingEnbSpec> {
+        #[allow(clippy::no_effect)]
+        [(); 12][n as usize];
         TileClkGatingEnbW::new(self, n)
     }
     ///Bit 0 - Enable clock gating
     #[inline(always)]
-    pub fn tile0_clk_gating_enb(
-        &mut self,
-    ) -> TileClkGatingEnbW<'_, AppTileClkGatingEnbSpec> {
+    pub fn tile0_clk_gating_enb(&mut self) -> TileClkGatingEnbW<'_, AppTileClkGatingEnbSpec> {
         TileClkGatingEnbW::new(self, 0)
     }
     ///Bit 1 - Enable clock gating
     #[inline(always)]
-    pub fn tile1_clk_gating_enb(
-        &mut self,
-    ) -> TileClkGatingEnbW<'_, AppTileClkGatingEnbSpec> {
+    pub fn tile1_clk_gating_enb(&mut self) -> TileClkGatingEnbW<'_, AppTileClkGatingEnbSpec> {
         TileClkGatingEnbW::new(self, 1)
     }
     ///Bit 2 - Enable clock gating
     #[inline(always)]
-    pub fn tile2_clk_gating_enb(
-        &mut self,
-    ) -> TileClkGatingEnbW<'_, AppTileClkGatingEnbSpec> {
+    pub fn tile2_clk_gating_enb(&mut self) -> TileClkGatingEnbW<'_, AppTileClkGatingEnbSpec> {
         TileClkGatingEnbW::new(self, 2)
     }
     ///Bit 3 - Enable clock gating
     #[inline(always)]
-    pub fn tile3_clk_gating_enb(
-        &mut self,
-    ) -> TileClkGatingEnbW<'_, AppTileClkGatingEnbSpec> {
+    pub fn tile3_clk_gating_enb(&mut self) -> TileClkGatingEnbW<'_, AppTileClkGatingEnbSpec> {
         TileClkGatingEnbW::new(self, 3)
     }
     ///Bit 4 - Enable clock gating
     #[inline(always)]
-    pub fn tile4_clk_gating_enb(
-        &mut self,
-    ) -> TileClkGatingEnbW<'_, AppTileClkGatingEnbSpec> {
+    pub fn tile4_clk_gating_enb(&mut self) -> TileClkGatingEnbW<'_, AppTileClkGatingEnbSpec> {
         TileClkGatingEnbW::new(self, 4)
     }
     ///Bit 5 - Enable clock gating
     #[inline(always)]
-    pub fn tile5_clk_gating_enb(
-        &mut self,
-    ) -> TileClkGatingEnbW<'_, AppTileClkGatingEnbSpec> {
+    pub fn tile5_clk_gating_enb(&mut self) -> TileClkGatingEnbW<'_, AppTileClkGatingEnbSpec> {
         TileClkGatingEnbW::new(self, 5)
     }
     ///Bit 6 - Enable clock gating
     #[inline(always)]
-    pub fn tile6_clk_gating_enb(
-        &mut self,
-    ) -> TileClkGatingEnbW<'_, AppTileClkGatingEnbSpec> {
+    pub fn tile6_clk_gating_enb(&mut self) -> TileClkGatingEnbW<'_, AppTileClkGatingEnbSpec> {
         TileClkGatingEnbW::new(self, 6)
     }
     ///Bit 7 - Enable clock gating
     #[inline(always)]
-    pub fn tile7_clk_gating_enb(
-        &mut self,
-    ) -> TileClkGatingEnbW<'_, AppTileClkGatingEnbSpec> {
+    pub fn tile7_clk_gating_enb(&mut self) -> TileClkGatingEnbW<'_, AppTileClkGatingEnbSpec> {
         TileClkGatingEnbW::new(self, 7)
     }
     ///Bit 8 - Enable clock gating
     #[inline(always)]
-    pub fn tile8_clk_gating_enb(
-        &mut self,
-    ) -> TileClkGatingEnbW<'_, AppTileClkGatingEnbSpec> {
+    pub fn tile8_clk_gating_enb(&mut self) -> TileClkGatingEnbW<'_, AppTileClkGatingEnbSpec> {
         TileClkGatingEnbW::new(self, 8)
     }
     ///Bit 9 - Enable clock gating
     #[inline(always)]
-    pub fn tile9_clk_gating_enb(
-        &mut self,
-    ) -> TileClkGatingEnbW<'_, AppTileClkGatingEnbSpec> {
+    pub fn tile9_clk_gating_enb(&mut self) -> TileClkGatingEnbW<'_, AppTileClkGatingEnbSpec> {
         TileClkGatingEnbW::new(self, 9)
     }
     ///Bit 10 - Enable clock gating
     #[inline(always)]
-    pub fn tile10_clk_gating_enb(
-        &mut self,
-    ) -> TileClkGatingEnbW<'_, AppTileClkGatingEnbSpec> {
+    pub fn tile10_clk_gating_enb(&mut self) -> TileClkGatingEnbW<'_, AppTileClkGatingEnbSpec> {
         TileClkGatingEnbW::new(self, 10)
     }
     ///Bit 11 - Enable clock gating
     #[inline(always)]
-    pub fn tile11_clk_gating_enb(
-        &mut self,
-    ) -> TileClkGatingEnbW<'_, AppTileClkGatingEnbSpec> {
+    pub fn tile11_clk_gating_enb(&mut self) -> TileClkGatingEnbW<'_, AppTileClkGatingEnbSpec> {
         TileClkGatingEnbW::new(self, 11)
     }
 }

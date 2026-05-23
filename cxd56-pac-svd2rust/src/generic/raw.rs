@@ -1,4 +1,4 @@
-use super::{marker, BitM, FieldSpec, RegisterSpec, Unsafe, Writable};
+use super::{BitM, FieldSpec, RegisterSpec, Unsafe, Writable, marker};
 pub struct R<REG: RegisterSpec> {
     pub(crate) bits: REG::Ux,
     pub(super) _reg: marker::PhantomData<REG>,

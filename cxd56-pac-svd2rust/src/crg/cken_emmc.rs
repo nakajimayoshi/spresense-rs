@@ -59,14 +59,14 @@ where
 }
 ///Enable DRV clock
 pub use Clkin as Drv;
-///Field `DRV` reader - Enable DRV clock
-pub use ClkinR as DrvR;
-///Field `DRV` writer - Enable DRV clock
-pub use ClkinW as DrvW;
 ///Enable eMMC sampling clock
 pub use Clkin as Smp;
+///Field `DRV` reader - Enable DRV clock
+pub use ClkinR as DrvR;
 ///Field `SMP` reader - Enable eMMC sampling clock
 pub use ClkinR as SmpR;
+///Field `DRV` writer - Enable DRV clock
+pub use ClkinW as DrvW;
 ///Field `SMP` writer - Enable eMMC sampling clock
 pub use ClkinW as SmpW;
 impl R {

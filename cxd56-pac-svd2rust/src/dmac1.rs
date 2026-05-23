@@ -210,9 +210,7 @@ You can [`read`](crate::Reg::read) this register and get [`dmacraw_int_error_sta
 
 For information about available fields see [`mod@dmacraw_int_error_status`] module*/
 #[doc(alias = "DMACRawIntErrorStatus")]
-pub type DmacrawIntErrorStatus = crate::Reg<
-    dmacraw_int_error_status::DmacrawIntErrorStatusSpec,
->;
+pub type DmacrawIntErrorStatus = crate::Reg<dmacraw_int_error_status::DmacrawIntErrorStatusSpec>;
 ///
 pub mod dmacraw_int_error_status;
 /**DMACEnbldChns (r) register accessor:
@@ -323,13 +321,13 @@ For information about available fields see [`mod@dmacc0configuration`] module*/
 pub type Dmacc0configuration = crate::Reg<dmacc0configuration::Dmacc0configurationSpec>;
 ///
 pub mod dmacc0configuration;
-pub use Dmacc0srcAddr as Dmacc1srcAddr;
-pub use dmacc0src_addr as dmacc1src_addr;
-pub use Dmacc0destAddr as Dmacc1destAddr;
-pub use dmacc0dest_addr as dmacc1dest_addr;
-pub use Dmacc0lli as Dmacc1lli;
-pub use dmacc0lli as dmacc1lli;
-pub use Dmacc0control as Dmacc1control;
-pub use dmacc0control as dmacc1control;
 pub use Dmacc0configuration as Dmacc1configuration;
+pub use Dmacc0control as Dmacc1control;
+pub use Dmacc0destAddr as Dmacc1destAddr;
+pub use Dmacc0lli as Dmacc1lli;
+pub use Dmacc0srcAddr as Dmacc1srcAddr;
 pub use dmacc0configuration as dmacc1configuration;
+pub use dmacc0control as dmacc1control;
+pub use dmacc0dest_addr as dmacc1dest_addr;
+pub use dmacc0lli as dmacc1lli;
+pub use dmacc0src_addr as dmacc1src_addr;
