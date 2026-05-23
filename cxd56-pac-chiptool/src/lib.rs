@@ -69,6 +69,10 @@ pub const GPIO0: GPIO0::GPIO0 = unsafe { GPIO0::GPIO0::from_ptr(0x0410_2000usize
 ///APP / GNSS sub-domain clock and reset controller
 pub const TOPREG_SUB: TOPREG_SUB::TOPREG_SUB =
     unsafe { TOPREG_SUB::TOPREG_SUB::from_ptr(0x0410_3000usize as _) };
+///Real-time clock 0 (always-on, 32.768 kHz, 47-bit dual counter, 3 alarms)
+pub const RTC0: RTC0::RTC0 = unsafe { RTC0::RTC0::from_ptr(0x0410_8000usize as _) };
+///Real-time clock 1 (SYSIOP-gated, 32.768 kHz, 47-bit dual counter, 3 alarms)
+pub const RTC1: RTC0::RTC0 = unsafe { RTC0::RTC0::from_ptr(0x0410_9000usize as _) };
 ///Synchronous Serial Port Controller (SCU SPI)
 pub const SPI3: SPI0::SPI0 = unsafe { SPI0::SPI0::from_ptr(0x0418_d000usize as _) };
 ///Synchronous Serial Port Controller (SPIM)
@@ -78,6 +82,12 @@ pub const UART1: UART1::UART1 = unsafe { UART1::UART1::from_ptr(0x041a_c000usize
 ///CPU FIFO Control
 pub const CPU_FIFO: CPU_FIFO::CPU_FIFO =
     unsafe { CPU_FIFO::CPU_FIFO::from_ptr(0x4600_c400usize as _) };
+///ARM PrimeCell SP804 dual-input timer 0
+pub const TIMER0: TIMER0::TIMER0 = unsafe { TIMER0::TIMER0::from_ptr(0xe004_3000usize as _) };
+///ARM PrimeCell SP804 dual-input timer 1
+pub const TIMER1: TIMER0::TIMER0 = unsafe { TIMER0::TIMER0::from_ptr(0xe004_3020usize as _) };
+///ARM PrimeCell SP805 watchdog timer
+pub const WDOG: WDOG::WDOG = unsafe { WDOG::WDOG::from_ptr(0xe004_4000usize as _) };
 /// Number available in the NVIC for configuring priority
 #[cfg(feature = "rt")]
 pub const NVIC_PRIO_BITS: u8 = 3;
@@ -94,11 +104,14 @@ pub mod DMAC3;
 pub mod GE2D;
 pub mod GPIO0;
 pub mod ROT;
+pub mod RTC0;
 pub mod SMP_RAM_CTRL;
 pub mod SPI0;
 pub mod SPI4;
+pub mod TIMER0;
 pub mod TOPREG;
 pub mod TOPREG_SUB;
 pub mod UART1;
 pub mod UART2;
+pub mod WDOG;
 pub mod common;
