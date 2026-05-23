@@ -1,35 +1,37 @@
-#[doc = "Register `SET_SRC_PITCH` reader"]
+///Register `SET_SRC_PITCH` reader
 pub type R = crate::R<SetSrcPitchSpec>;
-#[doc = "Register `SET_SRC_PITCH` writer"]
+///Register `SET_SRC_PITCH` writer
 pub type W = crate::W<SetSrcPitchSpec>;
-#[doc = "Field `PITCH` reader - "]
+///Field `PITCH` reader -
 pub type PitchR = crate::FieldReader<u16>;
-#[doc = "Field `PITCH` writer - "]
+///Field `PITCH` writer -
 pub type PitchW<'a, REG> = crate::FieldWriter<'a, REG, 12, u16>;
 impl R {
-    #[doc = "Bits 0:11"]
+    ///Bits 0:11
     #[inline(always)]
     pub fn pitch(&self) -> PitchR {
         PitchR::new((self.bits & 0x0fff) as u16)
     }
 }
 impl W {
-    #[doc = "Bits 0:11"]
+    ///Bits 0:11
     #[inline(always)]
     pub fn pitch(&mut self) -> PitchW<'_, SetSrcPitchSpec> {
         PitchW::new(self, 0)
     }
 }
-#[doc = "Source Image Pitch (Actual size - 1)\n\nYou can [`read`](crate::Reg::read) this register and get [`set_src_pitch::R`](R). You can [`reset`](crate::Reg::reset), [`write`](crate::Reg::write), [`write_with_zero`](crate::Reg::write_with_zero) this register using [`set_src_pitch::W`](W). You can also [`modify`](crate::Reg::modify) this register. See [API](https://docs.rs/svd2rust/#read--modify--write-api)."]
+/**Source Image Pitch (Actual size - 1)
+
+You can [`read`](crate::Reg::read) this register and get [`set_src_pitch::R`](R). You can [`reset`](crate::Reg::reset), [`write`](crate::Reg::write), [`write_with_zero`](crate::Reg::write_with_zero) this register using [`set_src_pitch::W`](W). You can also [`modify`](crate::Reg::modify) this register. See [API](https://docs.rs/svd2rust/#read--modify--write-api).*/
 pub struct SetSrcPitchSpec;
 impl crate::RegisterSpec for SetSrcPitchSpec {
     type Ux = u32;
 }
-#[doc = "`read()` method returns [`set_src_pitch::R`](R) reader structure"]
+///`read()` method returns [`set_src_pitch::R`](R) reader structure
 impl crate::Readable for SetSrcPitchSpec {}
-#[doc = "`write(|w| ..)` method takes [`set_src_pitch::W`](W) writer structure"]
+///`write(|w| ..)` method takes [`set_src_pitch::W`](W) writer structure
 impl crate::Writable for SetSrcPitchSpec {
     type Safety = crate::Unsafe;
 }
-#[doc = "`reset()` method sets SET_SRC_PITCH to value 0"]
+///`reset()` method sets SET_SRC_PITCH to value 0
 impl crate::Resettable for SetSrcPitchSpec {}

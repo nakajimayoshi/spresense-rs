@@ -1,13 +1,15 @@
-#[doc = "Register `SSPCS` reader"]
+///Register `SSPCS` reader
 pub type R = crate::R<SspcsSpec>;
-#[doc = "Register `SSPCS` writer"]
+///Register `SSPCS` writer
 pub type W = crate::W<SspcsSpec>;
-#[doc = "\n\nValue on reset: 0"]
+/**
+
+Value on reset: 0*/
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum SspCs {
-    #[doc = "0: Output low to the CS"]
+    ///0: Output low to the CS
     Low = 0,
-    #[doc = "1: Output high to the CS"]
+    ///1: Output high to the CS
     High = 1,
 }
 impl From<SspCs> for bool {
@@ -16,10 +18,10 @@ impl From<SspCs> for bool {
         variant as u8 != 0
     }
 }
-#[doc = "Field `SSP_CS` reader - "]
+///Field `SSP_CS` reader -
 pub type SspCsR = crate::BitReader<SspCs>;
 impl SspCsR {
-    #[doc = "Get enumerated values variant"]
+    ///Get enumerated values variant
     #[inline(always)]
     pub const fn variant(&self) -> SspCs {
         match self.bits {
@@ -27,58 +29,60 @@ impl SspCsR {
             true => SspCs::High,
         }
     }
-    #[doc = "Output low to the CS"]
+    ///Output low to the CS
     #[inline(always)]
     pub fn is_low(&self) -> bool {
         *self == SspCs::Low
     }
-    #[doc = "Output high to the CS"]
+    ///Output high to the CS
     #[inline(always)]
     pub fn is_high(&self) -> bool {
         *self == SspCs::High
     }
 }
-#[doc = "Field `SSP_CS` writer - "]
+///Field `SSP_CS` writer -
 pub type SspCsW<'a, REG> = crate::BitWriter<'a, REG, SspCs>;
 impl<'a, REG> SspCsW<'a, REG>
 where
     REG: crate::Writable + crate::RegisterSpec,
 {
-    #[doc = "Output low to the CS"]
+    ///Output low to the CS
     #[inline(always)]
     pub fn low(self) -> &'a mut crate::W<REG> {
         self.variant(SspCs::Low)
     }
-    #[doc = "Output high to the CS"]
+    ///Output high to the CS
     #[inline(always)]
     pub fn high(self) -> &'a mut crate::W<REG> {
         self.variant(SspCs::High)
     }
 }
 impl R {
-    #[doc = "Bit 0"]
+    ///Bit 0
     #[inline(always)]
     pub fn ssp_cs(&self) -> SspCsR {
         SspCsR::new((self.bits & 1) != 0)
     }
 }
 impl W {
-    #[doc = "Bit 0"]
+    ///Bit 0
     #[inline(always)]
     pub fn ssp_cs(&mut self) -> SspCsW<'_, SspcsSpec> {
         SspCsW::new(self, 0)
     }
 }
-#[doc = "\n\nYou can [`read`](crate::Reg::read) this register and get [`sspcs::R`](R). You can [`reset`](crate::Reg::reset), [`write`](crate::Reg::write), [`write_with_zero`](crate::Reg::write_with_zero) this register using [`sspcs::W`](W). You can also [`modify`](crate::Reg::modify) this register. See [API](https://docs.rs/svd2rust/#read--modify--write-api)."]
+/**
+
+You can [`read`](crate::Reg::read) this register and get [`sspcs::R`](R). You can [`reset`](crate::Reg::reset), [`write`](crate::Reg::write), [`write_with_zero`](crate::Reg::write_with_zero) this register using [`sspcs::W`](W). You can also [`modify`](crate::Reg::modify) this register. See [API](https://docs.rs/svd2rust/#read--modify--write-api).*/
 pub struct SspcsSpec;
 impl crate::RegisterSpec for SspcsSpec {
     type Ux = u32;
 }
-#[doc = "`read()` method returns [`sspcs::R`](R) reader structure"]
+///`read()` method returns [`sspcs::R`](R) reader structure
 impl crate::Readable for SspcsSpec {}
-#[doc = "`write(|w| ..)` method takes [`sspcs::W`](W) writer structure"]
+///`write(|w| ..)` method takes [`sspcs::W`](W) writer structure
 impl crate::Writable for SspcsSpec {
     type Safety = crate::Unsafe;
 }
-#[doc = "`reset()` method sets SSPCS to value 0"]
+///`reset()` method sets SSPCS to value 0
 impl crate::Resettable for SspcsSpec {}

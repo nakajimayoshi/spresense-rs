@@ -1,0 +1,18 @@
+///Register `GEAR_STAT` reader
+pub type R = crate::R<GearStatSpec>;
+impl core::fmt::Debug for R {
+    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+        write!(f, "{}", self.bits())
+    }
+}
+/**Clock gear status (read-only)
+
+You can [`read`](crate::Reg::read) this register and get [`gear_stat::R`](R). See [API](https://docs.rs/svd2rust/#read--modify--write-api).*/
+pub struct GearStatSpec;
+impl crate::RegisterSpec for GearStatSpec {
+    type Ux = u32;
+}
+///`read()` method returns [`gear_stat::R`](R) reader structure
+impl crate::Readable for GearStatSpec {}
+///`reset()` method sets GEAR_STAT to value 0
+impl crate::Resettable for GearStatSpec {}
