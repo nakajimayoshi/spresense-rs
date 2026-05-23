@@ -2,12 +2,13 @@ use cortex_m::delay::Delay as SystDelay;
 use cortex_m::peripheral::SYST;
 use embedded_hal::delay::DelayNs;
 
+use crate::clocks::Clocks;
+
 /// App-core clock in SYSPLL high-performance mode (XOSC 26 MHz × 12 / 2).
 ///
-/// This is the frequency the boot ROM leaves the Cortex-M4 running at before
-/// user code starts. Verified against the SYSPLL formula in
-/// `nuttx/arch/arm/src/cxd56xx/cxd56_clock.c`. Use [`Delay::with_clock`] if
-/// you are running in low-power mode (~39 MHz) or have reconfigured the PLL.
+/// Boot ROM leaves the Cortex-M4 running at this frequency before user code
+/// starts. Provided as a fallback for early-boot delay setup before
+/// [`Clocks`] is available.
 pub const APP_CORE_CLOCK_HZ: u32 = 156_000_000;
 
 /// SysTick-backed delay implementing [`DelayNs`].
@@ -16,12 +17,13 @@ pub struct Delay {
 }
 
 impl Delay {
-    /// Create a `Delay` assuming [`APP_CORE_CLOCK_HZ`] (156 MHz, HP mode).
-    pub fn new(syst: SYST) -> Self {
-        Self::with_clock(syst, APP_CORE_CLOCK_HZ)
+    /// Create a `Delay` using the current APP core frequency from `clocks`.
+    pub fn new(syst: SYST, clocks: &Clocks) -> Self {
+        Self::with_clock(syst, clocks.appsmp.to_Hz())
     }
 
-    /// Create a `Delay` for an explicit core clock frequency.
+    /// Create a `Delay` with an explicit core clock frequency. Useful before
+    /// [`Clocks`] is available (e.g. during very early boot).
     pub fn with_clock(syst: SYST, sysclk_hz: u32) -> Self {
         Self {
             inner: SystDelay::new(syst, sysclk_hz),
