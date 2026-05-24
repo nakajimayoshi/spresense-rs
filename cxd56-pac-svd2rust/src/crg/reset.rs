@@ -59,74 +59,74 @@ where
 }
 ///0=reset, 1=active
 pub use XrsAud as XrsImg;
-///0=reset, 1=active
-pub use XrsAud as XrsUsb;
-///0=reset, 1=active
-pub use XrsAud as XrsSdio;
-///0=reset, 1=active
-pub use XrsAud as XrsMmc;
-///0=reset, 1=active
-pub use XrsAud as XrsMmcCrg;
-///0=reset, 1=active
-pub use XrsAud as XrsDsp0;
-///0=reset, 1=active
-pub use XrsAud as XrsDsp1;
-///0=reset, 1=active
-pub use XrsAud as XrsDsp2;
-///0=reset, 1=active
-pub use XrsAud as XrsDsp3;
-///0=reset, 1=active
-pub use XrsAud as XrsDsp4;
-///0=reset, 1=active
-pub use XrsAud as XrsDsp5;
-///0=reset, 1=active
-pub use XrsAud as XrsDspGen;
 ///Field `XRS_IMG` reader - 0=reset, 1=active
 pub use XrsAudR as XrsImgR;
-///Field `XRS_USB` reader - 0=reset, 1=active
-pub use XrsAudR as XrsUsbR;
-///Field `XRS_SDIO` reader - 0=reset, 1=active
-pub use XrsAudR as XrsSdioR;
-///Field `XRS_MMC` reader - 0=reset, 1=active
-pub use XrsAudR as XrsMmcR;
-///Field `XRS_MMC_CRG` reader - 0=reset, 1=active
-pub use XrsAudR as XrsMmcCrgR;
-///Field `XRS_DSP0` reader - 0=reset, 1=active
-pub use XrsAudR as XrsDsp0R;
-///Field `XRS_DSP1` reader - 0=reset, 1=active
-pub use XrsAudR as XrsDsp1R;
-///Field `XRS_DSP2` reader - 0=reset, 1=active
-pub use XrsAudR as XrsDsp2R;
-///Field `XRS_DSP3` reader - 0=reset, 1=active
-pub use XrsAudR as XrsDsp3R;
-///Field `XRS_DSP4` reader - 0=reset, 1=active
-pub use XrsAudR as XrsDsp4R;
-///Field `XRS_DSP5` reader - 0=reset, 1=active
-pub use XrsAudR as XrsDsp5R;
-///Field `XRS_DSP_GEN` reader - 0=reset, 1=active
-pub use XrsAudR as XrsDspGenR;
 ///Field `XRS_IMG` writer - 0=reset, 1=active
 pub use XrsAudW as XrsImgW;
+///0=reset, 1=active
+pub use XrsAud as XrsUsb;
+///Field `XRS_USB` reader - 0=reset, 1=active
+pub use XrsAudR as XrsUsbR;
 ///Field `XRS_USB` writer - 0=reset, 1=active
 pub use XrsAudW as XrsUsbW;
+///0=reset, 1=active
+pub use XrsAud as XrsSdio;
+///Field `XRS_SDIO` reader - 0=reset, 1=active
+pub use XrsAudR as XrsSdioR;
 ///Field `XRS_SDIO` writer - 0=reset, 1=active
 pub use XrsAudW as XrsSdioW;
+///0=reset, 1=active
+pub use XrsAud as XrsMmc;
+///Field `XRS_MMC` reader - 0=reset, 1=active
+pub use XrsAudR as XrsMmcR;
 ///Field `XRS_MMC` writer - 0=reset, 1=active
 pub use XrsAudW as XrsMmcW;
+///0=reset, 1=active
+pub use XrsAud as XrsMmcCrg;
+///Field `XRS_MMC_CRG` reader - 0=reset, 1=active
+pub use XrsAudR as XrsMmcCrgR;
 ///Field `XRS_MMC_CRG` writer - 0=reset, 1=active
 pub use XrsAudW as XrsMmcCrgW;
+///0=reset, 1=active
+pub use XrsAud as XrsDsp0;
+///Field `XRS_DSP0` reader - 0=reset, 1=active
+pub use XrsAudR as XrsDsp0R;
 ///Field `XRS_DSP0` writer - 0=reset, 1=active
 pub use XrsAudW as XrsDsp0W;
+///0=reset, 1=active
+pub use XrsAud as XrsDsp1;
+///Field `XRS_DSP1` reader - 0=reset, 1=active
+pub use XrsAudR as XrsDsp1R;
 ///Field `XRS_DSP1` writer - 0=reset, 1=active
 pub use XrsAudW as XrsDsp1W;
+///0=reset, 1=active
+pub use XrsAud as XrsDsp2;
+///Field `XRS_DSP2` reader - 0=reset, 1=active
+pub use XrsAudR as XrsDsp2R;
 ///Field `XRS_DSP2` writer - 0=reset, 1=active
 pub use XrsAudW as XrsDsp2W;
+///0=reset, 1=active
+pub use XrsAud as XrsDsp3;
+///Field `XRS_DSP3` reader - 0=reset, 1=active
+pub use XrsAudR as XrsDsp3R;
 ///Field `XRS_DSP3` writer - 0=reset, 1=active
 pub use XrsAudW as XrsDsp3W;
+///0=reset, 1=active
+pub use XrsAud as XrsDsp4;
+///Field `XRS_DSP4` reader - 0=reset, 1=active
+pub use XrsAudR as XrsDsp4R;
 ///Field `XRS_DSP4` writer - 0=reset, 1=active
 pub use XrsAudW as XrsDsp4W;
+///0=reset, 1=active
+pub use XrsAud as XrsDsp5;
+///Field `XRS_DSP5` reader - 0=reset, 1=active
+pub use XrsAudR as XrsDsp5R;
 ///Field `XRS_DSP5` writer - 0=reset, 1=active
 pub use XrsAudW as XrsDsp5W;
+///0=reset, 1=active
+pub use XrsAud as XrsDspGen;
+///Field `XRS_DSP_GEN` reader - 0=reset, 1=active
+pub use XrsAudR as XrsDspGenR;
 ///Field `XRS_DSP_GEN` writer - 0=reset, 1=active
 pub use XrsAudW as XrsDspGenW;
 impl R {

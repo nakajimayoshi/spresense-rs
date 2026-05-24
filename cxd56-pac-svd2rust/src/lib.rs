@@ -41,7 +41,7 @@ pub union Vector {
 #[cfg(feature = "rt")]
 #[doc(hidden)]
 #[link_section = ".vector_table.interrupts"]
-#[unsafe(no_mangle)]
+#[no_mangle]
 pub static __INTERRUPTS: [Vector; 135] = [
     Vector { _reserved: 0 },
     Vector { _handler: CRG },
@@ -421,7 +421,7 @@ impl core::fmt::Debug for Cisif {
 }
 ///CMOS Image Sensor IF
 pub mod cisif;
-#[unsafe(no_mangle)]
+#[no_mangle]
 static mut DEVICE_PERIPHERALS: bool = false;
 /// All the peripherals.
 #[allow(non_snake_case)]

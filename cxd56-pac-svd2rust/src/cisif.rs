@@ -157,10 +157,10 @@ pub type IntrStat = crate::Reg<intr_stat::IntrStatSpec>;
 ///Interrupt status register
 pub mod intr_stat;
 pub use IntrStat as IntrEnable;
-pub use IntrStat as IntrDisable;
-pub use IntrStat as IntrClear;
 pub use intr_stat as intr_enable;
+pub use IntrStat as IntrDisable;
 pub use intr_stat as intr_disable;
+pub use IntrStat as IntrClear;
 pub use intr_stat as intr_clear;
 /**DIN_ENABLE (rw) register accessor: Input data enable register
 

@@ -4,17 +4,19 @@ pub struct RegisterBlock {
     pwd_ctl: PwdCtl,
     ana_pw_ctl: AnaPwCtl,
     ana_en_ctl: AnaEnCtl,
-    _reserved3: [u8; 0x54],
+    _reserved3: [u8; 0x24],
+    pmu_pw_ctl: PmuPwCtl,
+    _reserved4: [u8; 0x2c],
     pwd_reset0: PwdReset0,
-    _reserved4: [u8; 0x019c],
+    _reserved5: [u8; 0x019c],
     pwd_stat: PwdStat,
-    _reserved5: [u8; 0x04],
+    _reserved6: [u8; 0x04],
     ana_pw_stat: AnaPwStat,
-    _reserved6: [u8; 0x0208],
+    _reserved7: [u8; 0x0208],
     clseldiv_wake: ClseldivWake,
     ckdiv_cpu_dsp_bus_wake: CkdivCpuDspBusWake,
     cksel_root_wake: CkselRootWake,
-    _reserved9: [u8; 0xa0],
+    _reserved10: [u8; 0xa0],
     pmu_core_cken: PmuCoreCken,
     cksel_root: CkselRoot,
     cksel_pmu: CkselPmu,
@@ -38,7 +40,7 @@ pub struct RegisterBlock {
     usbphy_cken: UsbphyCken,
     crg_mon: CrgMon,
     gear_stat: GearStat,
-    _reserved32: [u8; 0x64],
+    _reserved33: [u8; 0x64],
     xosc_ctrl: XoscCtrl,
     xosc_ctrl2: XoscCtrl2,
     sys_pll_ctrl1: SysPllCtrl1,
@@ -46,20 +48,30 @@ pub struct RegisterBlock {
     rcosc_ctrl1: RcoscCtrl1,
     rcosc_ctrl2: RcoscCtrl2,
     rf_gpmbi_en: RfGpmbiEn,
-    _reserved39: [u8; 0xa8],
+    _reserved40: [u8; 0xa8],
     force_cken: ForceCken,
-    _reserved40: [u8; 0x18],
+    _reserved41: [u8; 0x18],
     ckgate_ctl: CkgateCtl,
-    _reserved41: [u8; 0x9c],
+    _reserved42: [u8; 0x9c],
     swreset_bus: SwresetBus,
     swreset_scu: SwresetScu,
-    _reserved43: [u8; 0x08],
+    _reserved44: [u8; 0x08],
     busrom_cken: BusromCken,
     sysiop_cken: SysiopCken,
-    _reserved45: [u8; 0x04],
+    _reserved46: [u8; 0x04],
     scu_cken: ScuCken,
-    _reserved46: [u8; 0x10],
+    _reserved47: [u8; 0x10],
     rtc0_ctl: Rtc0Ctl,
+    _reserved48: [u8; 0x8c],
+    iocsys_iomd0: IocsysIomd0,
+    _reserved49: [u8; 0x80],
+    io_spi0_cs_x: IoSpi0CsX,
+    io_spi0_sck: IoSpi0Sck,
+    _reserved51: [u8; 0xc0],
+    io_uart2_txd: IoUart2Txd,
+    io_uart2_rxd: IoUart2Rxd,
+    _reserved53: [u8; 0x0b8c],
+    iocapp_iomd: IocappIomd,
 }
 impl RegisterBlock {
     ///0x00 - Power-domain control (1 = powered on)
@@ -76,6 +88,11 @@ impl RegisterBlock {
     #[inline(always)]
     pub const fn ana_en_ctl(&self) -> &AnaEnCtl {
         &self.ana_en_ctl
+    }
+    ///0x30 - PMU power-supply control request (write-only kick register)
+    #[inline(always)]
+    pub const fn pmu_pw_ctl(&self) -> &PmuPwCtl {
+        &self.pmu_pw_ctl
     }
     ///0x60 - Per-domain power reset control
     #[inline(always)]
@@ -296,6 +313,36 @@ impl RegisterBlock {
     #[inline(always)]
     pub const fn rtc0_ctl(&self) -> &Rtc0Ctl {
         &self.rtc0_ctl
+    }
+    ///0x7c0 - SYSIOP IO-cell mode-mux register 0
+    #[inline(always)]
+    pub const fn iocsys_iomd0(&self) -> &IocsysIomd0 {
+        &self.iocsys_iomd0
+    }
+    ///0x844 - IOCELL control for SPI0_CS_X / UART1-TXD
+    #[inline(always)]
+    pub const fn io_spi0_cs_x(&self) -> &IoSpi0CsX {
+        &self.io_spi0_cs_x
+    }
+    ///0x848 - IOCELL control for SPI0_SCK / UART1-RXD
+    #[inline(always)]
+    pub const fn io_spi0_sck(&self) -> &IoSpi0Sck {
+        &self.io_spi0_sck
+    }
+    ///0x90c - IOCELL control for UART2 TXD pin
+    #[inline(always)]
+    pub const fn io_uart2_txd(&self) -> &IoUart2Txd {
+        &self.io_uart2_txd
+    }
+    ///0x910 - IOCELL control for UART2 RXD pin
+    #[inline(always)]
+    pub const fn io_uart2_rxd(&self) -> &IoUart2Rxd {
+        &self.io_uart2_rxd
+    }
+    ///0x14a0 - APP-domain IO-cell mode-mux register
+    #[inline(always)]
+    pub const fn iocapp_iomd(&self) -> &IocappIomd {
+        &self.iocapp_iomd
     }
 }
 /**PWD_CTL (rw) register accessor: Power-domain control (1 = powered on)
@@ -721,3 +768,66 @@ For information about available fields see [`mod@rtc0_ctl`] module*/
 pub type Rtc0Ctl = crate::Reg<rtc0_ctl::Rtc0CtlSpec>;
 ///RTC0 control
 pub mod rtc0_ctl;
+/**PMU_PW_CTL (w) register accessor: PMU power-supply control request (write-only kick register)
+
+You can [`reset`](crate::Reg::reset), [`write`](crate::Reg::write), [`write_with_zero`](crate::Reg::write_with_zero) this register using [`pmu_pw_ctl::W`]. See [API](https://docs.rs/svd2rust/#read--modify--write-api).
+
+For information about available fields see [`mod@pmu_pw_ctl`] module*/
+#[doc(alias = "PMU_PW_CTL")]
+pub type PmuPwCtl = crate::Reg<pmu_pw_ctl::PmuPwCtlSpec>;
+///PMU power-supply control request (write-only kick register)
+pub mod pmu_pw_ctl;
+/**IOCSYS_IOMD0 (rw) register accessor: SYSIOP IO-cell mode-mux register 0
+
+You can [`read`](crate::Reg::read) this register and get [`iocsys_iomd0::R`]. You can [`reset`](crate::Reg::reset), [`write`](crate::Reg::write), [`write_with_zero`](crate::Reg::write_with_zero) this register using [`iocsys_iomd0::W`]. You can also [`modify`](crate::Reg::modify) this register. See [API](https://docs.rs/svd2rust/#read--modify--write-api).
+
+For information about available fields see [`mod@iocsys_iomd0`] module*/
+#[doc(alias = "IOCSYS_IOMD0")]
+pub type IocsysIomd0 = crate::Reg<iocsys_iomd0::IocsysIomd0Spec>;
+///SYSIOP IO-cell mode-mux register 0
+pub mod iocsys_iomd0;
+/**IO_SPI0_CS_X (rw) register accessor: IOCELL control for SPI0_CS_X / UART1-TXD
+
+You can [`read`](crate::Reg::read) this register and get [`io_spi0_cs_x::R`]. You can [`reset`](crate::Reg::reset), [`write`](crate::Reg::write), [`write_with_zero`](crate::Reg::write_with_zero) this register using [`io_spi0_cs_x::W`]. You can also [`modify`](crate::Reg::modify) this register. See [API](https://docs.rs/svd2rust/#read--modify--write-api).
+
+For information about available fields see [`mod@io_spi0_cs_x`] module*/
+#[doc(alias = "IO_SPI0_CS_X")]
+pub type IoSpi0CsX = crate::Reg<io_spi0_cs_x::IoSpi0CsXSpec>;
+///IOCELL control for SPI0_CS_X / UART1-TXD
+pub mod io_spi0_cs_x;
+/**IO_SPI0_SCK (rw) register accessor: IOCELL control for SPI0_SCK / UART1-RXD
+
+You can [`read`](crate::Reg::read) this register and get [`io_spi0_sck::R`]. You can [`reset`](crate::Reg::reset), [`write`](crate::Reg::write), [`write_with_zero`](crate::Reg::write_with_zero) this register using [`io_spi0_sck::W`]. You can also [`modify`](crate::Reg::modify) this register. See [API](https://docs.rs/svd2rust/#read--modify--write-api).
+
+For information about available fields see [`mod@io_spi0_sck`] module*/
+#[doc(alias = "IO_SPI0_SCK")]
+pub type IoSpi0Sck = crate::Reg<io_spi0_sck::IoSpi0SckSpec>;
+///IOCELL control for SPI0_SCK / UART1-RXD
+pub mod io_spi0_sck;
+/**IO_UART2_TXD (rw) register accessor: IOCELL control for UART2 TXD pin
+
+You can [`read`](crate::Reg::read) this register and get [`io_uart2_txd::R`]. You can [`reset`](crate::Reg::reset), [`write`](crate::Reg::write), [`write_with_zero`](crate::Reg::write_with_zero) this register using [`io_uart2_txd::W`]. You can also [`modify`](crate::Reg::modify) this register. See [API](https://docs.rs/svd2rust/#read--modify--write-api).
+
+For information about available fields see [`mod@io_uart2_txd`] module*/
+#[doc(alias = "IO_UART2_TXD")]
+pub type IoUart2Txd = crate::Reg<io_uart2_txd::IoUart2TxdSpec>;
+///IOCELL control for UART2 TXD pin
+pub mod io_uart2_txd;
+/**IO_UART2_RXD (rw) register accessor: IOCELL control for UART2 RXD pin
+
+You can [`read`](crate::Reg::read) this register and get [`io_uart2_rxd::R`]. You can [`reset`](crate::Reg::reset), [`write`](crate::Reg::write), [`write_with_zero`](crate::Reg::write_with_zero) this register using [`io_uart2_rxd::W`]. You can also [`modify`](crate::Reg::modify) this register. See [API](https://docs.rs/svd2rust/#read--modify--write-api).
+
+For information about available fields see [`mod@io_uart2_rxd`] module*/
+#[doc(alias = "IO_UART2_RXD")]
+pub type IoUart2Rxd = crate::Reg<io_uart2_rxd::IoUart2RxdSpec>;
+///IOCELL control for UART2 RXD pin
+pub mod io_uart2_rxd;
+/**IOCAPP_IOMD (rw) register accessor: APP-domain IO-cell mode-mux register
+
+You can [`read`](crate::Reg::read) this register and get [`iocapp_iomd::R`]. You can [`reset`](crate::Reg::reset), [`write`](crate::Reg::write), [`write_with_zero`](crate::Reg::write_with_zero) this register using [`iocapp_iomd::W`]. You can also [`modify`](crate::Reg::modify) this register. See [API](https://docs.rs/svd2rust/#read--modify--write-api).
+
+For information about available fields see [`mod@iocapp_iomd`] module*/
+#[doc(alias = "IOCAPP_IOMD")]
+pub type IocappIomd = crate::Reg<iocapp_iomd::IocappIomdSpec>;
+///APP-domain IO-cell mode-mux register
+pub mod iocapp_iomd;

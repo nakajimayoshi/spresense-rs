@@ -4,14 +4,14 @@ pub type R = crate::R<IntrEnableSpec>;
 pub type W = crate::W<IntrEnableSpec>;
 ///Done Interrupt Enable
 pub use WrErrEnb as EndEnb;
-///Read Error
-pub use WrErrEnb as RdErrEnb;
 ///Field `END_ENB` reader - Done Interrupt Enable
 pub use WrErrEnbR as EndEnbR;
-///Field `RD_ERR_ENB` reader - Read Error
-pub use WrErrEnbR as RdErrEnbR;
 ///Field `END_ENB` writer - Done Interrupt Enable
 pub use WrErrEnbW as EndEnbW;
+///Read Error
+pub use WrErrEnb as RdErrEnb;
+///Field `RD_ERR_ENB` reader - Read Error
+pub use WrErrEnbR as RdErrEnbR;
 ///Field `RD_ERR_ENB` writer - Read Error
 pub use WrErrEnbW as RdErrEnbW;
 /**Write Error Enable

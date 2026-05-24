@@ -14,6 +14,8 @@ pub struct RegisterBlock {
     gnsdsp_cken: GnsdspCken,
     _reserved8: [u8; 0x04],
     gnss_div: GnssDiv,
+    _reserved9: [u8; 0x0864],
+    chip_id: ChipId,
 }
 impl RegisterBlock {
     ///0x404 - GNSS DSP software reset
@@ -60,6 +62,11 @@ impl RegisterBlock {
     #[inline(always)]
     pub const fn gnss_div(&self) -> &GnssDiv {
         &self.gnss_div
+    }
+    ///0x1490 - Chip identification register (read-only)
+    #[inline(always)]
+    pub const fn chip_id(&self) -> &ChipId {
+        &self.chip_id
     }
 }
 /**SWRESET_GNSDSP (rw) register accessor: GNSS DSP software reset
@@ -143,3 +150,12 @@ For information about available fields see [`mod@gnss_div`] module*/
 pub type GnssDiv = crate::Reg<gnss_div::GnssDivSpec>;
 ///GNSS clock divider
 pub mod gnss_div;
+/**CHIP_ID (r) register accessor: Chip identification register (read-only)
+
+You can [`read`](crate::Reg::read) this register and get [`chip_id::R`]. See [API](https://docs.rs/svd2rust/#read--modify--write-api).
+
+For information about available fields see [`mod@chip_id`] module*/
+#[doc(alias = "CHIP_ID")]
+pub type ChipId = crate::Reg<chip_id::ChipIdSpec>;
+///Chip identification register (read-only)
+pub mod chip_id;

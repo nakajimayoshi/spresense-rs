@@ -17,6 +17,8 @@ You can [`read`](crate::Reg::read) this register and get [`app_tile_clk_gating_e
 
 For information about available fields see [`mod@app_tile_clk_gating_enb`] module*/
 #[doc(alias = "APP_TILE_CLK_GATING_ENB")]
-pub type AppTileClkGatingEnb = crate::Reg<app_tile_clk_gating_enb::AppTileClkGatingEnbSpec>;
+pub type AppTileClkGatingEnb = crate::Reg<
+    app_tile_clk_gating_enb::AppTileClkGatingEnbSpec,
+>;
 ///SRAM tile (128KB) clock gating control (0 = gated)
 pub mod app_tile_clk_gating_enb;

@@ -339,7 +339,9 @@ You can [`read`](crate::Reg::read) this register and get [`dmacraw_int_error_sta
 
 For information about available fields see [`mod@dmacraw_int_error_status`] module*/
 #[doc(alias = "DMACRawIntErrorStatus")]
-pub type DmacrawIntErrorStatus = crate::Reg<dmacraw_int_error_status::DmacrawIntErrorStatusSpec>;
+pub type DmacrawIntErrorStatus = crate::Reg<
+    dmacraw_int_error_status::DmacrawIntErrorStatusSpec,
+>;
 ///
 pub mod dmacraw_int_error_status;
 /**DMACEnbldChns (r) register accessor:
@@ -468,51 +470,51 @@ For information about available fields see [`mod@dmacc0configuration`] module*/
 pub type Dmacc0configuration = crate::Reg<dmacc0configuration::Dmacc0configurationSpec>;
 ///
 pub mod dmacc0configuration;
-pub use Dmacc0configuration as Dmacc1configuration;
-pub use Dmacc0configuration as Dmacc2configuration;
-pub use Dmacc0configuration as Dmacc3configuration;
-pub use Dmacc0configuration as Dmacc4configuration;
-pub use Dmacc0control as Dmacc1control;
-pub use Dmacc0control as Dmacc2control;
-pub use Dmacc0control as Dmacc3control;
-pub use Dmacc0control as Dmacc4control;
-pub use Dmacc0defLli as Dmacc1defLli;
-pub use Dmacc0defLli as Dmacc2defLli;
-pub use Dmacc0defLli as Dmacc3defLli;
-pub use Dmacc0defLli as Dmacc4defLli;
-pub use Dmacc0destAddr as Dmacc1destAddr;
-pub use Dmacc0destAddr as Dmacc2destAddr;
-pub use Dmacc0destAddr as Dmacc3destAddr;
-pub use Dmacc0destAddr as Dmacc4destAddr;
-pub use Dmacc0lli as Dmacc1lli;
-pub use Dmacc0lli as Dmacc2lli;
-pub use Dmacc0lli as Dmacc3lli;
-pub use Dmacc0lli as Dmacc4lli;
 pub use Dmacc0srcAddr as Dmacc1srcAddr;
-pub use Dmacc0srcAddr as Dmacc2srcAddr;
-pub use Dmacc0srcAddr as Dmacc3srcAddr;
-pub use Dmacc0srcAddr as Dmacc4srcAddr;
-pub use dmacc0configuration as dmacc1configuration;
-pub use dmacc0configuration as dmacc2configuration;
-pub use dmacc0configuration as dmacc3configuration;
-pub use dmacc0configuration as dmacc4configuration;
-pub use dmacc0control as dmacc1control;
-pub use dmacc0control as dmacc2control;
-pub use dmacc0control as dmacc3control;
-pub use dmacc0control as dmacc4control;
-pub use dmacc0def_lli as dmacc1def_lli;
-pub use dmacc0def_lli as dmacc2def_lli;
-pub use dmacc0def_lli as dmacc3def_lli;
-pub use dmacc0def_lli as dmacc4def_lli;
-pub use dmacc0dest_addr as dmacc1dest_addr;
-pub use dmacc0dest_addr as dmacc2dest_addr;
-pub use dmacc0dest_addr as dmacc3dest_addr;
-pub use dmacc0dest_addr as dmacc4dest_addr;
-pub use dmacc0lli as dmacc1lli;
-pub use dmacc0lli as dmacc2lli;
-pub use dmacc0lli as dmacc3lli;
-pub use dmacc0lli as dmacc4lli;
 pub use dmacc0src_addr as dmacc1src_addr;
+pub use Dmacc0destAddr as Dmacc1destAddr;
+pub use dmacc0dest_addr as dmacc1dest_addr;
+pub use Dmacc0lli as Dmacc1lli;
+pub use dmacc0lli as dmacc1lli;
+pub use Dmacc0control as Dmacc1control;
+pub use dmacc0control as dmacc1control;
+pub use Dmacc0configuration as Dmacc1configuration;
+pub use dmacc0configuration as dmacc1configuration;
+pub use Dmacc0defLli as Dmacc1defLli;
+pub use dmacc0def_lli as dmacc1def_lli;
+pub use Dmacc0srcAddr as Dmacc2srcAddr;
 pub use dmacc0src_addr as dmacc2src_addr;
+pub use Dmacc0destAddr as Dmacc2destAddr;
+pub use dmacc0dest_addr as dmacc2dest_addr;
+pub use Dmacc0lli as Dmacc2lli;
+pub use dmacc0lli as dmacc2lli;
+pub use Dmacc0control as Dmacc2control;
+pub use dmacc0control as dmacc2control;
+pub use Dmacc0configuration as Dmacc2configuration;
+pub use dmacc0configuration as dmacc2configuration;
+pub use Dmacc0defLli as Dmacc2defLli;
+pub use dmacc0def_lli as dmacc2def_lli;
+pub use Dmacc0srcAddr as Dmacc3srcAddr;
 pub use dmacc0src_addr as dmacc3src_addr;
+pub use Dmacc0destAddr as Dmacc3destAddr;
+pub use dmacc0dest_addr as dmacc3dest_addr;
+pub use Dmacc0lli as Dmacc3lli;
+pub use dmacc0lli as dmacc3lli;
+pub use Dmacc0control as Dmacc3control;
+pub use dmacc0control as dmacc3control;
+pub use Dmacc0configuration as Dmacc3configuration;
+pub use dmacc0configuration as dmacc3configuration;
+pub use Dmacc0defLli as Dmacc3defLli;
+pub use dmacc0def_lli as dmacc3def_lli;
+pub use Dmacc0srcAddr as Dmacc4srcAddr;
 pub use dmacc0src_addr as dmacc4src_addr;
+pub use Dmacc0destAddr as Dmacc4destAddr;
+pub use dmacc0dest_addr as dmacc4dest_addr;
+pub use Dmacc0lli as Dmacc4lli;
+pub use dmacc0lli as dmacc4lli;
+pub use Dmacc0control as Dmacc4control;
+pub use dmacc0control as dmacc4control;
+pub use Dmacc0configuration as Dmacc4configuration;
+pub use dmacc0configuration as dmacc4configuration;
+pub use Dmacc0defLli as Dmacc4defLli;
+pub use dmacc0def_lli as dmacc4def_lli;
