@@ -95,10 +95,16 @@ pub(crate) fn busy_wait(cnt: u32) {
 /// Drive PMU_PW_CTL=1 in a loop until `(reg & mask) == want`. Returns
 /// [`ClockError::PmuTimeout`] after 20000 unproductive iterations.
 /// Mirrors `do_power_control` (`cxd56_clock.c:254`).
+///
+/// The kick register is `PMU_PW_CTL` at `CXD56_TOPREG_BASE + 0x0030`
+/// (`0x0410_0030`). The SVD/PAC omits this register (it falls inside
+/// `_reserved3`); use a direct volatile write instead.
 fn kick_and_poll(read: impl Fn() -> u32, mask: u32, want: u32) -> Result<(), ClockError> {
-    let topreg = unsafe { &*pac::Topreg::PTR };
+    // CXD56_TOPREG_PMU_PW_CTL = CXD56_TOPREG_BASE + 0x0030 = 0x0410_0030
+    // NuttX cxd56_clock.c:261 — "putreg32(1, CXD56_TOPREG_PMU_PW_CTL)"
+    const PMU_PW_CTL: *mut u32 = 0x0410_0030 as *mut u32;
     for _ in 0..POWER_CONTROL_RETRY {
-        topreg.pmu_core_cken().write(|w| unsafe { w.bits(1) });
+        unsafe { core::ptr::write_volatile(PMU_PW_CTL, 1) };
         delay_us(KICK_DELAY_US);
         if read() & mask == want {
             delay_us(SETTLE_DELAY_US);
