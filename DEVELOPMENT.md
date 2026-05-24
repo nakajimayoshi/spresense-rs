@@ -31,6 +31,10 @@ For Later
   - Looks uses some PL080/81 so might look for drivers for those, still need other peripherals first to be useful.
 - Fancy stuff like GNSS
 
+## `memory.x` and `rt` features
+
+I wanted to avoid having to keep copies in each of the examples. Seems like the `rt` feature is needed to automatically get cargo to pick it up. PACs its not default, HALs its default but might need some machinery to allow for opting out and let users choose their own `memory.x`.
+
 ## arm-firmware crates
 
 TrustFirmware.org has a few different drivers for common peripherals. Testing the pl011 driver in the corresponding feature branch. There are a few that look like they might work for the sony chip, like the 805 watchdog driver, so should look to pull that in if the pl011 driver works.
