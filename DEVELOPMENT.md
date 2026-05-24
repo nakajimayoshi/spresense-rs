@@ -60,3 +60,10 @@ The SWD might be disabled by default (boo!) so I need to look that up when it co
 
   ▎ "By default the JTAG access to the chip is disabled at reset. The boot ROM determines the boot mode based on OTP
   ▎ BOOT_SRC or reset state pins."
+
+## LED debugging
+
+Probably should have thought of this myself, but writing it down to remember. Running into issues with UART and clock configuration setup. The constructor returns a Result but since the UART is what is the issue, I cant tell what the problem is. Instead, I can use the LED to encode the enum value, with different light patterns indicating the problem.
+
+- SOS:  (150 ms on -> 150 ms off) x 3, wait 1000 ms
+- Strobe: (50 ms on -> 50 ms off) x 10, wait 500 ms
