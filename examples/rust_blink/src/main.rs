@@ -17,7 +17,7 @@ use cortex_m::asm;
 use cortex_m_rt::entry;
 use panic_halt as _;
 
-use cxd56_pac::pac::*;
+use cxd56_pac_svd2rust::*;
 
 /// Cycles to spin between LED toggles at ~153.6 MHz (≈ 0.5 s).
 const DELAY_CYCLES: u32 = 76_800_000;
