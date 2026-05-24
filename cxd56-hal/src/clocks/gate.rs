@@ -41,6 +41,10 @@ pub(crate) fn img_acquire(client: ImgClient) {
         let g = crg.ck_gate_ahb().read().bits();
         crg.ck_gate_ahb()
             .write(|w| unsafe { w.bits(g | CK_GATE_IMG_BIT) });
+        // Read-back to drain the AHB write and let the gate settle before
+        // deasserting reset. Mirrors cxd56_clock.c:1808.
+        let _ = crg.reset().read().bits();
+        super::pmu::busy_wait(10);
         let r = crg.reset().read().bits();
         crg.reset().write(|w| unsafe { w.bits(r | XRS_IMG_BIT) });
     }
