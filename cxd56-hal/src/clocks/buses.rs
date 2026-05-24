@@ -104,7 +104,7 @@ pub fn scu_hz(rcosc: u32, rtc: u32, xosc: u32) -> u32 {
     }
 }
 
-/// COM-bus clock (SPI0/I2C2/UART0). `cxd56_clock.c:1665`.
+/// COM-bus clock (SPI0/I2C2/UART1). `cxd56_clock.c:1665`.
 pub fn com_hz(sys: u32) -> u32 {
     let val = unsafe { (*pac::Topreg::PTR).ckdiv_com().read().bits() };
     sys / ((val & 0x1f) + 1)

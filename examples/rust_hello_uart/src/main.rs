@@ -10,7 +10,7 @@ use panic_halt as _;
 
 use cxd56_hal::gpio::{gpio0, Level};
 use cxd56_hal::pac;
-use cxd56_hal::uart::{Uart2, UartConfig};
+use cxd56_hal::uart::{Uart1, UartConfig};
 use cxd56_hal::{
     clocks::{Config, RccExt},
     pac::gpio0::pin97::Pin97Spec,
@@ -52,7 +52,7 @@ fn main() -> ! {
     sos(&mut led, &mut delay);
 
     let mut uart =
-        Uart2::new(pac.uart2, &clocks, UartConfig::default()).expect("uart2 init failed");
+        Uart1::new(pac.uart1, &clocks, UartConfig::default()).expect("uart1 init failed");
 
     let mut n: u32 = 0;
     loop {

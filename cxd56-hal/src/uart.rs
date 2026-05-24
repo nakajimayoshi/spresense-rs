@@ -8,7 +8,7 @@ use embedded_hal_nb::serial::{ErrorKind, ErrorType};
 pub enum UartError {
     /// Baud rate divisor would be zero or exceed the 16-bit IBRD register.
     BadBaud,
-    /// IMG-UART clock could not be enabled.
+    /// UART clock could not be enabled.
     Clock(ClockError),
 }
 
@@ -54,78 +54,118 @@ impl Default for UartConfig {
     }
 }
 
-// TODO(iopad): factor into a dedicated iopad module once SPI4/SDIO/I2S need it.
-// Register details from CXD5602 user manual §3.1 (pp. 66, 71-74):
-//   IO_UART2_TXD  = 0x0410_090C  (P1n_00, pin 67)
-//   IO_UART2_RXD  = 0x0410_0910  (P1n_01, pin 68)
-//   IOCAPP_IOMD   = 0x0410_14A0  (bits [3:2] = UART2 mode field)
-//   IOCELL layout: ENZI[0]=input-en, PUN[8]=pullup(0=on), PDN[16]=pulldown(0=on), LOWEMI[24]=drive(1=2mA)
+// TODO(iopad): factor pin-mux helpers into a dedicated iopad module once SPI4/SDIO/I2S need it.
+
+// UART1 — debug console UART in the SYSIOP_SUB (COM) domain.
+// TXD = SPI0_CS_X (pin 17) at TOPREG+0x0844
+// RXD = SPI0_SCK  (pin 18) at TOPREG+0x0848
+// Mode mux: IOCSYS_IOMD0 (TOPREG+0x07c0), GROUP_SPI0A shift = 12.
+// Reference: cxd5602_pinconfig.h:510, cxd5602_topreg.h:149,159-160,
+//            cxd56_pinconfig.c:53,139-141,391.
+fn uart1_pinmux() {
+    const IO_SPI0_CS_X: *mut u32 = 0x0410_0844 as *mut u32; // UART1 TXD
+    const IO_SPI0_SCK:  *mut u32 = 0x0410_0848 as *mut u32; // UART1 RXD
+    const IOCSYS_IOMD0: *mut u32 = 0x0410_07c0 as *mut u32;
+    const SPI0A_FIELD_MASK: u32  = 0x3 << 12;
+    const SPI0A_MODE_UART1: u32  = 0x1 << 12;
+
+    unsafe {
+        // TXD: DRIVE_NORMAL(1<<24), FLOAT((1<<16)|(1<<8)), input disabled
+        core::ptr::write_volatile(IO_SPI0_CS_X, 0x0101_0100);
+        // RXD: same + input enabled
+        core::ptr::write_volatile(IO_SPI0_SCK, 0x0101_0101);
+        let m = core::ptr::read_volatile(IOCSYS_IOMD0);
+        core::ptr::write_volatile(IOCSYS_IOMD0, (m & !SPI0A_FIELD_MASK) | SPI0A_MODE_UART1);
+    }
+}
+
+// UART2 — IMG-domain UART connected to the extension-board JP1 header (pins 2-5).
+// TXD = P1n_00 (pin 67) at TOPREG+0x090C
+// RXD = P1n_01 (pin 68) at TOPREG+0x0910
+// Mode mux: IOCAPP_IOMD (TOPREG+0x14a0), GROUP_UART2 shift = 2.
+// Reference: CXD5602 user manual §3.1 pp.66,71-74; cxd5602_pinconfig.h:356-357,577.
 fn uart2_pinmux() {
     const IO_UART2_TXD: *mut u32 = 0x0410_090C as *mut u32;
     const IO_UART2_RXD: *mut u32 = 0x0410_0910 as *mut u32;
     const IOCAPP_IOMD:  *mut u32 = 0x0410_14A0 as *mut u32;
-    const UART2_FIELD_MASK: u32  = 0x3 << 2; // bits [3:2]
-    const UART2_MODE_ALT1: u32   = 0x1 << 2; // mode=1 → UART2 alt function
+    const UART2_FIELD_MASK: u32  = 0x3 << 2;
+    const UART2_MODE_ALT1: u32   = 0x1 << 2;
 
     unsafe {
-        // TXD: 2mA drive, no pull, input disabled (0x01010100)
         core::ptr::write_volatile(IO_UART2_TXD, 0x0101_0100);
-        // RXD: 2mA drive, no pull, input enabled  (0x01010101)
         core::ptr::write_volatile(IO_UART2_RXD, 0x0101_0101);
-        // Switch both pads from GPIO (mode 0) to UART2 (mode 1)
         let m = core::ptr::read_volatile(IOCAPP_IOMD);
         core::ptr::write_volatile(IOCAPP_IOMD, (m & !UART2_FIELD_MASK) | UART2_MODE_ALT1);
     }
 }
 
-/// Blocking driver for UART2 (the IMG-domain UART connected to the on-board
-/// CP2102N USB-to-serial bridge on the Spresense main board).
-pub struct Uart2 {
-    uart: pac::Uart2,
+/// Compute baud-rate divisors from a clock frequency. Returns `(ibrd, fbrd)` or
+/// `Err(UartError::BadBaud)` if the divisor is zero or overflows the 16-bit IBRD.
+/// PL011 baud: BRD = f / (16 * baud), split as IBRD (integer) + FBRD (6-bit fraction).
+fn brd(f_uart: u32, baud: u32) -> Result<(u16, u8), UartError> {
+    let brd_x64 = (f_uart as u64 * 4) / baud as u64;
+    let ibrd = (brd_x64 >> 6) as u32;
+    let fbrd = (brd_x64 & 0x3F) as u32;
+    if ibrd == 0 || ibrd > 0xFFFF {
+        return Err(UartError::BadBaud);
+    }
+    Ok((ibrd as u16, fbrd as u8))
 }
 
-impl Uart2 {
-    /// Initialise UART2 with the given baud rate and frame format.
+// ---------- PL011 init sequence (mirrors cxd56_serial.c:454-516) ----------
+//
+// The sequence is identical for UART1 and UART2. svd2rust generates distinct
+// types for each peripheral, so the body is duplicated. TODO(pl011): factor
+// into a macro when a third UART instance is added.
+
+/// Blocking driver for UART1 (the SYSIOP_SUB "debug" UART wired to the
+/// on-board CP2102N USB-to-serial bridge on the Spresense main board).
+pub struct Uart1 {
+    uart: pac::Uart1,
+}
+
+impl Uart1 {
+    /// Initialise UART1 with the given baud rate and frame format.
     ///
-    /// Enables the IMG-UART clock (≈ 39 MHz) and programs the PL011
-    /// control registers.  Must be called after `Clocks::freeze`.
+    /// Enables the COM-bus clock, programs the SPI0A pinmux to UART1 mode,
+    /// and initialises the PL011 control registers. Must be called after
+    /// `Clocks::freeze`. No hardware flow control — UART1 has none on the
+    /// Spresense main board.
     pub fn new(
-        uart: pac::Uart2,
+        uart: pac::Uart1,
         clocks: &Clocks,
         config: UartConfig,
     ) -> Result<Self, UartError> {
-        PeripheralId::ImgUart.enable()?;
-        uart2_pinmux();
+        PeripheralId::Uart1.enable()?;
+        uart1_pinmux();
 
-        // img_uart_enable() just programmed GEAR_IMG_UART = 0x0001_0004.
-        // clocks.img_uart was snapshotted at freeze() time, before that write,
-        // so re-derive from the live gear register using the stable APPSMP value.
-        let f_uart = buses::img_uart_hz(clocks.appsmp.to_Hz());
-
-        // PL011 baud-rate divisor: BRD = f_uart / (16 * baud)
-        // Compute as brd_x64 = f_uart * 4 / baud (avoids overflow for typical
-        // embedded clocks; f_uart ≤ 156 MHz fits in u64).
-        let brd_x64 = (f_uart as u64 * 4) / config.baud_rate as u64;
-        let ibrd = (brd_x64 >> 6) as u32;
-        let fbrd = (brd_x64 & 0x3F) as u32;
-
-        // IBRD must be non-zero (IBRD=0 disables the UART) and fit in 16 bits.
-        if ibrd == 0 || ibrd > 0xFFFF {
-            return Err(UartError::BadBaud);
-        }
+        // clocks.com is the COM baseclock (cxd56_get_com_baseclock). UART1 has
+        // no per-port gear register, so this value is stable from freeze() onward.
+        let f_uart = clocks.com.to_Hz();
+        let (ibrd, fbrd) = brd(f_uart, config.baud_rate)?;
 
         // Disable UART before reconfiguring (PL011 spec §3.3.4).
         uart.cr().write(|w| unsafe { w.bits(0) });
+        uart.lcr_h().write(|w| unsafe { w.bits(0) });
+        // Clear DMA enables. ECR (error clear, write-only at offset 0x004) is
+        // the write side of the RSR register; PAC models RSR as read-only so use
+        // a raw write. Mirrors cxd56_serial.c:478-479.
+        uart.dmacr().write(|w| unsafe { w.bits(0) });
+        unsafe {
+            core::ptr::write_volatile(
+                (pac::Uart1::PTR as usize + 0x004) as *mut u32,
+                0xf,
+            );
+        }
 
         uart.ibrd()
-            .write(|w| unsafe { w.baud_divint().bits(ibrd as u16) });
+            .write(|w| unsafe { w.baud_divint().bits(ibrd) });
         uart.fbrd()
-            .write(|w| unsafe { w.baud_divfrac().bits(fbrd as u8) });
+            .write(|w| unsafe { w.baud_divfrac().bits(fbrd) });
 
-        // LCR_H must be written after IBRD/FBRD; the write latches the
-        // divisors into the baud-rate generator (PL011 spec §3.3.4).
+        // LCR_H written after IBRD/FBRD latches the baud-rate generator (PL011
+        // spec §3.3.4). Write format bits only — FEN comes in a separate write.
         uart.lcr_h().write(|w| {
-            let w = w.fen().enabled(); // enable FIFOs
             let w = match config.word_length {
                 WordLength::Eight => w.wlen()._8bits(),
                 WordLength::Seven => w.wlen()._7bits(),
@@ -143,6 +183,154 @@ impl Uart2 {
             }
         });
 
+        // FIFO interrupt thresholds = 1/8 full; clear all interrupt sources.
+        uart.ifls().write(|w| unsafe { w.bits(0) });
+        uart.icr().write(|w| unsafe { w.bits(0x7ff) });
+
+        // Enable FIFOs, then enable UART — two separate writes (cxd56_serial.c:499-505).
+        uart.lcr_h().modify(|r, w| unsafe { w.bits(r.bits() | (1 << 4)) }); // FEN
+        uart.cr()
+            .write(|w| w.uarten().enabled().txe().enabled().rxe().enabled());
+
+        Ok(Self { uart })
+    }
+
+    /// Transmit one byte, blocking until the TX FIFO has room.
+    #[inline]
+    pub fn write_byte(&mut self, byte: u8) {
+        while self.uart.fr().read().txff().bit_is_set() {}
+        self.uart.dr().write(|w| unsafe { w.bits(byte as u32) });
+    }
+
+    /// Read one byte if the RX FIFO is non-empty, otherwise return `None`.
+    #[inline]
+    pub fn read_byte(&mut self) -> Option<u8> {
+        if self.uart.fr().read().rxfe().bit_is_set() {
+            None
+        } else {
+            Some(self.uart.dr().read().bits() as u8)
+        }
+    }
+
+    /// Block until the TX FIFO and shift register are empty.
+    #[inline]
+    pub fn flush(&mut self) {
+        while self.uart.fr().read().busy().bit_is_set() {}
+    }
+}
+
+impl fmt::Write for Uart1 {
+    fn write_str(&mut self, s: &str) -> fmt::Result {
+        for byte in s.bytes() {
+            self.write_byte(byte);
+        }
+        Ok(())
+    }
+}
+
+impl ErrorType for Uart1 {
+    type Error = ErrorKind;
+}
+
+impl embedded_hal_nb::serial::Read<u8> for Uart1 {
+    fn read(&mut self) -> nb::Result<u8, Self::Error> {
+        match self.read_byte() {
+            Some(b) => Ok(b),
+            None => Err(nb::Error::WouldBlock),
+        }
+    }
+}
+
+impl embedded_hal_nb::serial::Write<u8> for Uart1 {
+    fn write(&mut self, word: u8) -> nb::Result<(), Self::Error> {
+        if self.uart.fr().read().txff().bit_is_set() {
+            Err(nb::Error::WouldBlock)
+        } else {
+            self.uart.dr().write(|w| unsafe { w.bits(word as u32) });
+            Ok(())
+        }
+    }
+
+    fn flush(&mut self) -> nb::Result<(), Self::Error> {
+        if self.uart.fr().read().busy().bit_is_set() {
+            Err(nb::Error::WouldBlock)
+        } else {
+            Ok(())
+        }
+    }
+}
+
+/// Blocking driver for UART2 (the IMG-domain UART connected to JP1 pins 2-5 on
+/// the Spresense extension/Arduino header). Note: the on-board CP2102N USB-serial
+/// bridge is wired to UART1, not UART2.
+pub struct Uart2 {
+    uart: pac::Uart2,
+}
+
+impl Uart2 {
+    /// Initialise UART2 with the given baud rate and frame format.
+    ///
+    /// Enables the IMG-UART clock (≈ 39 MHz) and programs the PL011
+    /// control registers. Must be called after `Clocks::freeze`.
+    pub fn new(
+        uart: pac::Uart2,
+        clocks: &Clocks,
+        config: UartConfig,
+    ) -> Result<Self, UartError> {
+        PeripheralId::ImgUart.enable()?;
+        uart2_pinmux();
+
+        // img_uart_enable() just programmed GEAR_IMG_UART = 0x0001_0004.
+        // clocks.img_uart was snapshotted at freeze() time, before that write,
+        // so re-derive from the live gear register using the stable APPSMP value.
+        let f_uart = buses::img_uart_hz(clocks.appsmp.to_Hz());
+        let (ibrd, fbrd) = brd(f_uart, config.baud_rate)?;
+
+        // Disable UART before reconfiguring (PL011 spec §3.3.4).
+        uart.cr().write(|w| unsafe { w.bits(0) });
+        uart.lcr_h().write(|w| unsafe { w.bits(0) });
+        // Clear DMA enables. ECR (error clear, write-only at offset 0x004) is
+        // the write side of the RSR register; PAC models RSR as read-only so use
+        // a raw write. Mirrors cxd56_serial.c:478-479.
+        uart.dmacr().write(|w| unsafe { w.bits(0) });
+        unsafe {
+            core::ptr::write_volatile(
+                (pac::Uart2::PTR as usize + 0x004) as *mut u32,
+                0xf,
+            );
+        }
+
+        uart.ibrd()
+            .write(|w| unsafe { w.baud_divint().bits(ibrd) });
+        uart.fbrd()
+            .write(|w| unsafe { w.baud_divfrac().bits(fbrd) });
+
+        // LCR_H written after IBRD/FBRD latches the baud-rate generator (PL011
+        // spec §3.3.4). Write format bits only — FEN comes in a separate write.
+        uart.lcr_h().write(|w| {
+            let w = match config.word_length {
+                WordLength::Eight => w.wlen()._8bits(),
+                WordLength::Seven => w.wlen()._7bits(),
+                WordLength::Six => w.wlen()._6bits(),
+                WordLength::Five => w.wlen()._5bits(),
+            };
+            let w = match config.stop_bits {
+                StopBits::One => w.stp2().not_selected(),
+                StopBits::Two => w.stp2().selected(),
+            };
+            match config.parity {
+                Parity::None => w.pen().disabled(),
+                Parity::Even => w.pen().enabled().eps().even_parity(),
+                Parity::Odd => w.pen().enabled().eps().odd_parity(),
+            }
+        });
+
+        // FIFO interrupt thresholds = 1/8 full; clear all interrupt sources.
+        uart.ifls().write(|w| unsafe { w.bits(0) });
+        uart.icr().write(|w| unsafe { w.bits(0x7ff) });
+
+        // Enable FIFOs, then enable UART — two separate writes (cxd56_serial.c:499-505).
+        uart.lcr_h().modify(|r, w| unsafe { w.bits(r.bits() | (1 << 4)) }); // FEN
         uart.cr()
             .write(|w| w.uarten().enabled().txe().enabled().rxe().enabled());
 
