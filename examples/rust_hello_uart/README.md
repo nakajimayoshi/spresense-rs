@@ -7,7 +7,9 @@ This is also an empirical test to validate that the UART and clock configuration
 ## Build and flash
 
 ```bash
-cargo build --release && mkspk -c 2 target/thumbv7em-none-eabihf/release/rust_hello_uart nuttx target/rust_hello.spk && flash_writer -c /dev/ttyUSB1 target/rust_hello.spk 
+cargo build --release \
+    && mkspk -c 2 target/thumbv7em-none-eabihf/release/rust_hello_uart nuttx target/rust_hello.spk \
+    && flash_writer -c /dev/ttyUSB1 target/rust_hello.spk 
 ```
 
 Expected output
