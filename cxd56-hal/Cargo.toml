@@ -13,5 +13,6 @@ cxd56-pac-svd2rust = { version = "0.1.0", path = "../cxd56-pac-svd2rust" }
 cortex-m = "0.7.7"
 embedded-hal = "1.0.0"
 embedded-hal-nb = "1.0.0"
+embedded-io = "0.7"
 fugit = "0.3"
 critical-section = "1"

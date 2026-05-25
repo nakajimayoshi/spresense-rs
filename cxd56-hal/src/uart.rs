@@ -3,6 +3,7 @@ use crate::pac;
 use core::fmt;
 use embedded_hal_nb::nb;
 use embedded_hal_nb::serial::{ErrorKind, ErrorType};
+use embedded_io;
 
 #[derive(Debug)]
 pub enum UartError {
@@ -255,6 +256,26 @@ impl embedded_hal_nb::serial::Write<u8> for Uart1 {
     }
 }
 
+impl embedded_io::ErrorType for Uart1 {
+    type Error = embedded_io::ErrorKind;
+}
+
+impl embedded_io::Write for Uart1 {
+    fn write(&mut self, buf: &[u8]) -> Result<usize, Self::Error> {
+        for &byte in buf {
+            self.write_byte(byte);
+        }
+        Ok(buf.len())
+    }
+
+    fn flush(&mut self) -> Result<(), Self::Error> {
+        while nb::block!(
+            <Self as embedded_hal_nb::serial::Write<u8>>::flush(self)
+        ).is_err() {}
+        Ok(())
+    }
+}
+
 /// Blocking driver for UART2 (the IMG-domain UART connected to JP1 pins 2-5 on
 /// the Spresense extension/Arduino header). Note: the on-board CP2102N USB-serial
 /// bridge is wired to UART1, not UART2.
@@ -391,5 +412,25 @@ impl embedded_hal_nb::serial::Write<u8> for Uart2 {
         } else {
             Ok(())
         }
+    }
+}
+
+impl embedded_io::ErrorType for Uart2 {
+    type Error = embedded_io::ErrorKind;
+}
+
+impl embedded_io::Write for Uart2 {
+    fn write(&mut self, buf: &[u8]) -> Result<usize, Self::Error> {
+        for &byte in buf {
+            self.write_byte(byte);
+        }
+        Ok(buf.len())
+    }
+
+    fn flush(&mut self) -> Result<(), Self::Error> {
+        while nb::block!(
+            <Self as embedded_hal_nb::serial::Write<u8>>::flush(self)
+        ).is_err() {}
+        Ok(())
     }
 }
