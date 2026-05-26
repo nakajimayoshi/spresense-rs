@@ -83,9 +83,7 @@ fn modify_sysiop_sub_cken(set: u32, clr: u32) {
     let topreg = unsafe { &*pac::TopregSub::PTR };
     let v = topreg.sysiop_sub_cken().read().bits();
     let new = (v & !clr) | set;
-    topreg
-        .sysiop_sub_cken()
-        .write(|w| unsafe { w.bits(new) });
+    topreg.sysiop_sub_cken().write(|w| unsafe { w.bits(new) });
 }
 
 pub(crate) fn sysiop_bridge_acquire(client: SysiopBridgeClient) {

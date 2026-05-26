@@ -122,8 +122,11 @@ impl PeripheralId {
     /// load (SCU sequencer) or to recover from a wedged peripheral.
     pub fn reset(self) {
         match self {
-            PeripheralId::Spi4 | PeripheralId::Spi5 | PeripheralId::ImgUart
-            | PeripheralId::ImgCisif | PeripheralId::ImgGe2d => {
+            PeripheralId::Spi4
+            | PeripheralId::Spi5
+            | PeripheralId::ImgUart
+            | PeripheralId::ImgCisif
+            | PeripheralId::ImgGe2d => {
                 reset::pulse(ResetReg::Crg, 1 << 4); // XRS_IMG
             }
             PeripheralId::Usb => reset::pulse(ResetReg::Crg, 1 << 8),
@@ -139,11 +142,7 @@ impl PeripheralId {
     /// Set a SPI port's clock gear so the resulting frequency is **at most**
     /// `maxfreq`. Valid for [`PeripheralId::Spi4`] and [`PeripheralId::Spi5`].
     /// Mirrors `cxd56_spi_clock_gear_adjust` (cxd56_clock.c:1133).
-    pub fn set_spi_gear(
-        self,
-        appsmp: Hertz<u32>,
-        maxfreq: Hertz<u32>,
-    ) -> Result<(), GearError> {
+    pub fn set_spi_gear(self, appsmp: Hertz<u32>, maxfreq: Hertz<u32>) -> Result<(), GearError> {
         if maxfreq.to_Hz() == 0 {
             return Err(GearError::ZeroFreq);
         }
@@ -152,20 +151,14 @@ impl PeripheralId {
             return Err(GearError::ParentClockZero);
         }
         let (max_divisor, write_gear): (u32, fn(u32)) = match self {
-            PeripheralId::Spi4 => (
-                0x7f,
-                |gear| {
-                    let crg = unsafe { &*pac::Crg::PTR };
-                    crg.gear_img_spi().write(|w| unsafe { w.bits(gear) });
-                },
-            ),
-            PeripheralId::Spi5 => (
-                0xf,
-                |gear| {
-                    let crg = unsafe { &*pac::Crg::PTR };
-                    crg.gear_img_wspi().write(|w| unsafe { w.bits(gear) });
-                },
-            ),
+            PeripheralId::Spi4 => (0x7f, |gear| {
+                let crg = unsafe { &*pac::Crg::PTR };
+                crg.gear_img_spi().write(|w| unsafe { w.bits(gear) });
+            }),
+            PeripheralId::Spi5 => (0xf, |gear| {
+                let crg = unsafe { &*pac::Crg::PTR };
+                crg.gear_img_wspi().write(|w| unsafe { w.bits(gear) });
+            }),
             _ => return Err(GearError::NotASpi),
         };
         // Ceiling-divide by (2 * maxfreq) — SPI hardware does an internal /2.
@@ -184,8 +177,7 @@ fn spi4_enable() -> Result<(), ClockError> {
     pmu::enable_domain(PmuDomain::AppSub)?;
     gate::img_acquire(ImgClient::Spi4);
     let crg = unsafe { &*pac::Crg::PTR };
-    crg.gear_img_spi()
-        .write(|w| unsafe { w.bits(0x0001_0002) });
+    crg.gear_img_spi().write(|w| unsafe { w.bits(0x0001_0002) });
     Ok(())
 }
 
@@ -245,13 +237,11 @@ fn usb_enable() -> Result<(), ClockError> {
     // USBPHY, set gear. Mirrors cxd56_clock.c:631-650.
     let r = crg.reset().read().bits();
     crg.reset().write(|w| unsafe { w.bits(r & !(1 << 8)) });
-    crg.ck_gate_ahb()
-        .write(|w| unsafe { w.bits(c | (1 << 8)) });
+    crg.ck_gate_ahb().write(|w| unsafe { w.bits(c | (1 << 8)) });
     pmu::busy_wait(10);
     crg.reset().write(|w| unsafe { w.bits(r | (1 << 8)) });
     topreg.usbphy_cken().write(|w| unsafe { w.bits(1) });
-    crg.gear_per_usb()
-        .write(|w| unsafe { w.bits(0x0001_0002) });
+    crg.gear_per_usb().write(|w| unsafe { w.bits(0x0001_0002) });
     Ok(())
 }
 
@@ -280,8 +270,7 @@ fn sdio_enable() -> Result<(), ClockError> {
     }
     let r = crg.reset().read().bits();
     crg.reset().write(|w| unsafe { w.bits(r & !(1 << 9)) });
-    crg.ck_gate_ahb()
-        .write(|w| unsafe { w.bits(c | (1 << 9)) });
+    crg.ck_gate_ahb().write(|w| unsafe { w.bits(c | (1 << 9)) });
     crg.gear_per_sdio()
         .write(|w| unsafe { w.bits(0x0001_0002) });
     pmu::busy_wait(10);
@@ -347,11 +336,7 @@ fn uart1_enable() -> Result<(), ClockError> {
 }
 
 fn uart1_disable() -> Result<(), ClockError> {
-    sysiop_sub_peripheral_disable(
-        SysiopBridgeClient::Uart1,
-        sysiop_sub_bits::CK_UART1,
-        1 << 5,
-    );
+    sysiop_sub_peripheral_disable(SysiopBridgeClient::Uart1, sysiop_sub_bits::CK_UART1, 1 << 5);
     Ok(())
 }
 
@@ -365,11 +350,7 @@ fn spim_enable() -> Result<(), ClockError> {
 }
 
 fn spim_disable() -> Result<(), ClockError> {
-    sysiop_sub_peripheral_disable(
-        SysiopBridgeClient::Spim,
-        sysiop_sub_bits::CK_SPIM,
-        1 << 0,
-    );
+    sysiop_sub_peripheral_disable(SysiopBridgeClient::Spim, sysiop_sub_bits::CK_SPIM, 1 << 0);
     Ok(())
 }
 
@@ -383,10 +364,6 @@ fn i2cm_enable() -> Result<(), ClockError> {
 }
 
 fn i2cm_disable() -> Result<(), ClockError> {
-    sysiop_sub_peripheral_disable(
-        SysiopBridgeClient::I2cm,
-        sysiop_sub_bits::CK_I2CM,
-        1 << 11,
-    );
+    sysiop_sub_peripheral_disable(SysiopBridgeClient::I2cm, sysiop_sub_bits::CK_I2CM, 1 << 11);
     Ok(())
 }

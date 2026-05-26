@@ -53,16 +53,40 @@ const SETTLE_DELAY_US: u32 = 400;
 /// Refcounts indexed by `PmuDomain as u8`. Length matches the highest enum
 /// discriminant (`AppAudio` = 13) plus a small margin.
 static DIGITAL_REFS: [AtomicU32; 16] = [
-    AtomicU32::new(0), AtomicU32::new(0), AtomicU32::new(0), AtomicU32::new(0),
-    AtomicU32::new(0), AtomicU32::new(0), AtomicU32::new(0), AtomicU32::new(0),
-    AtomicU32::new(0), AtomicU32::new(0), AtomicU32::new(0), AtomicU32::new(0),
-    AtomicU32::new(0), AtomicU32::new(0), AtomicU32::new(0), AtomicU32::new(0),
+    AtomicU32::new(0),
+    AtomicU32::new(0),
+    AtomicU32::new(0),
+    AtomicU32::new(0),
+    AtomicU32::new(0),
+    AtomicU32::new(0),
+    AtomicU32::new(0),
+    AtomicU32::new(0),
+    AtomicU32::new(0),
+    AtomicU32::new(0),
+    AtomicU32::new(0),
+    AtomicU32::new(0),
+    AtomicU32::new(0),
+    AtomicU32::new(0),
+    AtomicU32::new(0),
+    AtomicU32::new(0),
 ];
 static ANALOG_REFS: [AtomicU32; 16] = [
-    AtomicU32::new(0), AtomicU32::new(0), AtomicU32::new(0), AtomicU32::new(0),
-    AtomicU32::new(0), AtomicU32::new(0), AtomicU32::new(0), AtomicU32::new(0),
-    AtomicU32::new(0), AtomicU32::new(0), AtomicU32::new(0), AtomicU32::new(0),
-    AtomicU32::new(0), AtomicU32::new(0), AtomicU32::new(0), AtomicU32::new(0),
+    AtomicU32::new(0),
+    AtomicU32::new(0),
+    AtomicU32::new(0),
+    AtomicU32::new(0),
+    AtomicU32::new(0),
+    AtomicU32::new(0),
+    AtomicU32::new(0),
+    AtomicU32::new(0),
+    AtomicU32::new(0),
+    AtomicU32::new(0),
+    AtomicU32::new(0),
+    AtomicU32::new(0),
+    AtomicU32::new(0),
+    AtomicU32::new(0),
+    AtomicU32::new(0),
+    AtomicU32::new(0),
 ];
 
 /// Cached APPSMP frequency for [`delay_us`] scaling. Defaults to the boot
@@ -139,9 +163,7 @@ fn write_ana_pw_ctl(mask: u32) {
 #[inline]
 fn write_ana_pw_ctl_off(mask: u32) {
     let topreg = unsafe { &*pac::Topreg::PTR };
-    topreg
-        .ana_pw_ctl()
-        .write(|w| unsafe { w.bits(mask << 16) });
+    topreg.ana_pw_ctl().write(|w| unsafe { w.bits(mask << 16) });
 }
 
 #[inline]
@@ -182,8 +204,8 @@ pub fn enable_domain(d: PmuDomain) -> Result<(), ClockError> {
 pub fn disable_domain(d: PmuDomain) -> Result<(), ClockError> {
     let mask = 1u32 << (d as u8);
     critical_section::with(|_| {
-        let prev = DIGITAL_REFS[d as usize]
-            .fetch_update(Ordering::Relaxed, Ordering::Relaxed, |v| {
+        let prev =
+            DIGITAL_REFS[d as usize].fetch_update(Ordering::Relaxed, Ordering::Relaxed, |v| {
                 if v == 0 { None } else { Some(v - 1) }
             });
         let prev = match prev {
@@ -220,8 +242,8 @@ pub fn enable_analog(d: AnaDomain) -> Result<(), ClockError> {
 pub fn disable_analog(d: AnaDomain) -> Result<(), ClockError> {
     let mask = 1u32 << (d as u8);
     critical_section::with(|_| {
-        let prev = ANALOG_REFS[d as usize]
-            .fetch_update(Ordering::Relaxed, Ordering::Relaxed, |v| {
+        let prev =
+            ANALOG_REFS[d as usize].fetch_update(Ordering::Relaxed, Ordering::Relaxed, |v| {
                 if v == 0 { None } else { Some(v - 1) }
             });
         let prev = match prev {

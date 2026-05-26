@@ -1,4 +1,4 @@
-use crate::clocks::{buses, ClockError, Clocks, PeripheralId};
+use crate::clocks::{ClockError, Clocks, PeripheralId, buses};
 use crate::pac;
 use core::fmt;
 use embedded_hal_nb::nb;
@@ -65,13 +65,27 @@ impl Default for UartConfig {
 fn uart1_pinmux() {
     let topreg = unsafe { &*pac::Topreg::PTR };
     // TXD: 2mA drive (LOWEMI=1), float (PDN=1, PUN=1), input disabled (ENZI=0).
-    topreg
-        .io_spi0_cs_x()
-        .write(|w| w.lowemi().set_bit().pdn().set_bit().pun().set_bit().enzi().clear_bit());
+    topreg.io_spi0_cs_x().write(|w| {
+        w.lowemi()
+            .set_bit()
+            .pdn()
+            .set_bit()
+            .pun()
+            .set_bit()
+            .enzi()
+            .clear_bit()
+    });
     // RXD: same but input enabled (ENZI=1).
-    topreg
-        .io_spi0_sck()
-        .write(|w| w.lowemi().set_bit().pdn().set_bit().pun().set_bit().enzi().set_bit());
+    topreg.io_spi0_sck().write(|w| {
+        w.lowemi()
+            .set_bit()
+            .pdn()
+            .set_bit()
+            .pun()
+            .set_bit()
+            .enzi()
+            .set_bit()
+    });
     // SPI0A[13:12] = Func1 → UART1.  FieldWriter<2> needs unsafe bits().
     topreg
         .iocsys_iomd0()
@@ -85,13 +99,27 @@ fn uart1_pinmux() {
 fn uart2_pinmux() {
     let topreg = unsafe { &*pac::Topreg::PTR };
     // TXD: 2mA drive (LOWEMI=1), float (PDN=1, PUN=1), input disabled (ENZI=0).
-    topreg
-        .io_uart2_txd()
-        .write(|w| w.lowemi().set_bit().pdn().set_bit().pun().set_bit().enzi().clear_bit());
+    topreg.io_uart2_txd().write(|w| {
+        w.lowemi()
+            .set_bit()
+            .pdn()
+            .set_bit()
+            .pun()
+            .set_bit()
+            .enzi()
+            .clear_bit()
+    });
     // RXD: same but input enabled (ENZI=1).
-    topreg
-        .io_uart2_rxd()
-        .write(|w| w.lowemi().set_bit().pdn().set_bit().pun().set_bit().enzi().set_bit());
+    topreg.io_uart2_rxd().write(|w| {
+        w.lowemi()
+            .set_bit()
+            .pdn()
+            .set_bit()
+            .pun()
+            .set_bit()
+            .enzi()
+            .set_bit()
+    });
     // UART2[3:2] = Func1 → UART2.  FieldWriter<2> needs unsafe bits().
     topreg
         .iocapp_iomd()
@@ -130,11 +158,7 @@ impl Uart1 {
     /// and initialises the PL011 control registers. Must be called after
     /// `Clocks::freeze`. No hardware flow control — UART1 has none on the
     /// Spresense main board.
-    pub fn new(
-        uart: pac::Uart1,
-        clocks: &Clocks,
-        config: UartConfig,
-    ) -> Result<Self, UartError> {
+    pub fn new(uart: pac::Uart1, clocks: &Clocks, config: UartConfig) -> Result<Self, UartError> {
         PeripheralId::Uart1.enable()?;
         uart1_pinmux();
 
@@ -154,8 +178,7 @@ impl Uart1 {
         uart.rsr()
             .write(|w| w.roe().error().rbe().error().rpe().error().rfe().error());
 
-        uart.ibrd()
-            .write(|w| unsafe { w.baud_divint().bits(ibrd) });
+        uart.ibrd().write(|w| unsafe { w.baud_divint().bits(ibrd) });
         uart.fbrd()
             .write(|w| unsafe { w.baud_divfrac().bits(fbrd) });
 
@@ -184,7 +207,8 @@ impl Uart1 {
         uart.icr().write(|w| unsafe { w.bits(0x7ff) });
 
         // Enable FIFOs, then enable UART — two separate writes (cxd56_serial.c:499-505).
-        uart.lcr_h().modify(|r, w| unsafe { w.bits(r.bits() | (1 << 4)) }); // FEN
+        uart.lcr_h()
+            .modify(|r, w| unsafe { w.bits(r.bits() | (1 << 4)) }); // FEN
         uart.cr()
             .write(|w| w.uarten().enabled().txe().enabled().rxe().enabled());
 
@@ -269,9 +293,7 @@ impl embedded_io::Write for Uart1 {
     }
 
     fn flush(&mut self) -> Result<(), Self::Error> {
-        while nb::block!(
-            <Self as embedded_hal_nb::serial::Write<u8>>::flush(self)
-        ).is_err() {}
+        while nb::block!(<Self as embedded_hal_nb::serial::Write<u8>>::flush(self)).is_err() {}
         Ok(())
     }
 }
@@ -303,11 +325,7 @@ impl Uart2 {
     ///
     /// Enables the IMG-UART clock (≈ 39 MHz) and programs the PL011
     /// control registers. Must be called after `Clocks::freeze`.
-    pub fn new(
-        uart: pac::Uart2,
-        clocks: &Clocks,
-        config: UartConfig,
-    ) -> Result<Self, UartError> {
+    pub fn new(uart: pac::Uart2, clocks: &Clocks, config: UartConfig) -> Result<Self, UartError> {
         PeripheralId::ImgUart.enable()?;
         uart2_pinmux();
 
@@ -326,8 +344,7 @@ impl Uart2 {
         uart.rsr()
             .write(|w| w.roe().error().rbe().error().rpe().error().rfe().error());
 
-        uart.ibrd()
-            .write(|w| unsafe { w.baud_divint().bits(ibrd) });
+        uart.ibrd().write(|w| unsafe { w.baud_divint().bits(ibrd) });
         uart.fbrd()
             .write(|w| unsafe { w.baud_divfrac().bits(fbrd) });
 
@@ -356,7 +373,8 @@ impl Uart2 {
         uart.icr().write(|w| unsafe { w.bits(0x7ff) });
 
         // Enable FIFOs, then enable UART — two separate writes (cxd56_serial.c:499-505).
-        uart.lcr_h().modify(|r, w| unsafe { w.bits(r.bits() | (1 << 4)) }); // FEN
+        uart.lcr_h()
+            .modify(|r, w| unsafe { w.bits(r.bits() | (1 << 4)) }); // FEN
         uart.cr()
             .write(|w| w.uarten().enabled().txe().enabled().rxe().enabled());
 
@@ -367,9 +385,7 @@ impl Uart2 {
     #[inline]
     pub fn write_byte(&mut self, byte: u8) {
         while self.uart.fr().read().txff().bit_is_set() {}
-        self.uart
-            .dr()
-            .write(|w| unsafe { w.bits(byte as u32) });
+        self.uart.dr().write(|w| unsafe { w.bits(byte as u32) });
     }
 
     /// Read one byte if the RX FIFO is non-empty, otherwise return `None`.
@@ -443,9 +459,7 @@ impl embedded_io::Write for Uart2 {
     }
 
     fn flush(&mut self) -> Result<(), Self::Error> {
-        while nb::block!(
-            <Self as embedded_hal_nb::serial::Write<u8>>::flush(self)
-        ).is_err() {}
+        while nb::block!(<Self as embedded_hal_nb::serial::Write<u8>>::flush(self)).is_err() {}
         Ok(())
     }
 }
