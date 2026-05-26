@@ -7,13 +7,13 @@ impl FIF_PULL_CMP {
     #[must_use]
     #[inline(always)]
     pub const fn PULL_CMP(&self) -> super::vals::PULL_CMP {
-        let val = self.0 & 0x01;
+        let val = (self.0 >> 0usize) & 0x01;
         super::vals::PULL_CMP::from_bits(val as u8)
     }
     ///RX data read complete.
     #[inline(always)]
     pub const fn set_PULL_CMP(&mut self, val: super::vals::PULL_CMP) {
-        self.0 = (self.0 & !(0x01 << 0usize)) | ((val.to_bits() as u32) & 0x01);
+        self.0 = (self.0 & !(0x01 << 0usize)) | (((val.to_bits() as u32) & 0x01) << 0usize);
     }
 }
 impl Default for FIF_PULL_CMP {
@@ -44,13 +44,13 @@ impl FIF_PULL_EMP {
     #[must_use]
     #[inline(always)]
     pub const fn EMPTY_FLAG(&self) -> super::vals::EMPTY_FLAG {
-        let val = self.0 & 0x01;
+        let val = (self.0 >> 0usize) & 0x01;
         super::vals::EMPTY_FLAG::from_bits(val as u8)
     }
     ///RX buffer is empty.
     #[inline(always)]
     pub const fn set_EMPTY_FLAG(&mut self, val: super::vals::EMPTY_FLAG) {
-        self.0 = (self.0 & !(0x01 << 0usize)) | ((val.to_bits() as u32) & 0x01);
+        self.0 = (self.0 & !(0x01 << 0usize)) | (((val.to_bits() as u32) & 0x01) << 0usize);
     }
 }
 impl Default for FIF_PULL_EMP {
@@ -81,12 +81,13 @@ impl FIF_PULL_WRD0 {
     #[must_use]
     #[inline(always)]
     pub const fn DATA_0(&self) -> u32 {
-        self.0 & 0x0fff_ffff
+        let val = (self.0 >> 0usize) & 0x0fff_ffff;
+        val as u32
     }
     ///RX data word 0.
     #[inline(always)]
     pub const fn set_DATA_0(&mut self, val: u32) {
-        self.0 = (self.0 & !0x0fff_ffff) | (val & 0x0fff_ffff);
+        self.0 = (self.0 & !(0x0fff_ffff << 0usize)) | (((val as u32) & 0x0fff_ffff) << 0usize);
     }
     ///Sender ID.
     #[must_use]
@@ -135,13 +136,13 @@ impl FIF_PUSH_CMP {
     #[must_use]
     #[inline(always)]
     pub const fn PUSH_CMP(&self) -> super::vals::PUSH_CMP {
-        let val = self.0 & 0x01;
+        let val = (self.0 >> 0usize) & 0x01;
         super::vals::PUSH_CMP::from_bits(val as u8)
     }
     ///TX data write complete.
     #[inline(always)]
     pub const fn set_PUSH_CMP(&mut self, val: super::vals::PUSH_CMP) {
-        self.0 = (self.0 & !(0x01 << 0usize)) | ((val.to_bits() as u32) & 0x01);
+        self.0 = (self.0 & !(0x01 << 0usize)) | (((val.to_bits() as u32) & 0x01) << 0usize);
     }
 }
 impl Default for FIF_PUSH_CMP {
@@ -172,13 +173,13 @@ impl FIF_PUSH_FULL {
     #[must_use]
     #[inline(always)]
     pub const fn FULL_FLAG(&self) -> super::vals::FULL_FLAG {
-        let val = self.0 & 0x01;
+        let val = (self.0 >> 0usize) & 0x01;
         super::vals::FULL_FLAG::from_bits(val as u8)
     }
     ///TX buffer is full.
     #[inline(always)]
     pub const fn set_FULL_FLAG(&mut self, val: super::vals::FULL_FLAG) {
-        self.0 = (self.0 & !(0x01 << 0usize)) | ((val.to_bits() as u32) & 0x01);
+        self.0 = (self.0 & !(0x01 << 0usize)) | (((val.to_bits() as u32) & 0x01) << 0usize);
     }
 }
 impl Default for FIF_PUSH_FULL {
@@ -209,12 +210,13 @@ impl FIF_PUSH_WRD0 {
     #[must_use]
     #[inline(always)]
     pub const fn DATA_0(&self) -> u32 {
-        self.0 & 0x0fff_ffff
+        let val = (self.0 >> 0usize) & 0x0fff_ffff;
+        val as u32
     }
     ///TX data word 0.
     #[inline(always)]
     pub const fn set_DATA_0(&mut self, val: u32) {
-        self.0 = (self.0 & !0x0fff_ffff) | (val & 0x0fff_ffff);
+        self.0 = (self.0 & !(0x0fff_ffff << 0usize)) | (((val as u32) & 0x0fff_ffff) << 0usize);
     }
     ///Target ID.
     #[must_use]

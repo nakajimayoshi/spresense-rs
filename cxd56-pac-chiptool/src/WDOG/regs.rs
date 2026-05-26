@@ -7,13 +7,13 @@ impl WDOGCONTROL {
     #[must_use]
     #[inline(always)]
     pub const fn INTEN(&self) -> bool {
-        let val = self.0 & 0x01;
+        let val = (self.0 >> 0usize) & 0x01;
         val != 0
     }
     ///Interrupt output enable (starts the counter).
     #[inline(always)]
     pub const fn set_INTEN(&mut self, val: bool) {
-        self.0 = (self.0 & !(0x01 << 0usize)) | ((val as u32) & 0x01);
+        self.0 = (self.0 & !(0x01 << 0usize)) | (((val as u32) & 0x01) << 0usize);
     }
     ///Reset output enable (enables chip reset on second underflow).
     #[must_use]
@@ -62,13 +62,13 @@ impl WDOGLOCK {
     #[must_use]
     #[inline(always)]
     pub const fn ACCESS(&self) -> bool {
-        let val = self.0 & 0x01;
+        let val = (self.0 >> 0usize) & 0x01;
         val != 0
     }
     ///Register write-access state (0 = unlocked, 1 = locked).
     #[inline(always)]
     pub const fn set_ACCESS(&mut self, val: bool) {
-        self.0 = (self.0 & !(0x01 << 0usize)) | ((val as u32) & 0x01);
+        self.0 = (self.0 & !(0x01 << 0usize)) | (((val as u32) & 0x01) << 0usize);
     }
 }
 impl Default for WDOGLOCK {
@@ -99,13 +99,13 @@ impl WDOGMIS {
     #[must_use]
     #[inline(always)]
     pub const fn INT(&self) -> bool {
-        let val = self.0 & 0x01;
+        let val = (self.0 >> 0usize) & 0x01;
         val != 0
     }
     ///Masked interrupt status (RAWINT AND INTEN).
     #[inline(always)]
     pub const fn set_INT(&mut self, val: bool) {
-        self.0 = (self.0 & !(0x01 << 0usize)) | ((val as u32) & 0x01);
+        self.0 = (self.0 & !(0x01 << 0usize)) | (((val as u32) & 0x01) << 0usize);
     }
 }
 impl Default for WDOGMIS {
@@ -134,13 +134,13 @@ impl WDOGRIS {
     #[must_use]
     #[inline(always)]
     pub const fn RAWINT(&self) -> bool {
-        let val = self.0 & 0x01;
+        let val = (self.0 >> 0usize) & 0x01;
         val != 0
     }
     ///Raw interrupt status.
     #[inline(always)]
     pub const fn set_RAWINT(&mut self, val: bool) {
-        self.0 = (self.0 & !(0x01 << 0usize)) | ((val as u32) & 0x01);
+        self.0 = (self.0 & !(0x01 << 0usize)) | (((val as u32) & 0x01) << 0usize);
     }
 }
 impl Default for WDOGRIS {

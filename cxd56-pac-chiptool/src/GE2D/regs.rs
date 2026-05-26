@@ -7,24 +7,25 @@ impl ADDRESS_DESCRIPTOR_START {
     #[must_use]
     #[inline(always)]
     pub const fn MSEL(&self) -> bool {
-        let val = self.0 & 0x01;
+        let val = (self.0 >> 0usize) & 0x01;
         val != 0
     }
     ///must be 1.
     #[inline(always)]
     pub const fn set_MSEL(&mut self, val: bool) {
-        self.0 = (self.0 & !(0x01 << 0usize)) | ((val as u32) & 0x01);
+        self.0 = (self.0 & !(0x01 << 0usize)) | (((val as u32) & 0x01) << 0usize);
     }
     ///Descriptor Address.
     #[must_use]
     #[inline(always)]
     pub const fn DA(&self) -> u32 {
-        (self.0 >> 4usize) & 0x0fff_ffff
+        let val = (self.0 >> 4usize) & 0x0fff_ffff;
+        val as u32
     }
     ///Descriptor Address.
     #[inline(always)]
     pub const fn set_DA(&mut self, val: u32) {
-        self.0 = (self.0 & !(0x0fff_ffff << 4usize)) | ((val & 0x0fff_ffff) << 4usize);
+        self.0 = (self.0 & !(0x0fff_ffff << 4usize)) | (((val as u32) & 0x0fff_ffff) << 4usize);
     }
 }
 impl Default for ADDRESS_DESCRIPTOR_START {
@@ -61,13 +62,13 @@ impl CMD_DESCRIPTOR {
     #[must_use]
     #[inline(always)]
     pub const fn COMMAND(&self) -> super::vals::COMMAND {
-        let val = self.0 & 0x03;
+        let val = (self.0 >> 0usize) & 0x03;
         super::vals::COMMAND::from_bits(val as u8)
     }
     ///Command.
     #[inline(always)]
     pub const fn set_COMMAND(&mut self, val: super::vals::COMMAND) {
-        self.0 = (self.0 & !0x03) | ((val.to_bits() as u32) & 0x03);
+        self.0 = (self.0 & !(0x03 << 0usize)) | (((val.to_bits() as u32) & 0x03) << 0usize);
     }
 }
 impl Default for CMD_DESCRIPTOR {
@@ -98,13 +99,13 @@ impl INTR_ENABLE {
     #[must_use]
     #[inline(always)]
     pub const fn HPU(&self) -> bool {
-        let val = self.0 & 0x01;
+        let val = (self.0 >> 0usize) & 0x01;
         val != 0
     }
     ///Normal Descriptor Command Update Interrupt.
     #[inline(always)]
     pub const fn set_HPU(&mut self, val: bool) {
-        self.0 = (self.0 & !(0x01 << 0usize)) | ((val as u32) & 0x01);
+        self.0 = (self.0 & !(0x01 << 0usize)) | (((val as u32) & 0x01) << 0usize);
     }
     ///Normal Descriptor Command Finished Interrupt.
     #[must_use]
@@ -223,13 +224,13 @@ impl STATUS {
     #[must_use]
     #[inline(always)]
     pub const fn NREQ(&self) -> bool {
-        let val = self.0 & 0x01;
+        let val = (self.0 >> 0usize) & 0x01;
         val != 0
     }
     ///Requesting Normal Descriptor.
     #[inline(always)]
     pub const fn set_NREQ(&mut self, val: bool) {
-        self.0 = (self.0 & !(0x01 << 0usize)) | ((val as u32) & 0x01);
+        self.0 = (self.0 & !(0x01 << 0usize)) | (((val as u32) & 0x01) << 0usize);
     }
     ///Reqesting Descriptor Stop.
     #[must_use]

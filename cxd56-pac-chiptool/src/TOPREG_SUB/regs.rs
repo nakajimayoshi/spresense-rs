@@ -7,13 +7,13 @@ impl APP_CKEN {
     #[must_use]
     #[inline(always)]
     pub const fn APP_CPU(&self) -> bool {
-        let val = self.0 & 0x01;
+        let val = (self.0 >> 0usize) & 0x01;
         val != 0
     }
     ///APP CPU clock enable.
     #[inline(always)]
     pub const fn set_APP_CPU(&mut self, val: bool) {
-        self.0 = (self.0 & !(0x01 << 0usize)) | ((val as u32) & 0x01);
+        self.0 = (self.0 & !(0x01 << 0usize)) | (((val as u32) & 0x01) << 0usize);
     }
     ///APP MCLK enable.
     #[must_use]
@@ -113,12 +113,13 @@ impl CHIP_ID {
     #[must_use]
     #[inline(always)]
     pub const fn ID(&self) -> u32 {
-        self.0
+        let val = (self.0 >> 0usize) & 0xffff_ffff;
+        val as u32
     }
     ///Chip ID value.
     #[inline(always)]
     pub const fn set_ID(&mut self, val: u32) {
-        self.0 = (self.0 & !0xffff_ffff) | val;
+        self.0 = (self.0 & !(0xffff_ffff << 0usize)) | (((val as u32) & 0xffff_ffff) << 0usize);
     }
 }
 impl Default for CHIP_ID {
@@ -202,13 +203,13 @@ impl SYSIOP_SUB_CKEN {
     #[must_use]
     #[inline(always)]
     pub const fn CK_AHB_BRG_COMIF(&self) -> bool {
-        let val = self.0 & 0x01;
+        let val = (self.0 >> 0usize) & 0x01;
         val != 0
     }
     ///AHB bridge COMIF clock enable.
     #[inline(always)]
     pub const fn set_CK_AHB_BRG_COMIF(&mut self, val: bool) {
-        self.0 = (self.0 & !(0x01 << 0usize)) | ((val as u32) & 0x01);
+        self.0 = (self.0 & !(0x01 << 0usize)) | (((val as u32) & 0x01) << 0usize);
     }
     ///COM bridge clock enable.
     #[must_use]

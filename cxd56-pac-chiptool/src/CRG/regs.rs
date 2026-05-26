@@ -7,13 +7,13 @@ impl CKEN_EMMC {
     #[must_use]
     #[inline(always)]
     pub const fn CLKIN(&self) -> super::vals::CLKIN {
-        let val = self.0 & 0x01;
+        let val = (self.0 >> 0usize) & 0x01;
         super::vals::CLKIN::from_bits(val as u8)
     }
     ///Enable eMMC clock.
     #[inline(always)]
     pub const fn set_CLKIN(&mut self, val: super::vals::CLKIN) {
-        self.0 = (self.0 & !(0x01 << 0usize)) | ((val.to_bits() as u32) & 0x01);
+        self.0 = (self.0 & !(0x01 << 0usize)) | (((val.to_bits() as u32) & 0x01) << 0usize);
     }
 }
 impl Default for CKEN_EMMC {
@@ -44,13 +44,13 @@ impl CK_GATE_AHB {
     #[must_use]
     #[inline(always)]
     pub const fn CK_GATE_AUD(&self) -> super::vals::CK_GATE_AUD {
-        let val = self.0 & 0x01;
+        let val = (self.0 >> 0usize) & 0x01;
         super::vals::CK_GATE_AUD::from_bits(val as u8)
     }
     ///0=Gated, 1=Ungated.
     #[inline(always)]
     pub const fn set_CK_GATE_AUD(&mut self, val: super::vals::CK_GATE_AUD) {
-        self.0 = (self.0 & !(0x01 << 0usize)) | ((val.to_bits() as u32) & 0x01);
+        self.0 = (self.0 & !(0x01 << 0usize)) | (((val.to_bits() as u32) & 0x01) << 0usize);
     }
 }
 impl Default for CK_GATE_AHB {
@@ -80,12 +80,12 @@ impl GEAR_AHB {
     #[must_use]
     #[inline(always)]
     pub const fn GEAR_M_AHB(&self) -> u8 {
-        let val = self.0 & 0x7f;
+        let val = (self.0 >> 0usize) & 0x7f;
         val as u8
     }
     #[inline(always)]
     pub const fn set_GEAR_M_AHB(&mut self, val: u8) {
-        self.0 = (self.0 & !0x7f) | ((val as u32) & 0x7f);
+        self.0 = (self.0 & !(0x7f << 0usize)) | (((val as u32) & 0x7f) << 0usize);
     }
     #[must_use]
     #[inline(always)]
@@ -131,12 +131,12 @@ impl GEAR_IMG_SPI {
     #[must_use]
     #[inline(always)]
     pub const fn GEAR_M_SPI(&self) -> u8 {
-        let val = self.0 & 0x7f;
+        let val = (self.0 >> 0usize) & 0x7f;
         val as u8
     }
     #[inline(always)]
     pub const fn set_GEAR_M_SPI(&mut self, val: u8) {
-        self.0 = (self.0 & !0x7f) | ((val as u32) & 0x7f);
+        self.0 = (self.0 & !(0x7f << 0usize)) | (((val as u32) & 0x7f) << 0usize);
     }
     #[must_use]
     #[inline(always)]
@@ -182,12 +182,12 @@ impl GEAR_IMG_UART {
     #[must_use]
     #[inline(always)]
     pub const fn GEAR_M_UART(&self) -> u8 {
-        let val = self.0 & 0x7f;
+        let val = (self.0 >> 0usize) & 0x7f;
         val as u8
     }
     #[inline(always)]
     pub const fn set_GEAR_M_UART(&mut self, val: u8) {
-        self.0 = (self.0 & !0x7f) | ((val as u32) & 0x7f);
+        self.0 = (self.0 & !(0x7f << 0usize)) | (((val as u32) & 0x7f) << 0usize);
     }
     #[must_use]
     #[inline(always)]
@@ -233,12 +233,12 @@ impl GEAR_IMG_WSPI {
     #[must_use]
     #[inline(always)]
     pub const fn GEAR_M_IMG_WSPI(&self) -> u8 {
-        let val = self.0 & 0x0f;
+        let val = (self.0 >> 0usize) & 0x0f;
         val as u8
     }
     #[inline(always)]
     pub const fn set_GEAR_M_IMG_WSPI(&mut self, val: u8) {
-        self.0 = (self.0 & !0x0f) | ((val as u32) & 0x0f);
+        self.0 = (self.0 & !(0x0f << 0usize)) | (((val as u32) & 0x0f) << 0usize);
     }
     #[must_use]
     #[inline(always)]
@@ -284,12 +284,12 @@ impl GEAR_PER_SDIO {
     #[must_use]
     #[inline(always)]
     pub const fn GEAR_M_SDIO(&self) -> u8 {
-        let val = self.0 & 0x03;
+        let val = (self.0 >> 0usize) & 0x03;
         val as u8
     }
     #[inline(always)]
     pub const fn set_GEAR_M_SDIO(&mut self, val: u8) {
-        self.0 = (self.0 & !0x03) | ((val as u32) & 0x03);
+        self.0 = (self.0 & !(0x03 << 0usize)) | (((val as u32) & 0x03) << 0usize);
     }
     #[must_use]
     #[inline(always)]
@@ -335,12 +335,12 @@ impl GEAR_PER_USB {
     #[must_use]
     #[inline(always)]
     pub const fn GEAR_M_USB(&self) -> u16 {
-        let val = self.0 & 0x0fff;
+        let val = (self.0 >> 0usize) & 0x0fff;
         val as u16
     }
     #[inline(always)]
     pub const fn set_GEAR_M_USB(&mut self, val: u16) {
-        self.0 = (self.0 & !0x0fff) | ((val as u32) & 0x0fff);
+        self.0 = (self.0 & !(0x0fff << 0usize)) | (((val as u32) & 0x0fff) << 0usize);
     }
     #[must_use]
     #[inline(always)]
@@ -387,13 +387,13 @@ impl RESET {
     #[must_use]
     #[inline(always)]
     pub const fn XRS_AUD(&self) -> super::vals::XRS_AUD {
-        let val = self.0 & 0x01;
+        let val = (self.0 >> 0usize) & 0x01;
         super::vals::XRS_AUD::from_bits(val as u8)
     }
     ///0=reset, 1=active.
     #[inline(always)]
     pub const fn set_XRS_AUD(&mut self, val: super::vals::XRS_AUD) {
-        self.0 = (self.0 & !(0x01 << 0usize)) | ((val.to_bits() as u32) & 0x01);
+        self.0 = (self.0 & !(0x01 << 0usize)) | (((val.to_bits() as u32) & 0x01) << 0usize);
     }
 }
 impl Default for RESET {

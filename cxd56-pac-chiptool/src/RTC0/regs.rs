@@ -7,13 +7,13 @@ impl ALMCLR {
     #[must_use]
     #[inline(always)]
     pub const fn ALM0(&self) -> bool {
-        let val = self.0 & 0x01;
+        let val = (self.0 >> 0usize) & 0x01;
         val != 0
     }
     ///Clear alarm 0 flag.
     #[inline(always)]
     pub const fn set_ALM0(&mut self, val: bool) {
-        self.0 = (self.0 & !(0x01 << 0usize)) | ((val as u32) & 0x01);
+        self.0 = (self.0 & !(0x01 << 0usize)) | (((val as u32) & 0x01) << 0usize);
     }
     ///Clear alarm 1 flag.
     #[must_use]
@@ -104,13 +104,13 @@ impl ALMFLG {
     #[must_use]
     #[inline(always)]
     pub const fn ALM0(&self) -> bool {
-        let val = self.0 & 0x01;
+        let val = (self.0 >> 0usize) & 0x01;
         val != 0
     }
     ///Alarm 0 flag.
     #[inline(always)]
     pub const fn set_ALM0(&mut self, val: bool) {
-        self.0 = (self.0 & !(0x01 << 0usize)) | ((val as u32) & 0x01);
+        self.0 = (self.0 & !(0x01 << 0usize)) | (((val as u32) & 0x01) << 0usize);
     }
     ///Alarm 1 flag.
     #[must_use]
@@ -201,13 +201,13 @@ impl ALMOUTEN0 {
     #[must_use]
     #[inline(always)]
     pub const fn ALM_EN(&self) -> bool {
-        let val = self.0 & 0x01;
+        let val = (self.0 >> 0usize) & 0x01;
         val != 0
     }
     ///Alarm 0 enable.
     #[inline(always)]
     pub const fn set_ALM_EN(&mut self, val: bool) {
-        self.0 = (self.0 & !(0x01 << 0usize)) | ((val as u32) & 0x01);
+        self.0 = (self.0 & !(0x01 << 0usize)) | (((val as u32) & 0x01) << 0usize);
     }
     ///Alarm 0 write busy.
     #[must_use]
@@ -298,13 +298,13 @@ impl ALMOUTEN1 {
     #[must_use]
     #[inline(always)]
     pub const fn ALM_EN(&self) -> bool {
-        let val = self.0 & 0x01;
+        let val = (self.0 >> 0usize) & 0x01;
         val != 0
     }
     ///Alarm 1 enable.
     #[inline(always)]
     pub const fn set_ALM_EN(&mut self, val: bool) {
-        self.0 = (self.0 & !(0x01 << 0usize)) | ((val as u32) & 0x01);
+        self.0 = (self.0 & !(0x01 << 0usize)) | (((val as u32) & 0x01) << 0usize);
     }
     ///Alarm 1 write busy.
     #[must_use]
@@ -395,13 +395,13 @@ impl ALMOUTEN2 {
     #[must_use]
     #[inline(always)]
     pub const fn ALM_EN(&self) -> bool {
-        let val = self.0 & 0x01;
+        let val = (self.0 >> 0usize) & 0x01;
         val != 0
     }
     ///Alarm 2 enable.
     #[inline(always)]
     pub const fn set_ALM_EN(&mut self, val: bool) {
-        self.0 = (self.0 & !(0x01 << 0usize)) | ((val as u32) & 0x01);
+        self.0 = (self.0 & !(0x01 << 0usize)) | (((val as u32) & 0x01) << 0usize);
     }
     ///Alarm 2 write busy.
     #[must_use]
@@ -529,13 +529,13 @@ impl WRREGREQ {
     #[must_use]
     #[inline(always)]
     pub const fn BUSYA(&self) -> bool {
-        let val = self.0 & 0x01;
+        let val = (self.0 >> 0usize) & 0x01;
         val != 0
     }
     ///Counter write A-side busy.
     #[inline(always)]
     pub const fn set_BUSYA(&mut self, val: bool) {
-        self.0 = (self.0 & !(0x01 << 0usize)) | ((val as u32) & 0x01);
+        self.0 = (self.0 & !(0x01 << 0usize)) | (((val as u32) & 0x01) << 0usize);
     }
     ///Counter write B-side busy.
     #[must_use]

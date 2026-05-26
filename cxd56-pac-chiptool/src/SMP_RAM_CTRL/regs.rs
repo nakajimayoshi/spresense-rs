@@ -8,7 +8,7 @@ impl APP_TILE_CLK_GATING_ENB {
     #[inline(always)]
     pub const fn TILE_CLK_GATING_ENB(&self, n: usize) -> super::vals::TILE_CLK_GATING_ENB {
         assert!(n < 12usize);
-        let offs = n;
+        let offs = 0usize + n * 1usize;
         let val = (self.0 >> offs) & 0x01;
         super::vals::TILE_CLK_GATING_ENB::from_bits(val as u8)
     }
@@ -20,7 +20,7 @@ impl APP_TILE_CLK_GATING_ENB {
         val: super::vals::TILE_CLK_GATING_ENB,
     ) {
         assert!(n < 12usize);
-        let offs = n;
+        let offs = 0usize + n * 1usize;
         self.0 = (self.0 & !(0x01 << offs)) | (((val.to_bits() as u32) & 0x01) << offs);
     }
 }

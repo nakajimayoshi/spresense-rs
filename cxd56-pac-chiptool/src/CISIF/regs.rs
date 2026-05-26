@@ -6,12 +6,12 @@ impl ACT_POS {
     #[must_use]
     #[inline(always)]
     pub const fn act_hst(&self) -> u16 {
-        let val = self.0 & 0x0fff;
+        let val = (self.0 >> 0usize) & 0x0fff;
         val as u16
     }
     #[inline(always)]
     pub const fn set_act_hst(&mut self, val: u16) {
-        self.0 = (self.0 & !0x0fff) | ((val as u32) & 0x0fff);
+        self.0 = (self.0 & !(0x0fff << 0usize)) | (((val as u32) & 0x0fff) << 0usize);
     }
     #[must_use]
     #[inline(always)]
@@ -57,12 +57,12 @@ impl ACT_SIZE {
     #[must_use]
     #[inline(always)]
     pub const fn act_hsz(&self) -> u16 {
-        let val = self.0 & 0x01ff;
+        let val = (self.0 >> 0usize) & 0x01ff;
         val as u16
     }
     #[inline(always)]
     pub const fn set_act_hsz(&mut self, val: u16) {
-        self.0 = (self.0 & !0x01ff) | ((val as u32) & 0x01ff);
+        self.0 = (self.0 & !(0x01ff << 0usize)) | (((val as u32) & 0x01ff) << 0usize);
     }
     #[must_use]
     #[inline(always)]
@@ -108,12 +108,12 @@ impl CIS_SIZE {
     #[must_use]
     #[inline(always)]
     pub const fn cis_hst(&self) -> u16 {
-        let val = self.0 & 0x0fff;
+        let val = (self.0 >> 0usize) & 0x0fff;
         val as u16
     }
     #[inline(always)]
     pub const fn set_cis_hst(&mut self, val: u16) {
-        self.0 = (self.0 & !0x0fff) | ((val as u32) & 0x0fff);
+        self.0 = (self.0 & !(0x0fff << 0usize)) | (((val as u32) & 0x0fff) << 0usize);
     }
     #[must_use]
     #[inline(always)]
@@ -159,12 +159,12 @@ impl DIN_ENABLE {
     #[must_use]
     #[inline(always)]
     pub const fn ycin_enable(&self) -> bool {
-        let val = self.0 & 0x01;
+        let val = (self.0 >> 0usize) & 0x01;
         val != 0
     }
     #[inline(always)]
     pub const fn set_ycin_enable(&mut self, val: bool) {
-        self.0 = (self.0 & !(0x01 << 0usize)) | ((val as u32) & 0x01);
+        self.0 = (self.0 & !(0x01 << 0usize)) | (((val as u32) & 0x01) << 0usize);
     }
 }
 impl Default for DIN_ENABLE {
@@ -198,12 +198,12 @@ impl EXE_CMD {
     #[must_use]
     #[inline(always)]
     pub const fn exe_cmd(&self) -> bool {
-        let val = self.0 & 0x01;
+        let val = (self.0 >> 0usize) & 0x01;
         val != 0
     }
     #[inline(always)]
     pub const fn set_exe_cmd(&mut self, val: bool) {
-        self.0 = (self.0 & !(0x01 << 0usize)) | ((val as u32) & 0x01);
+        self.0 = (self.0 & !(0x01 << 0usize)) | (((val as u32) & 0x01) << 0usize);
     }
 }
 impl Default for EXE_CMD {
@@ -233,12 +233,12 @@ impl FORMAT {
     #[must_use]
     #[inline(always)]
     pub const fn yc_order(&self) -> super::vals::yc_order {
-        let val = self.0 & 0x03;
+        let val = (self.0 >> 0usize) & 0x03;
         super::vals::yc_order::from_bits(val as u8)
     }
     #[inline(always)]
     pub const fn set_yc_order(&mut self, val: super::vals::yc_order) {
-        self.0 = (self.0 & !0x03) | ((val.to_bits() as u32) & 0x03);
+        self.0 = (self.0 & !(0x03 << 0usize)) | (((val.to_bits() as u32) & 0x03) << 0usize);
     }
 }
 impl Default for FORMAT {
@@ -268,12 +268,12 @@ impl ILCODE {
     #[must_use]
     #[inline(always)]
     pub const fn sosi(&self) -> u8 {
-        let val = self.0 & 0xff;
+        let val = (self.0 >> 0usize) & 0xff;
         val as u8
     }
     #[inline(always)]
     pub const fn set_sosi(&mut self, val: u8) {
-        self.0 = (self.0 & !0xff) | ((val as u32) & 0xff);
+        self.0 = (self.0 & !(0xff << 0usize)) | (((val as u32) & 0xff) << 0usize);
     }
     #[must_use]
     #[inline(always)]
@@ -343,12 +343,12 @@ impl INTR_STAT {
     #[must_use]
     #[inline(always)]
     pub const fn vs_int(&self) -> bool {
-        let val = self.0 & 0x01;
+        let val = (self.0 >> 0usize) & 0x01;
         val != 0
     }
     #[inline(always)]
     pub const fn set_vs_int(&mut self, val: bool) {
-        self.0 = (self.0 & !(0x01 << 0usize)) | ((val as u32) & 0x01);
+        self.0 = (self.0 & !(0x01 << 0usize)) | (((val as u32) & 0x01) << 0usize);
     }
     #[must_use]
     #[inline(always)]
@@ -670,12 +670,12 @@ impl MODE {
     #[must_use]
     #[inline(always)]
     pub const fn cis_mode(&self) -> u8 {
-        let val = self.0 & 0x03;
+        let val = (self.0 >> 0usize) & 0x03;
         val as u8
     }
     #[inline(always)]
     pub const fn set_cis_mode(&mut self, val: u8) {
-        self.0 = (self.0 & !0x03) | ((val as u32) & 0x03);
+        self.0 = (self.0 & !(0x03 << 0usize)) | (((val as u32) & 0x03) << 0usize);
     }
     #[must_use]
     #[inline(always)]
@@ -745,12 +745,12 @@ impl POL {
     #[must_use]
     #[inline(always)]
     pub const fn hpol(&self) -> super::vals::hpol {
-        let val = self.0 & 0x01;
+        let val = (self.0 >> 0usize) & 0x01;
         super::vals::hpol::from_bits(val as u8)
     }
     #[inline(always)]
     pub const fn set_hpol(&mut self, val: super::vals::hpol) {
-        self.0 = (self.0 & !(0x01 << 0usize)) | ((val.to_bits() as u32) & 0x01);
+        self.0 = (self.0 & !(0x01 << 0usize)) | (((val.to_bits() as u32) & 0x01) << 0usize);
     }
     #[must_use]
     #[inline(always)]

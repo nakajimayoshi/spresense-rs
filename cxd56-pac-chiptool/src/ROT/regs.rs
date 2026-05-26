@@ -7,13 +7,13 @@ impl COMMAND {
     #[must_use]
     #[inline(always)]
     pub const fn CMD(&self) -> super::vals::CMD {
-        let val = self.0 & 0x01;
+        let val = (self.0 >> 0usize) & 0x01;
         super::vals::CMD::from_bits(val as u8)
     }
     ///Start rotation.
     #[inline(always)]
     pub const fn set_CMD(&mut self, val: super::vals::CMD) {
-        self.0 = (self.0 & !(0x01 << 0usize)) | ((val.to_bits() as u32) & 0x01);
+        self.0 = (self.0 & !(0x01 << 0usize)) | (((val.to_bits() as u32) & 0x01) << 0usize);
     }
 }
 impl Default for COMMAND {
@@ -42,13 +42,13 @@ impl CONV_CTRL {
     #[must_use]
     #[inline(always)]
     pub const fn CONV_FORMAT(&self) -> super::vals::CONV_FORMAT {
-        let val = self.0 & 0x03;
+        let val = (self.0 >> 0usize) & 0x03;
         super::vals::CONV_FORMAT::from_bits(val as u8)
     }
     ///Convert RGB565 to YCbCr422.
     #[inline(always)]
     pub const fn set_CONV_FORMAT(&mut self, val: super::vals::CONV_FORMAT) {
-        self.0 = (self.0 & !0x03) | ((val.to_bits() as u32) & 0x03);
+        self.0 = (self.0 & !(0x03 << 0usize)) | (((val.to_bits() as u32) & 0x03) << 0usize);
     }
     ///Scale factor for Cb and Cr.
     #[must_use]
@@ -97,13 +97,13 @@ impl INTR_CLEAR {
     #[must_use]
     #[inline(always)]
     pub const fn END_CLR(&self) -> bool {
-        let val = self.0 & 0x01;
+        let val = (self.0 >> 0usize) & 0x01;
         val != 0
     }
     ///Done Interrupt Clear.
     #[inline(always)]
     pub const fn set_END_CLR(&mut self, val: bool) {
-        self.0 = (self.0 & !(0x01 << 0usize)) | ((val as u32) & 0x01);
+        self.0 = (self.0 & !(0x01 << 0usize)) | (((val as u32) & 0x01) << 0usize);
     }
     ///Read Error Clear.
     #[must_use]
@@ -166,13 +166,13 @@ impl INTR_DISABLE {
     #[must_use]
     #[inline(always)]
     pub const fn END_DIS(&self) -> bool {
-        let val = self.0 & 0x01;
+        let val = (self.0 >> 0usize) & 0x01;
         val != 0
     }
     ///Done Interrupt Disable.
     #[inline(always)]
     pub const fn set_END_DIS(&mut self, val: bool) {
-        self.0 = (self.0 & !(0x01 << 0usize)) | ((val as u32) & 0x01);
+        self.0 = (self.0 & !(0x01 << 0usize)) | (((val as u32) & 0x01) << 0usize);
     }
     ///Read Error Disable.
     #[must_use]
@@ -272,13 +272,13 @@ impl INTR_STATUS {
     #[must_use]
     #[inline(always)]
     pub const fn END_STS(&self) -> bool {
-        let val = self.0 & 0x01;
+        let val = (self.0 >> 0usize) & 0x01;
         val != 0
     }
     ///Done.
     #[inline(always)]
     pub const fn set_END_STS(&mut self, val: bool) {
-        self.0 = (self.0 & !(0x01 << 0usize)) | ((val as u32) & 0x01);
+        self.0 = (self.0 & !(0x01 << 0usize)) | (((val as u32) & 0x01) << 0usize);
     }
     ///Read Error.
     #[must_use]
@@ -341,13 +341,13 @@ impl RGB_ALIGNMENT {
     #[must_use]
     #[inline(always)]
     pub const fn FORMAT(&self) -> super::vals::FORMAT {
-        let val = self.0 & 0x01;
+        let val = (self.0 >> 0usize) & 0x01;
         super::vals::FORMAT::from_bits(val as u8)
     }
     ///RGB Format.
     #[inline(always)]
     pub const fn set_FORMAT(&mut self, val: super::vals::FORMAT) {
-        self.0 = (self.0 & !(0x01 << 0usize)) | ((val.to_bits() as u32) & 0x01);
+        self.0 = (self.0 & !(0x01 << 0usize)) | (((val.to_bits() as u32) & 0x01) << 0usize);
     }
 }
 impl Default for RGB_ALIGNMENT {
@@ -378,13 +378,13 @@ impl SET_DIRECTION {
     #[must_use]
     #[inline(always)]
     pub const fn ROT(&self) -> super::vals::ROT {
-        let val = self.0 & 0x07;
+        let val = (self.0 >> 0usize) & 0x07;
         super::vals::ROT::from_bits(val as u8)
     }
     ///Rotation Angle.
     #[inline(always)]
     pub const fn set_ROT(&mut self, val: super::vals::ROT) {
-        self.0 = (self.0 & !0x07) | ((val.to_bits() as u32) & 0x07);
+        self.0 = (self.0 & !(0x07 << 0usize)) | (((val.to_bits() as u32) & 0x07) << 0usize);
     }
 }
 impl Default for SET_DIRECTION {
@@ -414,12 +414,12 @@ impl SET_DST_PITCH {
     #[must_use]
     #[inline(always)]
     pub const fn PITCH(&self) -> u16 {
-        let val = self.0 & 0x0fff;
+        let val = (self.0 >> 0usize) & 0x0fff;
         val as u16
     }
     #[inline(always)]
     pub const fn set_PITCH(&mut self, val: u16) {
-        self.0 = (self.0 & !0x0fff) | ((val as u32) & 0x0fff);
+        self.0 = (self.0 & !(0x0fff << 0usize)) | (((val as u32) & 0x0fff) << 0usize);
     }
 }
 impl Default for SET_DST_PITCH {
@@ -449,12 +449,12 @@ impl SET_SRC_HSIZE {
     #[must_use]
     #[inline(always)]
     pub const fn SIZE(&self) -> u16 {
-        let val = self.0 & 0x0fff;
+        let val = (self.0 >> 0usize) & 0x0fff;
         val as u16
     }
     #[inline(always)]
     pub const fn set_SIZE(&mut self, val: u16) {
-        self.0 = (self.0 & !0x0fff) | ((val as u32) & 0x0fff);
+        self.0 = (self.0 & !(0x0fff << 0usize)) | (((val as u32) & 0x0fff) << 0usize);
     }
 }
 impl Default for SET_SRC_HSIZE {
@@ -484,12 +484,12 @@ impl SET_SRC_PITCH {
     #[must_use]
     #[inline(always)]
     pub const fn PITCH(&self) -> u16 {
-        let val = self.0 & 0x0fff;
+        let val = (self.0 >> 0usize) & 0x0fff;
         val as u16
     }
     #[inline(always)]
     pub const fn set_PITCH(&mut self, val: u16) {
-        self.0 = (self.0 & !0x0fff) | ((val as u32) & 0x0fff);
+        self.0 = (self.0 & !(0x0fff << 0usize)) | (((val as u32) & 0x0fff) << 0usize);
     }
 }
 impl Default for SET_SRC_PITCH {
@@ -519,12 +519,12 @@ impl SET_SRC_VSIZE {
     #[must_use]
     #[inline(always)]
     pub const fn SIZE(&self) -> u16 {
-        let val = self.0 & 0x0fff;
+        let val = (self.0 >> 0usize) & 0x0fff;
         val as u16
     }
     #[inline(always)]
     pub const fn set_SIZE(&mut self, val: u16) {
-        self.0 = (self.0 & !0x0fff) | ((val as u32) & 0x0fff);
+        self.0 = (self.0 & !(0x0fff << 0usize)) | (((val as u32) & 0x0fff) << 0usize);
     }
 }
 impl Default for SET_SRC_VSIZE {
@@ -555,13 +555,13 @@ impl STATUS {
     #[must_use]
     #[inline(always)]
     pub const fn STATUS(&self) -> super::vals::STATUS {
-        let val = self.0 & 0x01;
+        let val = (self.0 >> 0usize) & 0x01;
         super::vals::STATUS::from_bits(val as u8)
     }
     ///Running Status (1 = running).
     #[inline(always)]
     pub const fn set_STATUS(&mut self, val: super::vals::STATUS) {
-        self.0 = (self.0 & !(0x01 << 0usize)) | ((val.to_bits() as u32) & 0x01);
+        self.0 = (self.0 & !(0x01 << 0usize)) | (((val.to_bits() as u32) & 0x01) << 0usize);
     }
 }
 impl Default for STATUS {

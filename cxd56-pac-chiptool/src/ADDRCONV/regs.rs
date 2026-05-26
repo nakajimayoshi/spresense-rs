@@ -7,13 +7,13 @@ impl ACNV_P0_DST0 {
     #[must_use]
     #[inline(always)]
     pub const fn AREA_0(&self) -> u16 {
-        let val = self.0 & 0x07ff;
+        let val = (self.0 >> 0usize) & 0x07ff;
         val as u16
     }
     ///0x00000 .. 0x10000.
     #[inline(always)]
     pub const fn set_AREA_0(&mut self, val: u16) {
-        self.0 = (self.0 & !0x07ff) | ((val as u32) & 0x07ff);
+        self.0 = (self.0 & !(0x07ff << 0usize)) | (((val as u32) & 0x07ff) << 0usize);
     }
     ///0x10000 .. 0x20000.
     #[must_use]
@@ -62,13 +62,13 @@ impl ACNV_P0_DST1 {
     #[must_use]
     #[inline(always)]
     pub const fn AREA_2(&self) -> u16 {
-        let val = self.0 & 0x07ff;
+        let val = (self.0 >> 0usize) & 0x07ff;
         val as u16
     }
     ///0x20000 .. 0x30000.
     #[inline(always)]
     pub const fn set_AREA_2(&mut self, val: u16) {
-        self.0 = (self.0 & !0x07ff) | ((val as u32) & 0x07ff);
+        self.0 = (self.0 & !(0x07ff << 0usize)) | (((val as u32) & 0x07ff) << 0usize);
     }
     ///0x30000 .. 0x40000.
     #[must_use]
@@ -117,13 +117,13 @@ impl ACNV_P0_DST2 {
     #[must_use]
     #[inline(always)]
     pub const fn AREA_4(&self) -> u16 {
-        let val = self.0 & 0x07ff;
+        let val = (self.0 >> 0usize) & 0x07ff;
         val as u16
     }
     ///0x40000 .. 0x50000.
     #[inline(always)]
     pub const fn set_AREA_4(&mut self, val: u16) {
-        self.0 = (self.0 & !0x07ff) | ((val as u32) & 0x07ff);
+        self.0 = (self.0 & !(0x07ff << 0usize)) | (((val as u32) & 0x07ff) << 0usize);
     }
     ///0x50000 .. 0x60000.
     #[must_use]
@@ -172,13 +172,13 @@ impl ACNV_P0_DST3 {
     #[must_use]
     #[inline(always)]
     pub const fn AREA_6(&self) -> u16 {
-        let val = self.0 & 0x07ff;
+        let val = (self.0 >> 0usize) & 0x07ff;
         val as u16
     }
     ///0x60000 .. 0x70000.
     #[inline(always)]
     pub const fn set_AREA_6(&mut self, val: u16) {
-        self.0 = (self.0 & !0x07ff) | ((val as u32) & 0x07ff);
+        self.0 = (self.0 & !(0x07ff << 0usize)) | (((val as u32) & 0x07ff) << 0usize);
     }
     ///0x70000 .. 0x80000.
     #[must_use]
@@ -227,13 +227,13 @@ impl ACNV_P0_DST4 {
     #[must_use]
     #[inline(always)]
     pub const fn AREA_8(&self) -> u16 {
-        let val = self.0 & 0x07ff;
+        let val = (self.0 >> 0usize) & 0x07ff;
         val as u16
     }
     ///0x80000 .. 0x90000.
     #[inline(always)]
     pub const fn set_AREA_8(&mut self, val: u16) {
-        self.0 = (self.0 & !0x07ff) | ((val as u32) & 0x07ff);
+        self.0 = (self.0 & !(0x07ff << 0usize)) | (((val as u32) & 0x07ff) << 0usize);
     }
     ///0x90000 .. 0xa0000.
     #[must_use]
@@ -282,13 +282,13 @@ impl ACNV_P0_DST5 {
     #[must_use]
     #[inline(always)]
     pub const fn AREA_A(&self) -> u16 {
-        let val = self.0 & 0x07ff;
+        let val = (self.0 >> 0usize) & 0x07ff;
         val as u16
     }
     ///0xa0000 .. 0xb0000.
     #[inline(always)]
     pub const fn set_AREA_A(&mut self, val: u16) {
-        self.0 = (self.0 & !0x07ff) | ((val as u32) & 0x07ff);
+        self.0 = (self.0 & !(0x07ff << 0usize)) | (((val as u32) & 0x07ff) << 0usize);
     }
     ///0xb0000 .. 0xc0000.
     #[must_use]
@@ -337,13 +337,13 @@ impl ACNV_P0_DST6 {
     #[must_use]
     #[inline(always)]
     pub const fn AREA_C(&self) -> u16 {
-        let val = self.0 & 0x07ff;
+        let val = (self.0 >> 0usize) & 0x07ff;
         val as u16
     }
     ///0xc0000 .. 0xd0000.
     #[inline(always)]
     pub const fn set_AREA_C(&mut self, val: u16) {
-        self.0 = (self.0 & !0x07ff) | ((val as u32) & 0x07ff);
+        self.0 = (self.0 & !(0x07ff << 0usize)) | (((val as u32) & 0x07ff) << 0usize);
     }
     ///0xd0000 .. 0xe0000.
     #[must_use]
@@ -392,13 +392,13 @@ impl ACNV_P0_DST7 {
     #[must_use]
     #[inline(always)]
     pub const fn AREA_E(&self) -> u16 {
-        let val = self.0 & 0x07ff;
+        let val = (self.0 >> 0usize) & 0x07ff;
         val as u16
     }
     ///0xe0000 .. 0xf0000.
     #[inline(always)]
     pub const fn set_AREA_E(&mut self, val: u16) {
-        self.0 = (self.0 & !0x07ff) | ((val as u32) & 0x07ff);
+        self.0 = (self.0 & !(0x07ff << 0usize)) | (((val as u32) & 0x07ff) << 0usize);
     }
     ///0xf0000 .. 0x100000.
     #[must_use]

@@ -7,13 +7,13 @@ impl SSPCPSR {
     #[must_use]
     #[inline(always)]
     pub const fn CPSDVSR(&self) -> u8 {
-        let val = self.0 & 0xff;
+        let val = (self.0 >> 0usize) & 0xff;
         val as u8
     }
     ///Clock prescale divisor.
     #[inline(always)]
     pub const fn set_CPSDVSR(&mut self, val: u8) {
-        self.0 = (self.0 & !0xff) | ((val as u32) & 0xff);
+        self.0 = (self.0 & !(0xff << 0usize)) | (((val as u32) & 0xff) << 0usize);
     }
 }
 impl Default for SSPCPSR {
@@ -44,13 +44,13 @@ impl SSPCR0 {
     #[must_use]
     #[inline(always)]
     pub const fn DSS(&self) -> super::vals::DSS {
-        let val = self.0 & 0x0f;
+        let val = (self.0 >> 0usize) & 0x0f;
         super::vals::DSS::from_bits(val as u8)
     }
     ///Data Size Select.
     #[inline(always)]
     pub const fn set_DSS(&mut self, val: super::vals::DSS) {
-        self.0 = (self.0 & !0x0f) | ((val.to_bits() as u32) & 0x0f);
+        self.0 = (self.0 & !(0x0f << 0usize)) | (((val.to_bits() as u32) & 0x0f) << 0usize);
     }
     ///Frame format.
     #[must_use]
@@ -141,13 +141,13 @@ impl SSPCR1 {
     #[must_use]
     #[inline(always)]
     pub const fn LBM(&self) -> super::vals::LBM {
-        let val = self.0 & 0x01;
+        let val = (self.0 >> 0usize) & 0x01;
         super::vals::LBM::from_bits(val as u8)
     }
     ///Loop back mode.
     #[inline(always)]
     pub const fn set_LBM(&mut self, val: super::vals::LBM) {
-        self.0 = (self.0 & !(0x01 << 0usize)) | ((val.to_bits() as u32) & 0x01);
+        self.0 = (self.0 & !(0x01 << 0usize)) | (((val.to_bits() as u32) & 0x01) << 0usize);
     }
     ///Synchronous serial port enable.
     #[must_use]
@@ -224,13 +224,13 @@ impl SSPDMACR {
     #[must_use]
     #[inline(always)]
     pub const fn RXDMAE(&self) -> super::vals::RXDMAE {
-        let val = self.0 & 0x01;
+        let val = (self.0 >> 0usize) & 0x01;
         super::vals::RXDMAE::from_bits(val as u8)
     }
     ///Receive DMA enable.
     #[inline(always)]
     pub const fn set_RXDMAE(&mut self, val: super::vals::RXDMAE) {
-        self.0 = (self.0 & !(0x01 << 0usize)) | ((val.to_bits() as u32) & 0x01);
+        self.0 = (self.0 & !(0x01 << 0usize)) | (((val.to_bits() as u32) & 0x01) << 0usize);
     }
     ///Transmit DMA enable.
     #[must_use]
@@ -279,13 +279,13 @@ impl SSPDR {
     #[must_use]
     #[inline(always)]
     pub const fn DATA(&self) -> u16 {
-        let val = self.0 & 0xffff;
+        let val = (self.0 >> 0usize) & 0xffff;
         val as u16
     }
     ///Transmit/Receive FIFO.
     #[inline(always)]
     pub const fn set_DATA(&mut self, val: u16) {
-        self.0 = (self.0 & !0xffff) | ((val as u32) & 0xffff);
+        self.0 = (self.0 & !(0xffff << 0usize)) | (((val as u32) & 0xffff) << 0usize);
     }
 }
 impl Default for SSPDR {
@@ -314,13 +314,13 @@ impl SSPICR {
     #[must_use]
     #[inline(always)]
     pub const fn RORIC(&self) -> bool {
-        let val = self.0 & 0x01;
+        let val = (self.0 >> 0usize) & 0x01;
         val != 0
     }
     ///Clear the SSPRORINTR interrupt.
     #[inline(always)]
     pub const fn set_RORIC(&mut self, val: bool) {
-        self.0 = (self.0 & !(0x01 << 0usize)) | ((val as u32) & 0x01);
+        self.0 = (self.0 & !(0x01 << 0usize)) | (((val as u32) & 0x01) << 0usize);
     }
     ///Clear the SSPRTINTR interrupt.
     #[must_use]
@@ -369,13 +369,13 @@ impl SSPIMSC {
     #[must_use]
     #[inline(always)]
     pub const fn RORIM(&self) -> super::vals::RORIM {
-        let val = self.0 & 0x01;
+        let val = (self.0 >> 0usize) & 0x01;
         super::vals::RORIM::from_bits(val as u8)
     }
     ///Receive overrun interrupt mask.
     #[inline(always)]
     pub const fn set_RORIM(&mut self, val: super::vals::RORIM) {
-        self.0 = (self.0 & !(0x01 << 0usize)) | ((val.to_bits() as u32) & 0x01);
+        self.0 = (self.0 & !(0x01 << 0usize)) | (((val.to_bits() as u32) & 0x01) << 0usize);
     }
     ///Receive timeout interrupt mask.
     #[must_use]
@@ -452,13 +452,13 @@ impl SSPMIS {
     #[must_use]
     #[inline(always)]
     pub const fn RORMIS(&self) -> super::vals::RORMIS {
-        let val = self.0 & 0x01;
+        let val = (self.0 >> 0usize) & 0x01;
         super::vals::RORMIS::from_bits(val as u8)
     }
     ///Receive overrun interrupt mask.
     #[inline(always)]
     pub const fn set_RORMIS(&mut self, val: super::vals::RORMIS) {
-        self.0 = (self.0 & !(0x01 << 0usize)) | ((val.to_bits() as u32) & 0x01);
+        self.0 = (self.0 & !(0x01 << 0usize)) | (((val.to_bits() as u32) & 0x01) << 0usize);
     }
     ///Receive timeout interrupt mask.
     #[must_use]
@@ -535,13 +535,13 @@ impl SSPRIS {
     #[must_use]
     #[inline(always)]
     pub const fn RORRIS(&self) -> super::vals::RORRIS {
-        let val = self.0 & 0x01;
+        let val = (self.0 >> 0usize) & 0x01;
         super::vals::RORRIS::from_bits(val as u8)
     }
     ///Receive overrun interrupt mask.
     #[inline(always)]
     pub const fn set_RORRIS(&mut self, val: super::vals::RORRIS) {
-        self.0 = (self.0 & !(0x01 << 0usize)) | ((val.to_bits() as u32) & 0x01);
+        self.0 = (self.0 & !(0x01 << 0usize)) | (((val.to_bits() as u32) & 0x01) << 0usize);
     }
     ///Receive timeout interrupt mask.
     #[must_use]
@@ -618,13 +618,13 @@ impl SSPSR {
     #[must_use]
     #[inline(always)]
     pub const fn TFE(&self) -> super::vals::TFE {
-        let val = self.0 & 0x01;
+        let val = (self.0 >> 0usize) & 0x01;
         super::vals::TFE::from_bits(val as u8)
     }
     ///Transmit FIFO empty.
     #[inline(always)]
     pub const fn set_TFE(&mut self, val: super::vals::TFE) {
-        self.0 = (self.0 & !(0x01 << 0usize)) | ((val.to_bits() as u32) & 0x01);
+        self.0 = (self.0 & !(0x01 << 0usize)) | (((val.to_bits() as u32) & 0x01) << 0usize);
     }
     ///Transmit FIFO not full.
     #[must_use]

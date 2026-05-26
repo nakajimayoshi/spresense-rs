@@ -7,13 +7,13 @@ impl CONTROL {
     #[must_use]
     #[inline(always)]
     pub const fn MODE(&self) -> bool {
-        let val = self.0 & 0x01;
+        let val = (self.0 >> 0usize) & 0x01;
         val != 0
     }
     ///Reload behavior on zero.
     #[inline(always)]
     pub const fn set_MODE(&mut self, val: bool) {
-        self.0 = (self.0 & !(0x01 << 0usize)) | ((val as u32) & 0x01);
+        self.0 = (self.0 & !(0x01 << 0usize)) | (((val as u32) & 0x01) << 0usize);
     }
     ///Counter width.
     #[must_use]
@@ -118,13 +118,13 @@ impl MIS {
     #[must_use]
     #[inline(always)]
     pub const fn TIMER_INTERRUPT(&self) -> bool {
-        let val = self.0 & 0x01;
+        let val = (self.0 >> 0usize) & 0x01;
         val != 0
     }
     ///Masked interrupt (RIS AND INTENABLE).
     #[inline(always)]
     pub const fn set_TIMER_INTERRUPT(&mut self, val: bool) {
-        self.0 = (self.0 & !(0x01 << 0usize)) | ((val as u32) & 0x01);
+        self.0 = (self.0 & !(0x01 << 0usize)) | (((val as u32) & 0x01) << 0usize);
     }
 }
 impl Default for MIS {
@@ -159,13 +159,13 @@ impl RIS {
     #[must_use]
     #[inline(always)]
     pub const fn TIMER_INTERRUPT(&self) -> bool {
-        let val = self.0 & 0x01;
+        let val = (self.0 >> 0usize) & 0x01;
         val != 0
     }
     ///Raw interrupt (set when counter reaches zero).
     #[inline(always)]
     pub const fn set_TIMER_INTERRUPT(&mut self, val: bool) {
-        self.0 = (self.0 & !(0x01 << 0usize)) | ((val as u32) & 0x01);
+        self.0 = (self.0 & !(0x01 << 0usize)) | (((val as u32) & 0x01) << 0usize);
     }
 }
 impl Default for RIS {

@@ -6,13 +6,13 @@ impl DMACC0Control {
     #[must_use]
     #[inline(always)]
     pub const fn TransferSize(&self) -> u16 {
-        let val = self.0 & 0x0fff;
+        let val = (self.0 >> 0usize) & 0x0fff;
         val as u16
     }
     ///Transfer size.
     #[inline(always)]
     pub const fn set_TransferSize(&mut self, val: u16) {
-        self.0 = (self.0 & !0x0fff) | ((val as u32) & 0x0fff);
+        self.0 = (self.0 & !(0x0fff << 0usize)) | (((val as u32) & 0x0fff) << 0usize);
     }
     ///Destination burst size.
     #[must_use]
@@ -158,12 +158,13 @@ impl DMACC0DestAddr {
     #[must_use]
     #[inline(always)]
     pub const fn DestAddr(&self) -> u32 {
-        self.0
+        let val = (self.0 >> 0usize) & 0xffff_ffff;
+        val as u32
     }
     ///DMA destination address.
     #[inline(always)]
     pub const fn set_DestAddr(&mut self, val: u32) {
-        self.0 = (self.0 & !0xffff_ffff) | val;
+        self.0 = (self.0 & !(0xffff_ffff << 0usize)) | (((val as u32) & 0xffff_ffff) << 0usize);
     }
 }
 impl Default for DMACC0DestAddr {
@@ -197,24 +198,25 @@ impl DMACC0LLI {
     #[must_use]
     #[inline(always)]
     pub const fn LM(&self) -> super::vals::LM {
-        let val = self.0 & 0x01;
+        let val = (self.0 >> 0usize) & 0x01;
         super::vals::LM::from_bits(val as u8)
     }
     ///AHB master select for loading the next LLI.
     #[inline(always)]
     pub const fn set_LM(&mut self, val: super::vals::LM) {
-        self.0 = (self.0 & !(0x01 << 0usize)) | ((val.to_bits() as u32) & 0x01);
+        self.0 = (self.0 & !(0x01 << 0usize)) | (((val.to_bits() as u32) & 0x01) << 0usize);
     }
     ///Linked list item.
     #[must_use]
     #[inline(always)]
     pub const fn LLI(&self) -> u32 {
-        (self.0 >> 2usize) & 0x3fff_ffff
+        let val = (self.0 >> 2usize) & 0x3fff_ffff;
+        val as u32
     }
     ///Linked list item.
     #[inline(always)]
     pub const fn set_LLI(&mut self, val: u32) {
-        self.0 = (self.0 & !(0x3fff_ffff << 2usize)) | ((val & 0x3fff_ffff) << 2usize);
+        self.0 = (self.0 & !(0x3fff_ffff << 2usize)) | (((val as u32) & 0x3fff_ffff) << 2usize);
     }
 }
 impl Default for DMACC0LLI {
@@ -250,12 +252,13 @@ impl DMACC0SrcAddr {
     #[must_use]
     #[inline(always)]
     pub const fn SrcAddr(&self) -> u32 {
-        self.0
+        let val = (self.0 >> 0usize) & 0xffff_ffff;
+        val as u32
     }
     ///DMA source address.
     #[inline(always)]
     pub const fn set_SrcAddr(&mut self, val: u32) {
-        self.0 = (self.0 & !0xffff_ffff) | val;
+        self.0 = (self.0 & !(0xffff_ffff << 0usize)) | (((val as u32) & 0xffff_ffff) << 0usize);
     }
 }
 impl Default for DMACC0SrcAddr {
@@ -285,13 +288,13 @@ impl DMACConfiguration {
     #[must_use]
     #[inline(always)]
     pub const fn E(&self) -> super::vals::E {
-        let val = self.0 & 0x01;
+        let val = (self.0 >> 0usize) & 0x01;
         super::vals::E::from_bits(val as u8)
     }
     ///DMAC enable.
     #[inline(always)]
     pub const fn set_E(&mut self, val: super::vals::E) {
-        self.0 = (self.0 & !(0x01 << 0usize)) | ((val.to_bits() as u32) & 0x01);
+        self.0 = (self.0 & !(0x01 << 0usize)) | (((val.to_bits() as u32) & 0x01) << 0usize);
     }
     ///AHB Master 1 endianess configuration.
     #[must_use]
@@ -353,13 +356,13 @@ impl DMACEnbldChns {
     #[must_use]
     #[inline(always)]
     pub const fn EnabledChannels(&self) -> u8 {
-        let val = self.0 & 0xff;
+        let val = (self.0 >> 0usize) & 0xff;
         val as u8
     }
     ///Channel enable status.
     #[inline(always)]
     pub const fn set_EnabledChannels(&mut self, val: u8) {
-        self.0 = (self.0 & !0xff) | ((val as u32) & 0xff);
+        self.0 = (self.0 & !(0xff << 0usize)) | (((val as u32) & 0xff) << 0usize);
     }
 }
 impl Default for DMACEnbldChns {
@@ -393,13 +396,13 @@ impl DMACIntErrClr {
     #[must_use]
     #[inline(always)]
     pub const fn IntErrClr(&self) -> u8 {
-        let val = self.0 & 0xff;
+        let val = (self.0 >> 0usize) & 0xff;
         val as u8
     }
     ///Interrupt error clear.
     #[inline(always)]
     pub const fn set_IntErrClr(&mut self, val: u8) {
-        self.0 = (self.0 & !0xff) | ((val as u32) & 0xff);
+        self.0 = (self.0 & !(0xff << 0usize)) | (((val as u32) & 0xff) << 0usize);
     }
 }
 impl Default for DMACIntErrClr {
@@ -433,13 +436,13 @@ impl DMACIntErrorStatus {
     #[must_use]
     #[inline(always)]
     pub const fn IntErrorStatus(&self) -> u8 {
-        let val = self.0 & 0xff;
+        let val = (self.0 >> 0usize) & 0xff;
         val as u8
     }
     ///Interrupt error status.
     #[inline(always)]
     pub const fn set_IntErrorStatus(&mut self, val: u8) {
-        self.0 = (self.0 & !0xff) | ((val as u32) & 0xff);
+        self.0 = (self.0 & !(0xff << 0usize)) | (((val as u32) & 0xff) << 0usize);
     }
 }
 impl Default for DMACIntErrorStatus {
@@ -473,13 +476,13 @@ impl DMACIntStatus {
     #[must_use]
     #[inline(always)]
     pub const fn IntStatus(&self) -> u8 {
-        let val = self.0 & 0xff;
+        let val = (self.0 >> 0usize) & 0xff;
         val as u8
     }
     ///Status of the DMA interrupts after masking.
     #[inline(always)]
     pub const fn set_IntStatus(&mut self, val: u8) {
-        self.0 = (self.0 & !0xff) | ((val as u32) & 0xff);
+        self.0 = (self.0 & !(0xff << 0usize)) | (((val as u32) & 0xff) << 0usize);
     }
 }
 impl Default for DMACIntStatus {
@@ -513,13 +516,13 @@ impl DMACIntTCClear {
     #[must_use]
     #[inline(always)]
     pub const fn IntTCClear(&self) -> u8 {
-        let val = self.0 & 0xff;
+        let val = (self.0 >> 0usize) & 0xff;
         val as u8
     }
     ///Terminal count request clear.
     #[inline(always)]
     pub const fn set_IntTCClear(&mut self, val: u8) {
-        self.0 = (self.0 & !0xff) | ((val as u32) & 0xff);
+        self.0 = (self.0 & !(0xff << 0usize)) | (((val as u32) & 0xff) << 0usize);
     }
 }
 impl Default for DMACIntTCClear {
@@ -553,13 +556,13 @@ impl DMACIntTCStatus {
     #[must_use]
     #[inline(always)]
     pub const fn IntTCStatus(&self) -> u8 {
-        let val = self.0 & 0xff;
+        let val = (self.0 >> 0usize) & 0xff;
         val as u8
     }
     ///Interrupt terminal count request status.
     #[inline(always)]
     pub const fn set_IntTCStatus(&mut self, val: u8) {
-        self.0 = (self.0 & !0xff) | ((val as u32) & 0xff);
+        self.0 = (self.0 & !(0xff << 0usize)) | (((val as u32) & 0xff) << 0usize);
     }
 }
 impl Default for DMACIntTCStatus {
@@ -593,13 +596,13 @@ impl DMACRawIntErrorStatus {
     #[must_use]
     #[inline(always)]
     pub const fn RawIntErrorStatus(&self) -> u8 {
-        let val = self.0 & 0xff;
+        let val = (self.0 >> 0usize) & 0xff;
         val as u8
     }
     ///Status of the error interrupt prior to masking.
     #[inline(always)]
     pub const fn set_RawIntErrorStatus(&mut self, val: u8) {
-        self.0 = (self.0 & !0xff) | ((val as u32) & 0xff);
+        self.0 = (self.0 & !(0xff << 0usize)) | (((val as u32) & 0xff) << 0usize);
     }
 }
 impl Default for DMACRawIntErrorStatus {
@@ -633,13 +636,13 @@ impl DMACRawIntTCStatus {
     #[must_use]
     #[inline(always)]
     pub const fn RawIntTCStatus(&self) -> u8 {
-        let val = self.0 & 0xff;
+        let val = (self.0 >> 0usize) & 0xff;
         val as u8
     }
     ///Status of the terminal count interrupt prior to masking.
     #[inline(always)]
     pub const fn set_RawIntTCStatus(&mut self, val: u8) {
-        self.0 = (self.0 & !0xff) | ((val as u32) & 0xff);
+        self.0 = (self.0 & !(0xff << 0usize)) | (((val as u32) & 0xff) << 0usize);
     }
 }
 impl Default for DMACRawIntTCStatus {
@@ -673,13 +676,13 @@ impl DMACSoftBReq {
     #[must_use]
     #[inline(always)]
     pub const fn SoftBReq(&self) -> u16 {
-        let val = self.0 & 0xffff;
+        let val = (self.0 >> 0usize) & 0xffff;
         val as u16
     }
     ///Software burst request.
     #[inline(always)]
     pub const fn set_SoftBReq(&mut self, val: u16) {
-        self.0 = (self.0 & !0xffff) | ((val as u32) & 0xffff);
+        self.0 = (self.0 & !(0xffff << 0usize)) | (((val as u32) & 0xffff) << 0usize);
     }
 }
 impl Default for DMACSoftBReq {
@@ -709,13 +712,13 @@ impl DMACSoftLBReq {
     #[must_use]
     #[inline(always)]
     pub const fn SoftLBReq(&self) -> u16 {
-        let val = self.0 & 0xffff;
+        let val = (self.0 >> 0usize) & 0xffff;
         val as u16
     }
     ///Software last burst request.
     #[inline(always)]
     pub const fn set_SoftLBReq(&mut self, val: u16) {
-        self.0 = (self.0 & !0xffff) | ((val as u32) & 0xffff);
+        self.0 = (self.0 & !(0xffff << 0usize)) | (((val as u32) & 0xffff) << 0usize);
     }
 }
 impl Default for DMACSoftLBReq {
@@ -749,13 +752,13 @@ impl DMACSoftLSReq {
     #[must_use]
     #[inline(always)]
     pub const fn SoftLSReq(&self) -> u16 {
-        let val = self.0 & 0xffff;
+        let val = (self.0 >> 0usize) & 0xffff;
         val as u16
     }
     ///Software last single request.
     #[inline(always)]
     pub const fn set_SoftLSReq(&mut self, val: u16) {
-        self.0 = (self.0 & !0xffff) | ((val as u32) & 0xffff);
+        self.0 = (self.0 & !(0xffff << 0usize)) | (((val as u32) & 0xffff) << 0usize);
     }
 }
 impl Default for DMACSoftLSReq {
@@ -789,13 +792,13 @@ impl DMACSoftSReq {
     #[must_use]
     #[inline(always)]
     pub const fn SoftSReq(&self) -> u16 {
-        let val = self.0 & 0xffff;
+        let val = (self.0 >> 0usize) & 0xffff;
         val as u16
     }
     ///Software single request.
     #[inline(always)]
     pub const fn set_SoftSReq(&mut self, val: u16) {
-        self.0 = (self.0 & !0xffff) | ((val as u32) & 0xffff);
+        self.0 = (self.0 & !(0xffff << 0usize)) | (((val as u32) & 0xffff) << 0usize);
     }
 }
 impl Default for DMACSoftSReq {
@@ -825,13 +828,13 @@ impl DMACSync {
     #[must_use]
     #[inline(always)]
     pub const fn DMACSync(&self) -> u16 {
-        let val = self.0 & 0xffff;
+        let val = (self.0 >> 0usize) & 0xffff;
         val as u16
     }
     ///DMA synchronization logic for DMA request signals enabled or disabled.
     #[inline(always)]
     pub const fn set_DMACSync(&mut self, val: u16) {
-        self.0 = (self.0 & !0xffff) | ((val as u32) & 0xffff);
+        self.0 = (self.0 & !(0xffff << 0usize)) | (((val as u32) & 0xffff) << 0usize);
     }
 }
 impl Default for DMACSync {

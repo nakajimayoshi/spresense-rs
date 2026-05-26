@@ -7,13 +7,13 @@ impl CR {
     #[must_use]
     #[inline(always)]
     pub const fn UARTEN(&self) -> super::vals::UARTEN {
-        let val = self.0 & 0x01;
+        let val = (self.0 >> 0usize) & 0x01;
         super::vals::UARTEN::from_bits(val as u8)
     }
     ///UART enable.
     #[inline(always)]
     pub const fn set_UARTEN(&mut self, val: super::vals::UARTEN) {
-        self.0 = (self.0 & !(0x01 << 0usize)) | ((val.to_bits() as u32) & 0x01);
+        self.0 = (self.0 & !(0x01 << 0usize)) | (((val.to_bits() as u32) & 0x01) << 0usize);
     }
     ///SIR enable.
     #[must_use]
@@ -202,13 +202,13 @@ impl DMACR {
     #[must_use]
     #[inline(always)]
     pub const fn RXDMAE(&self) -> super::vals::RXDMAE {
-        let val = self.0 & 0x01;
+        let val = (self.0 >> 0usize) & 0x01;
         super::vals::RXDMAE::from_bits(val as u8)
     }
     ///Receive DMA enable.
     #[inline(always)]
     pub const fn set_RXDMAE(&mut self, val: super::vals::RXDMAE) {
-        self.0 = (self.0 & !(0x01 << 0usize)) | ((val.to_bits() as u32) & 0x01);
+        self.0 = (self.0 & !(0x01 << 0usize)) | (((val.to_bits() as u32) & 0x01) << 0usize);
     }
     ///Transmit DMA enable.
     #[must_use]
@@ -270,13 +270,13 @@ impl DR {
     #[must_use]
     #[inline(always)]
     pub const fn DATA(&self) -> u8 {
-        let val = self.0 & 0xff;
+        let val = (self.0 >> 0usize) & 0xff;
         val as u8
     }
     ///Data.
     #[inline(always)]
     pub const fn set_DATA(&mut self, val: u8) {
-        self.0 = (self.0 & !0xff) | ((val as u32) & 0xff);
+        self.0 = (self.0 & !(0xff << 0usize)) | (((val as u32) & 0xff) << 0usize);
     }
     ///Framing Error.
     #[must_use]
@@ -367,13 +367,13 @@ impl FBRD {
     #[must_use]
     #[inline(always)]
     pub const fn BAUD_DIVFRAC(&self) -> u8 {
-        let val = self.0 & 0x3f;
+        let val = (self.0 >> 0usize) & 0x3f;
         val as u8
     }
     ///The fractional baud rate divisor.
     #[inline(always)]
     pub const fn set_BAUD_DIVFRAC(&mut self, val: u8) {
-        self.0 = (self.0 & !0x3f) | ((val as u32) & 0x3f);
+        self.0 = (self.0 & !(0x3f << 0usize)) | (((val as u32) & 0x3f) << 0usize);
     }
 }
 impl Default for FBRD {
@@ -404,13 +404,13 @@ impl FR {
     #[must_use]
     #[inline(always)]
     pub const fn CTS(&self) -> bool {
-        let val = self.0 & 0x01;
+        let val = (self.0 >> 0usize) & 0x01;
         val != 0
     }
     ///Clear to send.
     #[inline(always)]
     pub const fn set_CTS(&mut self, val: bool) {
-        self.0 = (self.0 & !(0x01 << 0usize)) | ((val as u32) & 0x01);
+        self.0 = (self.0 & !(0x01 << 0usize)) | (((val as u32) & 0x01) << 0usize);
     }
     ///Data set ready.
     #[must_use]
@@ -557,13 +557,13 @@ impl IBRD {
     #[must_use]
     #[inline(always)]
     pub const fn BAUD_DIVINT(&self) -> u16 {
-        let val = self.0 & 0xffff;
+        let val = (self.0 >> 0usize) & 0xffff;
         val as u16
     }
     ///The integer baud rate divisor.
     #[inline(always)]
     pub const fn set_BAUD_DIVINT(&mut self, val: u16) {
-        self.0 = (self.0 & !0xffff) | ((val as u32) & 0xffff);
+        self.0 = (self.0 & !(0xffff << 0usize)) | (((val as u32) & 0xffff) << 0usize);
     }
 }
 impl Default for IBRD {
@@ -594,13 +594,13 @@ impl ICR {
     #[must_use]
     #[inline(always)]
     pub const fn RIMIC(&self) -> bool {
-        let val = self.0 & 0x01;
+        let val = (self.0 >> 0usize) & 0x01;
         val != 0
     }
     ///nUARTRI modem interrupt clear.
     #[inline(always)]
     pub const fn set_RIMIC(&mut self, val: bool) {
-        self.0 = (self.0 & !(0x01 << 0usize)) | ((val as u32) & 0x01);
+        self.0 = (self.0 & !(0x01 << 0usize)) | (((val as u32) & 0x01) << 0usize);
     }
     ///nUARTCTS modem interrupt clear.
     #[must_use]
@@ -775,13 +775,13 @@ impl IFLS {
     #[must_use]
     #[inline(always)]
     pub const fn TXIFLSEL(&self) -> super::vals::TXIFLSEL {
-        let val = self.0 & 0x07;
+        let val = (self.0 >> 0usize) & 0x07;
         super::vals::TXIFLSEL::from_bits(val as u8)
     }
     ///Transmit interrupt FIFO level select.
     #[inline(always)]
     pub const fn set_TXIFLSEL(&mut self, val: super::vals::TXIFLSEL) {
-        self.0 = (self.0 & !0x07) | ((val.to_bits() as u32) & 0x07);
+        self.0 = (self.0 & !(0x07 << 0usize)) | (((val.to_bits() as u32) & 0x07) << 0usize);
     }
     ///Receive interrupt FIFO level select.
     #[must_use]
@@ -830,13 +830,13 @@ impl ILPR {
     #[must_use]
     #[inline(always)]
     pub const fn ILPDVSR(&self) -> u8 {
-        let val = self.0 & 0xff;
+        let val = (self.0 >> 0usize) & 0xff;
         val as u8
     }
     ///8-bit low-power divisor value.
     #[inline(always)]
     pub const fn set_ILPDVSR(&mut self, val: u8) {
-        self.0 = (self.0 & !0xff) | ((val as u32) & 0xff);
+        self.0 = (self.0 & !(0xff << 0usize)) | (((val as u32) & 0xff) << 0usize);
     }
 }
 impl Default for ILPR {
@@ -867,13 +867,13 @@ impl IMSC {
     #[must_use]
     #[inline(always)]
     pub const fn RIMIM(&self) -> bool {
-        let val = self.0 & 0x01;
+        let val = (self.0 >> 0usize) & 0x01;
         val != 0
     }
     ///nUARTRI modem interrupt mask.
     #[inline(always)]
     pub const fn set_RIMIM(&mut self, val: bool) {
-        self.0 = (self.0 & !(0x01 << 0usize)) | ((val as u32) & 0x01);
+        self.0 = (self.0 & !(0x01 << 0usize)) | (((val as u32) & 0x01) << 0usize);
     }
     ///nUARTCTS modem interrupt mask.
     #[must_use]
@@ -1048,13 +1048,13 @@ impl LCR_H {
     #[must_use]
     #[inline(always)]
     pub const fn BRK(&self) -> super::vals::BRK {
-        let val = self.0 & 0x01;
+        let val = (self.0 >> 0usize) & 0x01;
         super::vals::BRK::from_bits(val as u8)
     }
     ///Send break.
     #[inline(always)]
     pub const fn set_BRK(&mut self, val: super::vals::BRK) {
-        self.0 = (self.0 & !(0x01 << 0usize)) | ((val.to_bits() as u32) & 0x01);
+        self.0 = (self.0 & !(0x01 << 0usize)) | (((val.to_bits() as u32) & 0x01) << 0usize);
     }
     ///Parity enable.
     #[must_use]
@@ -1173,13 +1173,13 @@ impl MIS {
     #[must_use]
     #[inline(always)]
     pub const fn RIMMIS(&self) -> bool {
-        let val = self.0 & 0x01;
+        let val = (self.0 >> 0usize) & 0x01;
         val != 0
     }
     ///nUARTRI modem masked interrupt status.
     #[inline(always)]
     pub const fn set_RIMMIS(&mut self, val: bool) {
-        self.0 = (self.0 & !(0x01 << 0usize)) | ((val as u32) & 0x01);
+        self.0 = (self.0 & !(0x01 << 0usize)) | (((val as u32) & 0x01) << 0usize);
     }
     ///nUARTCTS modem masked interrupt status.
     #[must_use]
@@ -1354,13 +1354,13 @@ impl RIS {
     #[must_use]
     #[inline(always)]
     pub const fn RIRRIS(&self) -> bool {
-        let val = self.0 & 0x01;
+        let val = (self.0 >> 0usize) & 0x01;
         val != 0
     }
     ///nUARTRI modem interrupt status.
     #[inline(always)]
     pub const fn set_RIRRIS(&mut self, val: bool) {
-        self.0 = (self.0 & !(0x01 << 0usize)) | ((val as u32) & 0x01);
+        self.0 = (self.0 & !(0x01 << 0usize)) | (((val as u32) & 0x01) << 0usize);
     }
     ///nUARTCTS modem interrupt status.
     #[must_use]
@@ -1535,13 +1535,13 @@ impl RSR {
     #[must_use]
     #[inline(always)]
     pub const fn RFE(&self) -> super::vals::RFE {
-        let val = self.0 & 0x01;
+        let val = (self.0 >> 0usize) & 0x01;
         super::vals::RFE::from_bits(val as u8)
     }
     ///Framing Error.
     #[inline(always)]
     pub const fn set_RFE(&mut self, val: super::vals::RFE) {
-        self.0 = (self.0 & !(0x01 << 0usize)) | ((val.to_bits() as u32) & 0x01);
+        self.0 = (self.0 & !(0x01 << 0usize)) | (((val.to_bits() as u32) & 0x01) << 0usize);
     }
     ///Parity Error.
     #[must_use]

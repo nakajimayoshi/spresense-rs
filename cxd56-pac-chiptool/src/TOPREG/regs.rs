@@ -7,13 +7,13 @@ impl ANA_PW_CTL {
     #[must_use]
     #[inline(always)]
     pub const fn RCOSC(&self) -> bool {
-        let val = self.0 & 0x01;
+        let val = (self.0 >> 0usize) & 0x01;
         val != 0
     }
     ///RC oscillator.
     #[inline(always)]
     pub const fn set_RCOSC(&mut self, val: bool) {
-        self.0 = (self.0 & !(0x01 << 0usize)) | ((val as u32) & 0x01);
+        self.0 = (self.0 & !(0x01 << 0usize)) | (((val as u32) & 0x01) << 0usize);
     }
     ///Crystal oscillator.
     #[must_use]
@@ -188,13 +188,13 @@ impl ANA_PW_STAT {
     #[must_use]
     #[inline(always)]
     pub const fn RCOSC(&self) -> bool {
-        let val = self.0 & 0x01;
+        let val = (self.0 >> 0usize) & 0x01;
         val != 0
     }
     ///RC oscillator powered on.
     #[inline(always)]
     pub const fn set_RCOSC(&mut self, val: bool) {
-        self.0 = (self.0 & !(0x01 << 0usize)) | ((val as u32) & 0x01);
+        self.0 = (self.0 & !(0x01 << 0usize)) | (((val as u32) & 0x01) << 0usize);
     }
     ///Crystal oscillator powered on.
     #[must_use]
@@ -438,13 +438,13 @@ impl CRG_INT_CLR0 {
     #[must_use]
     #[inline(always)]
     pub const fn CK_PCLK_UART0(&self) -> bool {
-        let val = self.0 & 0x01;
+        let val = (self.0 >> 0usize) & 0x01;
         val != 0
     }
     ///UART0 PCLK ready.
     #[inline(always)]
     pub const fn set_CK_PCLK_UART0(&mut self, val: bool) {
-        self.0 = (self.0 & !(0x01 << 0usize)) | ((val as u32) & 0x01);
+        self.0 = (self.0 & !(0x01 << 0usize)) | (((val as u32) & 0x01) << 0usize);
     }
     ///UART0 clock ready.
     #[must_use]
@@ -773,13 +773,13 @@ impl CRG_INT_CLR1 {
     #[must_use]
     #[inline(always)]
     pub const fn CK_CPU_BUS(&self) -> bool {
-        let val = self.0 & 0x01;
+        let val = (self.0 >> 0usize) & 0x01;
         val != 0
     }
     ///CPU bus clock ready.
     #[inline(always)]
     pub const fn set_CK_CPU_BUS(&mut self, val: bool) {
-        self.0 = (self.0 & !(0x01 << 0usize)) | ((val as u32) & 0x01);
+        self.0 = (self.0 & !(0x01 << 0usize)) | (((val as u32) & 0x01) << 0usize);
     }
     ///CPU bus clock timeout.
     #[must_use]
@@ -1042,13 +1042,13 @@ impl IO_SPI0_CS_X {
     #[must_use]
     #[inline(always)]
     pub const fn ENZI(&self) -> bool {
-        let val = self.0 & 0x01;
+        let val = (self.0 >> 0usize) & 0x01;
         val != 0
     }
     ///Input enable: 0=disabled, 1=enabled.
     #[inline(always)]
     pub const fn set_ENZI(&mut self, val: bool) {
-        self.0 = (self.0 & !(0x01 << 0usize)) | ((val as u32) & 0x01);
+        self.0 = (self.0 & !(0x01 << 0usize)) | (((val as u32) & 0x01) << 0usize);
     }
     ///Pullup: 0=pullup enabled, 1=normal (off).
     #[must_use]
@@ -1125,13 +1125,13 @@ impl IO_SPI0_SCK {
     #[must_use]
     #[inline(always)]
     pub const fn ENZI(&self) -> bool {
-        let val = self.0 & 0x01;
+        let val = (self.0 >> 0usize) & 0x01;
         val != 0
     }
     ///Input enable: 0=disabled, 1=enabled.
     #[inline(always)]
     pub const fn set_ENZI(&mut self, val: bool) {
-        self.0 = (self.0 & !(0x01 << 0usize)) | ((val as u32) & 0x01);
+        self.0 = (self.0 & !(0x01 << 0usize)) | (((val as u32) & 0x01) << 0usize);
     }
     ///Pullup: 0=pullup enabled, 1=normal (off).
     #[must_use]
@@ -1208,13 +1208,13 @@ impl IO_UART2_RXD {
     #[must_use]
     #[inline(always)]
     pub const fn ENZI(&self) -> bool {
-        let val = self.0 & 0x01;
+        let val = (self.0 >> 0usize) & 0x01;
         val != 0
     }
     ///Input enable: 0=disabled, 1=enabled.
     #[inline(always)]
     pub const fn set_ENZI(&mut self, val: bool) {
-        self.0 = (self.0 & !(0x01 << 0usize)) | ((val as u32) & 0x01);
+        self.0 = (self.0 & !(0x01 << 0usize)) | (((val as u32) & 0x01) << 0usize);
     }
     ///Pullup: 0=pullup enabled, 1=normal (off).
     #[must_use]
@@ -1291,13 +1291,13 @@ impl IO_UART2_TXD {
     #[must_use]
     #[inline(always)]
     pub const fn ENZI(&self) -> bool {
-        let val = self.0 & 0x01;
+        let val = (self.0 >> 0usize) & 0x01;
         val != 0
     }
     ///Input enable: 0=disabled, 1=enabled.
     #[inline(always)]
     pub const fn set_ENZI(&mut self, val: bool) {
-        self.0 = (self.0 & !(0x01 << 0usize)) | ((val as u32) & 0x01);
+        self.0 = (self.0 & !(0x01 << 0usize)) | (((val as u32) & 0x01) << 0usize);
     }
     ///Pullup: 0=pullup enabled, 1=normal (off).
     #[must_use]
@@ -1374,13 +1374,13 @@ impl PMU_PW_CTL {
     #[must_use]
     #[inline(always)]
     pub const fn POWER_CTRL_ON(&self) -> bool {
-        let val = self.0 & 0x01;
+        let val = (self.0 >> 0usize) & 0x01;
         val != 0
     }
     ///Write 1 to request a PMU power-state transition.
     #[inline(always)]
     pub const fn set_POWER_CTRL_ON(&mut self, val: bool) {
-        self.0 = (self.0 & !(0x01 << 0usize)) | ((val as u32) & 0x01);
+        self.0 = (self.0 & !(0x01 << 0usize)) | (((val as u32) & 0x01) << 0usize);
     }
 }
 impl Default for PMU_PW_CTL {
@@ -1415,13 +1415,13 @@ impl PWD_CTL {
     #[must_use]
     #[inline(always)]
     pub const fn SCU(&self) -> bool {
-        let val = self.0 & 0x01;
+        let val = (self.0 >> 0usize) & 0x01;
         val != 0
     }
     ///Sensor Control Unit domain.
     #[inline(always)]
     pub const fn set_SCU(&mut self, val: bool) {
-        self.0 = (self.0 & !(0x01 << 0usize)) | ((val as u32) & 0x01);
+        self.0 = (self.0 & !(0x01 << 0usize)) | (((val as u32) & 0x01) << 0usize);
     }
     ///Core domain.
     #[must_use]
@@ -1582,13 +1582,13 @@ impl PWD_STAT {
     #[must_use]
     #[inline(always)]
     pub const fn SCU(&self) -> bool {
-        let val = self.0 & 0x01;
+        let val = (self.0 >> 0usize) & 0x01;
         val != 0
     }
     ///Sensor Control Unit domain powered on.
     #[inline(always)]
     pub const fn set_SCU(&mut self, val: bool) {
-        self.0 = (self.0 & !(0x01 << 0usize)) | ((val as u32) & 0x01);
+        self.0 = (self.0 & !(0x01 << 0usize)) | (((val as u32) & 0x01) << 0usize);
     }
     ///Core domain powered on.
     #[must_use]
@@ -1804,13 +1804,13 @@ impl SCU_CKEN {
     #[must_use]
     #[inline(always)]
     pub const fn SCU_SCU(&self) -> bool {
-        let val = self.0 & 0x01;
+        let val = (self.0 >> 0usize) & 0x01;
         val != 0
     }
     ///SCU core clock enable.
     #[inline(always)]
     pub const fn set_SCU_SCU(&mut self, val: bool) {
-        self.0 = (self.0 & !(0x01 << 0usize)) | ((val as u32) & 0x01);
+        self.0 = (self.0 & !(0x01 << 0usize)) | (((val as u32) & 0x01) << 0usize);
     }
     ///SCU I2C0 clock enable.
     #[must_use]
@@ -1957,13 +1957,13 @@ impl SWRESET_BUS {
     #[must_use]
     #[inline(always)]
     pub const fn XRST_SPIM(&self) -> bool {
-        let val = self.0 & 0x01;
+        let val = (self.0 >> 0usize) & 0x01;
         val != 0
     }
     ///SPI master reset.
     #[inline(always)]
     pub const fn set_XRST_SPIM(&mut self, val: bool) {
-        self.0 = (self.0 & !(0x01 << 0usize)) | ((val as u32) & 0x01);
+        self.0 = (self.0 & !(0x01 << 0usize)) | (((val as u32) & 0x01) << 0usize);
     }
     ///Serial flash controller reset.
     #[must_use]
@@ -2235,13 +2235,13 @@ impl SYSIOP_CKEN {
     #[must_use]
     #[inline(always)]
     pub const fn CKEN_UART0(&self) -> bool {
-        let val = self.0 & 0x01;
+        let val = (self.0 >> 0usize) & 0x01;
         val != 0
     }
     ///UART0 clock enable.
     #[inline(always)]
     pub const fn set_CKEN_UART0(&mut self, val: bool) {
-        self.0 = (self.0 & !(0x01 << 0usize)) | ((val as u32) & 0x01);
+        self.0 = (self.0 & !(0x01 << 0usize)) | (((val as u32) & 0x01) << 0usize);
     }
     ///UART0 PCLK enable.
     #[must_use]
