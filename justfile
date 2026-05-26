@@ -13,7 +13,6 @@ chiptool: svdtools
     rm -rf cxd56-pac-chiptool/src
     cp -r svd-out/src/ cxd56-pac-chiptool/
     rm -rf svd-out
-    cargo clippy --fix cxd56-pac-chiptool
     cargo fmt -p cxd56-pac-chiptool
 
 svd2rust: svdtools
@@ -23,7 +22,6 @@ svd2rust: svdtools
     rm -rf cxd56-pac-svd2rust/src
     cp -r svd-out/src/ cxd56-pac-svd2rust/
     rm -rf svd-out
-    cargo clippy --fix cxd56-pac-svd2rust
     cargo fmt -p cxd56-pac-svd2rust
 
 svdtools:
