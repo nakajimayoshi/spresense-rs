@@ -1378,6 +1378,209 @@ impl defmt::Format for IOCSYS_IOMD0 {
         defmt::write!(f, "IOCSYS_IOMD0 {{ SPI0A: {=u8:?} }}", self.SPI0A())
     }
 }
+///SYSIOP IO-cell mode-mux register 1.
+#[repr(transparent)]
+#[derive(Copy, Clone, Eq, PartialEq)]
+pub struct IOCSYS_IOMD1(pub u32);
+impl IOCSYS_IOMD1 {
+    ///Mode select for I2C0_BCK / I2C0_BDT (I2C0 = Func1).
+    #[must_use]
+    #[inline(always)]
+    pub const fn I2C0(&self) -> u8 {
+        let val = (self.0 >> 18usize) & 0x03;
+        val as u8
+    }
+    ///Mode select for I2C0_BCK / I2C0_BDT (I2C0 = Func1).
+    #[inline(always)]
+    pub const fn set_I2C0(&mut self, val: u8) {
+        self.0 = (self.0 & !(0x03 << 18usize)) | (((val as u32) & 0x03) << 18usize);
+    }
+}
+impl Default for IOCSYS_IOMD1 {
+    #[inline(always)]
+    fn default() -> IOCSYS_IOMD1 {
+        IOCSYS_IOMD1(0)
+    }
+}
+impl core::fmt::Debug for IOCSYS_IOMD1 {
+    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+        f.debug_struct("IOCSYS_IOMD1")
+            .field("I2C0", &self.I2C0())
+            .finish()
+    }
+}
+#[cfg(feature = "defmt")]
+impl defmt::Format for IOCSYS_IOMD1 {
+    fn format(&self, f: defmt::Formatter) {
+        defmt::write!(f, "IOCSYS_IOMD1 {{ I2C0: {=u8:?} }}", self.I2C0())
+    }
+}
+///IOCELL control for I2C0_BCK pad.
+#[repr(transparent)]
+#[derive(Copy, Clone, Eq, PartialEq)]
+pub struct IO_I2C0_BCK(pub u32);
+impl IO_I2C0_BCK {
+    ///Input enable: 0=disabled, 1=enabled.
+    #[must_use]
+    #[inline(always)]
+    pub const fn ENZI(&self) -> bool {
+        let val = (self.0 >> 0usize) & 0x01;
+        val != 0
+    }
+    ///Input enable: 0=disabled, 1=enabled.
+    #[inline(always)]
+    pub const fn set_ENZI(&mut self, val: bool) {
+        self.0 = (self.0 & !(0x01 << 0usize)) | (((val as u32) & 0x01) << 0usize);
+    }
+    ///Pullup: 0=pullup enabled, 1=normal (off).
+    #[must_use]
+    #[inline(always)]
+    pub const fn PUN(&self) -> bool {
+        let val = (self.0 >> 8usize) & 0x01;
+        val != 0
+    }
+    ///Pullup: 0=pullup enabled, 1=normal (off).
+    #[inline(always)]
+    pub const fn set_PUN(&mut self, val: bool) {
+        self.0 = (self.0 & !(0x01 << 8usize)) | (((val as u32) & 0x01) << 8usize);
+    }
+    ///Pulldown: 0=pulldown enabled, 1=normal (off).
+    #[must_use]
+    #[inline(always)]
+    pub const fn PDN(&self) -> bool {
+        let val = (self.0 >> 16usize) & 0x01;
+        val != 0
+    }
+    ///Pulldown: 0=pulldown enabled, 1=normal (off).
+    #[inline(always)]
+    pub const fn set_PDN(&mut self, val: bool) {
+        self.0 = (self.0 & !(0x01 << 16usize)) | (((val as u32) & 0x01) << 16usize);
+    }
+    ///Output current: 0=4mA(max 64MHz), 1=2mA(max 32MHz).
+    #[must_use]
+    #[inline(always)]
+    pub const fn LOWEMI(&self) -> bool {
+        let val = (self.0 >> 24usize) & 0x01;
+        val != 0
+    }
+    ///Output current: 0=4mA(max 64MHz), 1=2mA(max 32MHz).
+    #[inline(always)]
+    pub const fn set_LOWEMI(&mut self, val: bool) {
+        self.0 = (self.0 & !(0x01 << 24usize)) | (((val as u32) & 0x01) << 24usize);
+    }
+}
+impl Default for IO_I2C0_BCK {
+    #[inline(always)]
+    fn default() -> IO_I2C0_BCK {
+        IO_I2C0_BCK(0)
+    }
+}
+impl core::fmt::Debug for IO_I2C0_BCK {
+    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+        f.debug_struct("IO_I2C0_BCK")
+            .field("ENZI", &self.ENZI())
+            .field("PUN", &self.PUN())
+            .field("PDN", &self.PDN())
+            .field("LOWEMI", &self.LOWEMI())
+            .finish()
+    }
+}
+#[cfg(feature = "defmt")]
+impl defmt::Format for IO_I2C0_BCK {
+    fn format(&self, f: defmt::Formatter) {
+        defmt::write!(
+            f,
+            "IO_I2C0_BCK {{ ENZI: {=bool:?}, PUN: {=bool:?}, PDN: {=bool:?}, LOWEMI: {=bool:?} }}",
+            self.ENZI(),
+            self.PUN(),
+            self.PDN(),
+            self.LOWEMI()
+        )
+    }
+}
+///IOCELL control for I2C0_BDT pad.
+#[repr(transparent)]
+#[derive(Copy, Clone, Eq, PartialEq)]
+pub struct IO_I2C0_BDT(pub u32);
+impl IO_I2C0_BDT {
+    ///Input enable: 0=disabled, 1=enabled.
+    #[must_use]
+    #[inline(always)]
+    pub const fn ENZI(&self) -> bool {
+        let val = (self.0 >> 0usize) & 0x01;
+        val != 0
+    }
+    ///Input enable: 0=disabled, 1=enabled.
+    #[inline(always)]
+    pub const fn set_ENZI(&mut self, val: bool) {
+        self.0 = (self.0 & !(0x01 << 0usize)) | (((val as u32) & 0x01) << 0usize);
+    }
+    ///Pullup: 0=pullup enabled, 1=normal (off).
+    #[must_use]
+    #[inline(always)]
+    pub const fn PUN(&self) -> bool {
+        let val = (self.0 >> 8usize) & 0x01;
+        val != 0
+    }
+    ///Pullup: 0=pullup enabled, 1=normal (off).
+    #[inline(always)]
+    pub const fn set_PUN(&mut self, val: bool) {
+        self.0 = (self.0 & !(0x01 << 8usize)) | (((val as u32) & 0x01) << 8usize);
+    }
+    ///Pulldown: 0=pulldown enabled, 1=normal (off).
+    #[must_use]
+    #[inline(always)]
+    pub const fn PDN(&self) -> bool {
+        let val = (self.0 >> 16usize) & 0x01;
+        val != 0
+    }
+    ///Pulldown: 0=pulldown enabled, 1=normal (off).
+    #[inline(always)]
+    pub const fn set_PDN(&mut self, val: bool) {
+        self.0 = (self.0 & !(0x01 << 16usize)) | (((val as u32) & 0x01) << 16usize);
+    }
+    ///Output current: 0=4mA(max 64MHz), 1=2mA(max 32MHz).
+    #[must_use]
+    #[inline(always)]
+    pub const fn LOWEMI(&self) -> bool {
+        let val = (self.0 >> 24usize) & 0x01;
+        val != 0
+    }
+    ///Output current: 0=4mA(max 64MHz), 1=2mA(max 32MHz).
+    #[inline(always)]
+    pub const fn set_LOWEMI(&mut self, val: bool) {
+        self.0 = (self.0 & !(0x01 << 24usize)) | (((val as u32) & 0x01) << 24usize);
+    }
+}
+impl Default for IO_I2C0_BDT {
+    #[inline(always)]
+    fn default() -> IO_I2C0_BDT {
+        IO_I2C0_BDT(0)
+    }
+}
+impl core::fmt::Debug for IO_I2C0_BDT {
+    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+        f.debug_struct("IO_I2C0_BDT")
+            .field("ENZI", &self.ENZI())
+            .field("PUN", &self.PUN())
+            .field("PDN", &self.PDN())
+            .field("LOWEMI", &self.LOWEMI())
+            .finish()
+    }
+}
+#[cfg(feature = "defmt")]
+impl defmt::Format for IO_I2C0_BDT {
+    fn format(&self, f: defmt::Formatter) {
+        defmt::write!(
+            f,
+            "IO_I2C0_BDT {{ ENZI: {=bool:?}, PUN: {=bool:?}, PDN: {=bool:?}, LOWEMI: {=bool:?} }}",
+            self.ENZI(),
+            self.PUN(),
+            self.PDN(),
+            self.LOWEMI()
+        )
+    }
+}
 ///IOCELL control for SPI0_CS_X / UART1-TXD.
 #[repr(transparent)]
 #[derive(Copy, Clone, Eq, PartialEq)]

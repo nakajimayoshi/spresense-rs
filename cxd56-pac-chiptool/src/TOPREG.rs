@@ -259,6 +259,11 @@ impl TOPREG {
     pub const fn IOCSYS_IOMD0(self) -> crate::common::Reg<regs::IOCSYS_IOMD0, crate::common::RW> {
         unsafe { crate::common::Reg::from_ptr(self.ptr.wrapping_add(0x07c0usize) as _) }
     }
+    ///SYSIOP IO-cell mode-mux register 1.
+    #[inline(always)]
+    pub const fn IOCSYS_IOMD1(self) -> crate::common::Reg<regs::IOCSYS_IOMD1, crate::common::RW> {
+        unsafe { crate::common::Reg::from_ptr(self.ptr.wrapping_add(0x07c4usize) as _) }
+    }
     ///IOCELL control for SPI0_CS_X / UART1-TXD.
     #[inline(always)]
     pub const fn IO_SPI0_CS_X(self) -> crate::common::Reg<regs::IO_SPI0_CS_X, crate::common::RW> {
@@ -268,6 +273,16 @@ impl TOPREG {
     #[inline(always)]
     pub const fn IO_SPI0_SCK(self) -> crate::common::Reg<regs::IO_SPI0_SCK, crate::common::RW> {
         unsafe { crate::common::Reg::from_ptr(self.ptr.wrapping_add(0x0848usize) as _) }
+    }
+    ///IOCELL control for I2C0_BCK pad.
+    #[inline(always)]
+    pub const fn IO_I2C0_BCK(self) -> crate::common::Reg<regs::IO_I2C0_BCK, crate::common::RW> {
+        unsafe { crate::common::Reg::from_ptr(self.ptr.wrapping_add(0x08b0usize) as _) }
+    }
+    ///IOCELL control for I2C0_BDT pad.
+    #[inline(always)]
+    pub const fn IO_I2C0_BDT(self) -> crate::common::Reg<regs::IO_I2C0_BDT, crate::common::RW> {
+        unsafe { crate::common::Reg::from_ptr(self.ptr.wrapping_add(0x08b4usize) as _) }
     }
     ///IOCELL control for UART2 TXD pin.
     #[inline(always)]

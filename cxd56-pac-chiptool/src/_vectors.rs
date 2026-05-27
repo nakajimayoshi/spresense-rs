@@ -2,6 +2,7 @@ unsafe extern "C" {
     fn CRG();
     fn UART1();
     fn SPI3();
+    fn I2C0();
     fn SPI0();
     fn GE2D();
     fn ROT();
@@ -52,7 +53,7 @@ pub static __INTERRUPTS: [Vector; 135] = [
     Vector { _reserved: 0 },
     Vector { _reserved: 0 },
     Vector { _handler: SPI3 },
-    Vector { _reserved: 0 },
+    Vector { _handler: I2C0 },
     Vector { _reserved: 0 },
     Vector { _reserved: 0 },
     Vector { _reserved: 0 },

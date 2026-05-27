@@ -1,6 +1,7 @@
 PROVIDE(CRG = DefaultHandler);
 PROVIDE(UART1 = DefaultHandler);
 PROVIDE(SPI3 = DefaultHandler);
+PROVIDE(I2C0 = DefaultHandler);
 PROVIDE(SPI0 = DefaultHandler);
 PROVIDE(GE2D = DefaultHandler);
 PROVIDE(ROT = DefaultHandler);

@@ -12,6 +12,8 @@ pub enum Interrupt {
     UART1 = 27,
     ///32 - SPI3 interrupt
     SPI3 = 32,
+    ///33 - I2C0 (SCU_I2C0) interrupt
+    I2C0 = 33,
     ///90 - SPI0 interrupt
     SPI0 = 90,
     ///106 - 2D interrupt
@@ -74,6 +76,8 @@ pub const RTC0: RTC0::RTC0 = unsafe { RTC0::RTC0::from_ptr(0x0410_8000usize as _
 pub const RTC1: RTC0::RTC0 = unsafe { RTC0::RTC0::from_ptr(0x0410_9000usize as _) };
 ///Synchronous Serial Port Controller (SCU SPI)
 pub const SPI3: SPI0::SPI0 = unsafe { SPI0::SPI0::from_ptr(0x0418_d000usize as _) };
+///DesignWare DW_apb_i2c master controller (SCU_I2C0 / sensor I2C bus)
+pub const I2C0: I2C0::I2C0 = unsafe { I2C0::I2C0::from_ptr(0x0418_d400usize as _) };
 ///Synchronous Serial Port Controller (SPIM)
 pub const SPI0: SPI0::SPI0 = unsafe { SPI0::SPI0::from_ptr(0x041a_a000usize as _) };
 ///UART
@@ -101,6 +105,7 @@ pub mod CRG;
 pub mod DMAC1;
 pub mod DMAC3;
 pub mod GE2D;
+pub mod I2C0;
 pub mod ROT;
 pub mod RTC0;
 pub mod SMP_RAM_CTRL;
