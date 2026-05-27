@@ -6405,7 +6405,7 @@
       <baseAddress>0x04100000</baseAddress>
       <addressBlock>
         <offset>0x0</offset>
-        <size>0x1500</size>
+        <size>0x2200</size>
         <usage>registers</usage>
       </addressBlock>
       <registers>
@@ -7697,22 +7697,10 @@
             </field>
           </fields>
         </register>
-      </registers>
-    </peripheral>
-    <peripheral>
-      <name>GPIO0</name>
-      <description>GPIO Port 0 — GP_* output-enable/data registers</description>
-      <baseAddress>0x04102000</baseAddress>
-      <addressBlock>
-        <offset>0x0</offset>
-        <size>0x200</size>
-        <usage>registers</usage>
-      </addressBlock>
-      <registers>
         <register>
           <name>GP_I2C4_BCK</name>
           <description>GPIO SYS pin 1 — I2C4 clock / Arduino D14</description>
-          <addressOffset>0x0</addressOffset>
+          <addressOffset>0x2000</addressOffset>
           <access>read-write</access>
           <resetValue>0x00010000</resetValue>
           <fields>
@@ -7737,9 +7725,9 @@
           </fields>
         </register>
         <register>
-          <name>PIN97</name>
+          <name>GP_I2S1_BCK</name>
           <description>GPIO APP pin 97 — I2S1_BCK / LED0 on Spresense main board</description>
-          <addressOffset>0x168</addressOffset>
+          <addressOffset>0x2168</addressOffset>
           <access>read-write</access>
           <resetValue>0x00010000</resetValue>
           <fields>
@@ -7764,9 +7752,9 @@
           </fields>
         </register>
         <register>
-          <name>PIN98</name>
+          <name>GP_I2S1_LRCK</name>
           <description>GPIO APP pin 98 — I2S1_LRCK / LED1 on Spresense main board</description>
-          <addressOffset>0x16C</addressOffset>
+          <addressOffset>0x216C</addressOffset>
           <access>read-write</access>
           <resetValue>0x00010000</resetValue>
           <fields>
@@ -7791,9 +7779,9 @@
           </fields>
         </register>
         <register>
-          <name>PIN99</name>
+          <name>GP_I2S1_DATA_IN</name>
           <description>GPIO APP pin 99 — I2S1_DATA_IN / LED2 on Spresense main board</description>
-          <addressOffset>0x170</addressOffset>
+          <addressOffset>0x2170</addressOffset>
           <access>read-write</access>
           <resetValue>0x00010000</resetValue>
           <fields>
@@ -7818,9 +7806,9 @@
           </fields>
         </register>
         <register>
-          <name>PIN100</name>
+          <name>GP_I2S1_DATA_OUT</name>
           <description>GPIO APP pin 100 — I2S1_DATA_OUT / LED3 on Spresense main board</description>
-          <addressOffset>0x174</addressOffset>
+          <addressOffset>0x2174</addressOffset>
           <access>read-write</access>
           <resetValue>0x00010000</resetValue>
           <fields>
