@@ -1,7 +1,7 @@
-///Register `PIN100` reader
-pub type R = crate::R<Pin100Spec>;
-///Register `PIN100` writer
-pub type W = crate::W<Pin100Spec>;
+///Register `GP_I2S1_DATA_OUT` reader
+pub type R = crate::R<GpI2s1DataOutSpec>;
+///Register `GP_I2S1_DATA_OUT` writer
+pub type W = crate::W<GpI2s1DataOutSpec>;
 ///Field `IN` reader - Sampled pin level (read)
 pub type InR = crate::BitReader;
 ///Field `IN` writer - Sampled pin level (read)
@@ -34,34 +34,34 @@ impl R {
 impl W {
     ///Bit 0 - Sampled pin level (read)
     #[inline(always)]
-    pub fn in_(&mut self) -> InW<'_, Pin100Spec> {
+    pub fn in_(&mut self) -> InW<'_, GpI2s1DataOutSpec> {
         InW::new(self, 0)
     }
     ///Bit 8 - Output data
     #[inline(always)]
-    pub fn out(&mut self) -> OutW<'_, Pin100Spec> {
+    pub fn out(&mut self) -> OutW<'_, GpI2s1DataOutSpec> {
         OutW::new(self, 8)
     }
     ///Bit 16 - Output enable, active-low (0 = drive output, 1 = high-Z input)
     #[inline(always)]
-    pub fn dir(&mut self) -> DirW<'_, Pin100Spec> {
+    pub fn dir(&mut self) -> DirW<'_, GpI2s1DataOutSpec> {
         DirW::new(self, 16)
     }
 }
 /**GPIO APP pin 100 — I2S1_DATA_OUT / LED3 on Spresense main board
 
-You can [`read`](crate::Reg::read) this register and get [`pin100::R`](R). You can [`reset`](crate::Reg::reset), [`write`](crate::Reg::write), [`write_with_zero`](crate::Reg::write_with_zero) this register using [`pin100::W`](W). You can also [`modify`](crate::Reg::modify) this register. See [API](https://docs.rs/svd2rust/#read--modify--write-api).*/
-pub struct Pin100Spec;
-impl crate::RegisterSpec for Pin100Spec {
+You can [`read`](crate::Reg::read) this register and get [`gp_i2s1_data_out::R`](R). You can [`reset`](crate::Reg::reset), [`write`](crate::Reg::write), [`write_with_zero`](crate::Reg::write_with_zero) this register using [`gp_i2s1_data_out::W`](W). You can also [`modify`](crate::Reg::modify) this register. See [API](https://docs.rs/svd2rust/#read--modify--write-api).*/
+pub struct GpI2s1DataOutSpec;
+impl crate::RegisterSpec for GpI2s1DataOutSpec {
     type Ux = u32;
 }
-///`read()` method returns [`pin100::R`](R) reader structure
-impl crate::Readable for Pin100Spec {}
-///`write(|w| ..)` method takes [`pin100::W`](W) writer structure
-impl crate::Writable for Pin100Spec {
+///`read()` method returns [`gp_i2s1_data_out::R`](R) reader structure
+impl crate::Readable for GpI2s1DataOutSpec {}
+///`write(|w| ..)` method takes [`gp_i2s1_data_out::W`](W) writer structure
+impl crate::Writable for GpI2s1DataOutSpec {
     type Safety = crate::Unsafe;
 }
-///`reset()` method sets PIN100 to value 0x0001_0000
-impl crate::Resettable for Pin100Spec {
+///`reset()` method sets GP_I2S1_DATA_OUT to value 0x0001_0000
+impl crate::Resettable for GpI2s1DataOutSpec {
     const RESET_VALUE: u32 = 0x0001_0000;
 }

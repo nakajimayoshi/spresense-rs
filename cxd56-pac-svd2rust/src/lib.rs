@@ -376,15 +376,6 @@ impl core::fmt::Debug for Topreg {
 }
 ///Top-of-chip clock / PMU / oscillator / PLL controller
 pub mod topreg;
-///GPIO Port 0 — GP_* output-enable/data registers
-pub type Gpio0 = crate::Periph<gpio0::RegisterBlock, 0x0410_2000>;
-impl core::fmt::Debug for Gpio0 {
-    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-        f.debug_struct("Gpio0").finish()
-    }
-}
-///GPIO Port 0 — GP_* output-enable/data registers
-pub mod gpio0;
 ///APP / GNSS sub-domain clock and reset controller
 pub type TopregSub = crate::Periph<topreg_sub::RegisterBlock, 0x0410_3000>;
 impl core::fmt::Debug for TopregSub {
@@ -462,8 +453,6 @@ pub struct Peripherals {
     pub spi5: Spi5,
     ///TOPREG
     pub topreg: Topreg,
-    ///GPIO0
-    pub gpio0: Gpio0,
     ///TOPREG_SUB
     pub topreg_sub: TopregSub,
     ///RTC0
@@ -512,7 +501,6 @@ impl Peripherals {
             spi4: Spi4::steal(),
             spi5: Spi5::steal(),
             topreg: Topreg::steal(),
-            gpio0: Gpio0::steal(),
             topreg_sub: TopregSub::steal(),
             rtc0: Rtc0::steal(),
             rtc1: Rtc1::steal(),
