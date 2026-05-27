@@ -13,7 +13,7 @@ const DELAY_CYCLES: u32 = 76_800_000;
 #[entry]
 fn main() -> ! {
     let p = embassy_cxd56::init();
-    let mut led = Output::new(p.PIN97, Level::Low);
+    let mut led = Output::new(p.GP_I2S1_BCK, Level::Low);
 
     loop {
         led.set_high();

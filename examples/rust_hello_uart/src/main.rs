@@ -8,7 +8,7 @@ use cortex_m_rt::entry;
 use embedded_hal::delay::DelayNs;
 use panic_halt as _;
 
-use cxd56_hal::gpio::{gpio0, Level};
+use cxd56_hal::gpio::{pins, Level};
 use cxd56_hal::pac;
 use cxd56_hal::uart::{Uart1, UartConfig};
 use cxd56_hal::{
@@ -25,8 +25,8 @@ fn main() -> ! {
     let crg = pac.crg.constrain(Config::default());
     let clocks = crg.freeze();
 
-    let pins = gpio0::Parts::new(pac.gpio0);
-    let mut led = pins.pin97.into_output(Level::Low);
+    let pins = pins::Parts::new(pac.topreg);
+    let mut led = pins.gp_i2s1_bck.into_output(Level::Low);
     let mut delay = Delay::new(core.SYST, &clocks);
 
     sos(&mut led, &mut delay);

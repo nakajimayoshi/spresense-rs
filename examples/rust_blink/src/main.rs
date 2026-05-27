@@ -2,10 +2,10 @@
 //!
 //! Build: cargo build --example gpio_blink --target thumbv7em-none-eabihf --features rt
 //!
-//! This example exists to verify that the GPIO0 block in patch.yml is correct:
-//!   - baseAddress 0x04102000 (not 0x04120000)
-//!   - GP_I2C4_BCK at offset 0x000  ((1-1)*4)
-//!   - PIN97       at offset 0x168  ((97-7)*4)
+//! This example verifies the GP_* registers under TOPREG in patch.yml:
+//!   - TOPREG baseAddress 0x04100000
+//!   - GP_I2C4_BCK  at offset 0x2000  (TOPREG+0x2000, abs 0x04102000)
+//!   - GP_I2S1_BCK  at offset 0x2168  (TOPREG+0x2168, abs 0x04102168)
 //!   - DIR[16] active-low (0 = output enabled)
 //!   - OUT[8]  data bit
 //!   - IN[0]   sampled input (read)
@@ -25,20 +25,20 @@ const DELAY_CYCLES: u32 = 76_800_000;
 #[entry]
 fn main() -> ! {
     // Safety: no other code runs on this core before this point.
-    let gpio0 = unsafe { Gpio0::steal() };
+    let topreg = unsafe { Topreg::steal() };
 
-    // Configure PIN97 (LED0) as output, initially low.
+    // Configure GP_I2S1_BCK (LED0) as output, initially low.
     // DIR is active-low: clear_bit() = 0 = drive output.
-    gpio0.pin97().write(|w| w.dir().clear_bit().out().clear_bit());
+    topreg.gp_i2s1_bck().write(|w| w.dir().clear_bit().out().clear_bit());
 
     // Leave GP_I2C4_BCK (pin 1) as input (reset default: DIR=1, high-Z input).
 
     loop {
         // Read GP_I2C4_BCK input level.
-        let pin1_high = gpio0.gp_i2c4_bck().read().in_().bit_is_set();
+        let pin1_high = topreg.gp_i2c4_bck().read().in_().bit_is_set();
 
         // Toggle LED to match the input level (high → LED on, low → LED off).
-        gpio0.pin97().modify(|_, w| {
+        topreg.gp_i2s1_bck().modify(|_, w| {
             if pin1_high {
                 w.out().set_bit()
             } else {
@@ -49,7 +49,7 @@ fn main() -> ! {
         asm::delay(DELAY_CYCLES);
 
         // Toggle LED off regardless, so there is always a visible blink.
-        gpio0.pin97().modify(|_, w| w.out().clear_bit());
+        topreg.gp_i2s1_bck().modify(|_, w| w.out().clear_bit());
         asm::delay(DELAY_CYCLES);
     }
 }
