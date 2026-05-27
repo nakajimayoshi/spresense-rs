@@ -6,7 +6,7 @@ pub enum Level {
     High,
 }
 
-// Bit positions — identical layout for every GPIO0 register.
+// Bit positions — identical layout for every TOPREG GP_* register.
 const IN_BIT: u32 = 1 << 0;
 const OUT_BIT: u32 = 1 << 8;
 const DIR_BIT: u32 = 1 << 16; // active-low: 0 = drive output, 1 = high-Z input
@@ -22,7 +22,7 @@ mod sealed {
 /// IN[0] / OUT[8] / DIR[16] (active-low) field layout.
 pub trait PinReg: sealed::Sealed + 'static {}
 
-impl sealed::Sealed for pac::gpio0::Pin97 {
+impl sealed::Sealed for pac::topreg::GpI2s1Bck {
     fn read_bits(&self) -> u32 {
         self.read().bits()
     }
@@ -30,9 +30,9 @@ impl sealed::Sealed for pac::gpio0::Pin97 {
         self.modify(|_, w| unsafe { w.bits(val) });
     }
 }
-impl PinReg for pac::gpio0::Pin97 {}
+impl PinReg for pac::topreg::GpI2s1Bck {}
 
-impl sealed::Sealed for pac::gpio0::GpI2c4Bck {
+impl sealed::Sealed for pac::topreg::GpI2c4Bck {
     fn read_bits(&self) -> u32 {
         self.read().bits()
     }
@@ -40,7 +40,7 @@ impl sealed::Sealed for pac::gpio0::GpI2c4Bck {
         self.modify(|_, w| unsafe { w.bits(val) });
     }
 }
-impl PinReg for pac::gpio0::GpI2c4Bck {}
+impl PinReg for pac::topreg::GpI2c4Bck {}
 
 /// Unconfigured GPIO pin. Call [`into_output`](GpioPin::into_output) or
 /// [`into_input`](GpioPin::into_input) to configure the direction.
@@ -168,24 +168,24 @@ impl<R: PinReg> embedded_hal::digital::InputPin for Input<R> {
 /// `nrf-hal` (`p0::Parts`), etc. Construct via [`Parts::new`], which
 /// consumes the corresponding PAC singleton — proving exclusive access
 /// so no `unsafe` is needed at the call site.
-pub mod gpio0 {
+pub mod pins {
     use super::GpioPin;
     use crate::pac;
 
-    /// All GPIO0 pins.
+    /// GPIO pins accessible via the TOPREG GP_* registers.
     pub struct Parts {
-        pub pin97: GpioPin<pac::gpio0::Pin97>,
-        pub gp_i2c4_bck: GpioPin<pac::gpio0::GpI2c4Bck>,
+        pub gp_i2s1_bck: GpioPin<pac::topreg::GpI2s1Bck>,
+        pub gp_i2c4_bck: GpioPin<pac::topreg::GpI2c4Bck>,
     }
 
     impl Parts {
-        pub fn new(_gpio0: pac::Gpio0) -> Self {
-            // Safety: ownership of `pac::Gpio0` — obtainable only via
+        pub fn new(_topreg: pac::Topreg) -> Self {
+            // Safety: ownership of `pac::Topreg` — obtainable only via
             // `pac::Peripherals::take()` — guarantees no other code holds
             // a reference to this register block.
-            let block = unsafe { &*pac::Gpio0::PTR };
+            let block = unsafe { &*pac::Topreg::PTR };
             Self {
-                pin97: unsafe { GpioPin::new(block.pin97()) },
+                gp_i2s1_bck: unsafe { GpioPin::new(block.gp_i2s1_bck()) },
                 gp_i2c4_bck: unsafe { GpioPin::new(block.gp_i2c4_bck()) },
             }
         }
