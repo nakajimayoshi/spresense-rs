@@ -40,10 +40,10 @@ impl Board {
 
     fn from_parts() -> Self {
         // Safety: we reach here only through take() (singleton) or steal()
-        // (caller's responsibility). The GPIO0 peripheral address is a
+        // (caller's responsibility). The TOPREG peripheral address is a
         // compile-time constant; we borrow it for 'static.
-        let gpio0 = unsafe { &*pac::Gpio0::PTR };
-        let led0 = Led::new(unsafe { GpioPin::new(gpio0.pin97()) });
+        let topreg = unsafe { &*pac::Topreg::PTR };
+        let led0 = Led::new(unsafe { GpioPin::new(topreg.gp_i2s1_bck()) });
         Board { led0 }
     }
 }

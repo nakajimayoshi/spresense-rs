@@ -1,12 +1,12 @@
 use embedded_hal::digital::{ErrorType, OutputPin, StatefulOutputPin};
 
 use cxd56_hal::gpio::{GpioPin, Level, Output};
-use cxd56_hal::pac::gpio0::Pin97;
+use cxd56_hal::pac::topreg::GpI2s1Bck;
 
-pub struct Led(Output<Pin97>);
+pub struct Led(Output<GpI2s1Bck>);
 
 impl Led {
-    pub(crate) fn new(pin: GpioPin<Pin97>) -> Self {
+    pub(crate) fn new(pin: GpioPin<GpI2s1Bck>) -> Self {
         Led(pin.into_output(Level::Low))
     }
 
