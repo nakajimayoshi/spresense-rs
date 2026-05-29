@@ -7276,6 +7276,66 @@
         <size>0x2200</size>
         <usage>registers</usage>
       </addressBlock>
+      <interrupt>
+        <name>EXDEVICE_0</name>
+        <description>GPIO external interrupt slot 0</description>
+        <value>36</value>
+      </interrupt>
+      <interrupt>
+        <name>EXDEVICE_1</name>
+        <description>GPIO external interrupt slot 1</description>
+        <value>37</value>
+      </interrupt>
+      <interrupt>
+        <name>EXDEVICE_2</name>
+        <description>GPIO external interrupt slot 2</description>
+        <value>38</value>
+      </interrupt>
+      <interrupt>
+        <name>EXDEVICE_3</name>
+        <description>GPIO external interrupt slot 3</description>
+        <value>39</value>
+      </interrupt>
+      <interrupt>
+        <name>EXDEVICE_4</name>
+        <description>GPIO external interrupt slot 4</description>
+        <value>40</value>
+      </interrupt>
+      <interrupt>
+        <name>EXDEVICE_5</name>
+        <description>GPIO external interrupt slot 5</description>
+        <value>41</value>
+      </interrupt>
+      <interrupt>
+        <name>EXDEVICE_6</name>
+        <description>GPIO external interrupt slot 6</description>
+        <value>42</value>
+      </interrupt>
+      <interrupt>
+        <name>EXDEVICE_7</name>
+        <description>GPIO external interrupt slot 7</description>
+        <value>43</value>
+      </interrupt>
+      <interrupt>
+        <name>EXDEVICE_8</name>
+        <description>GPIO external interrupt slot 8</description>
+        <value>44</value>
+      </interrupt>
+      <interrupt>
+        <name>EXDEVICE_9</name>
+        <description>GPIO external interrupt slot 9</description>
+        <value>45</value>
+      </interrupt>
+      <interrupt>
+        <name>EXDEVICE_10</name>
+        <description>GPIO external interrupt slot 10</description>
+        <value>46</value>
+      </interrupt>
+      <interrupt>
+        <name>EXDEVICE_11</name>
+        <description>GPIO external interrupt slot 11</description>
+        <value>47</value>
+      </interrupt>
       <registers>
         <register>
           <name>PWD_CTL</name>
@@ -7597,6 +7657,457 @@
           <name>CKSEL_ROOT_WAKE</name>
           <description>Root clock source select used on wake from sleep</description>
           <addressOffset>0x41C</addressOffset>
+          <access>read-write</access>
+          <resetValue>0x00000000</resetValue>
+        </register>
+        <register>
+          <name>PMU_WAKE_TRIG_EN0</name>
+          <description>Positive wake-trigger enable, slots 0–11</description>
+          <addressOffset>0x454</addressOffset>
+          <access>read-write</access>
+          <resetValue>0x00000000</resetValue>
+          <fields>
+            <field>
+              <name>SLOT0</name>
+              <description>Slot 0 positive-trigger enable (EXDEVICE_0)</description>
+              <bitOffset>16</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>SLOT1</name>
+              <description>Slot 1 positive-trigger enable (EXDEVICE_1)</description>
+              <bitOffset>17</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>SLOT2</name>
+              <description>Slot 2 positive-trigger enable (EXDEVICE_2)</description>
+              <bitOffset>18</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>SLOT3</name>
+              <description>Slot 3 positive-trigger enable (EXDEVICE_3)</description>
+              <bitOffset>19</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>SLOT4</name>
+              <description>Slot 4 positive-trigger enable (EXDEVICE_4)</description>
+              <bitOffset>20</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>SLOT5</name>
+              <description>Slot 5 positive-trigger enable (EXDEVICE_5)</description>
+              <bitOffset>21</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>SLOT6</name>
+              <description>Slot 6 positive-trigger enable (EXDEVICE_6)</description>
+              <bitOffset>22</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>SLOT7</name>
+              <description>Slot 7 positive-trigger enable (EXDEVICE_7)</description>
+              <bitOffset>23</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>SLOT8</name>
+              <description>Slot 8 positive-trigger enable (EXDEVICE_8)</description>
+              <bitOffset>24</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>SLOT9</name>
+              <description>Slot 9 positive-trigger enable (EXDEVICE_9)</description>
+              <bitOffset>25</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>SLOT10</name>
+              <description>Slot 10 positive-trigger enable (EXDEVICE_10)</description>
+              <bitOffset>26</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>SLOT11</name>
+              <description>Slot 11 positive-trigger enable (EXDEVICE_11)</description>
+              <bitOffset>27</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+          </fields>
+        </register>
+        <register>
+          <name>PMU_WAKE_TRIG_EN1</name>
+          <description>Positive wake-trigger enable, second bank</description>
+          <addressOffset>0x458</addressOffset>
+          <access>read-write</access>
+          <resetValue>0x00000000</resetValue>
+        </register>
+        <register>
+          <name>PMU_WAKE_TRIG_NEGEN0</name>
+          <description>Negative wake-trigger enable, slots 0–11</description>
+          <addressOffset>0x45C</addressOffset>
+          <access>read-write</access>
+          <resetValue>0x00000000</resetValue>
+          <fields>
+            <field>
+              <name>SLOT0</name>
+              <description>Slot 0 negative-trigger enable (EXDEVICE_0)</description>
+              <bitOffset>16</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>SLOT1</name>
+              <description>Slot 1 negative-trigger enable (EXDEVICE_1)</description>
+              <bitOffset>17</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>SLOT2</name>
+              <description>Slot 2 negative-trigger enable (EXDEVICE_2)</description>
+              <bitOffset>18</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>SLOT3</name>
+              <description>Slot 3 negative-trigger enable (EXDEVICE_3)</description>
+              <bitOffset>19</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>SLOT4</name>
+              <description>Slot 4 negative-trigger enable (EXDEVICE_4)</description>
+              <bitOffset>20</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>SLOT5</name>
+              <description>Slot 5 negative-trigger enable (EXDEVICE_5)</description>
+              <bitOffset>21</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>SLOT6</name>
+              <description>Slot 6 negative-trigger enable (EXDEVICE_6)</description>
+              <bitOffset>22</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>SLOT7</name>
+              <description>Slot 7 negative-trigger enable (EXDEVICE_7)</description>
+              <bitOffset>23</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>SLOT8</name>
+              <description>Slot 8 negative-trigger enable (EXDEVICE_8)</description>
+              <bitOffset>24</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>SLOT9</name>
+              <description>Slot 9 negative-trigger enable (EXDEVICE_9)</description>
+              <bitOffset>25</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>SLOT10</name>
+              <description>Slot 10 negative-trigger enable (EXDEVICE_10)</description>
+              <bitOffset>26</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>SLOT11</name>
+              <description>Slot 11 negative-trigger enable (EXDEVICE_11)</description>
+              <bitOffset>27</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+          </fields>
+        </register>
+        <register>
+          <name>PMU_WAKE_TRIG_NEGEN1</name>
+          <description>Negative wake-trigger enable, second bank</description>
+          <addressOffset>0x460</addressOffset>
+          <access>read-write</access>
+          <resetValue>0x00000000</resetValue>
+        </register>
+        <register>
+          <name>PMU_WAKE_TRIG_NOISECUTEN0</name>
+          <description>Noise filter enable for interrupt slots 0–11</description>
+          <addressOffset>0x464</addressOffset>
+          <access>read-write</access>
+          <resetValue>0x00000000</resetValue>
+          <fields>
+            <field>
+              <name>SLOT0</name>
+              <description>Slot 0 noise filter enable (EXDEVICE_0)</description>
+              <bitOffset>16</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>SLOT1</name>
+              <description>Slot 1 noise filter enable (EXDEVICE_1)</description>
+              <bitOffset>17</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>SLOT2</name>
+              <description>Slot 2 noise filter enable (EXDEVICE_2)</description>
+              <bitOffset>18</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>SLOT3</name>
+              <description>Slot 3 noise filter enable (EXDEVICE_3)</description>
+              <bitOffset>19</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>SLOT4</name>
+              <description>Slot 4 noise filter enable (EXDEVICE_4)</description>
+              <bitOffset>20</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>SLOT5</name>
+              <description>Slot 5 noise filter enable (EXDEVICE_5)</description>
+              <bitOffset>21</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>SLOT6</name>
+              <description>Slot 6 noise filter enable (EXDEVICE_6)</description>
+              <bitOffset>22</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>SLOT7</name>
+              <description>Slot 7 noise filter enable (EXDEVICE_7)</description>
+              <bitOffset>23</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>SLOT8</name>
+              <description>Slot 8 noise filter enable (EXDEVICE_8)</description>
+              <bitOffset>24</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>SLOT9</name>
+              <description>Slot 9 noise filter enable (EXDEVICE_9)</description>
+              <bitOffset>25</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>SLOT10</name>
+              <description>Slot 10 noise filter enable (EXDEVICE_10)</description>
+              <bitOffset>26</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>SLOT11</name>
+              <description>Slot 11 noise filter enable (EXDEVICE_11)</description>
+              <bitOffset>27</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+          </fields>
+        </register>
+        <register>
+          <name>PMU_WAKE_TRIG_CPUINTSEL0</name>
+          <description>CPU interrupt route select, slots 0–3 (3-bit field per slot at 16+slot*4)</description>
+          <addressOffset>0x468</addressOffset>
+          <access>read-write</access>
+          <resetValue>0x00000000</resetValue>
+          <fields>
+            <field>
+              <name>SLOT0</name>
+              <description>Slot 0 route (EXDEVICE_0)</description>
+              <bitOffset>16</bitOffset>
+              <bitWidth>3</bitWidth>
+            </field>
+            <field>
+              <name>SLOT1</name>
+              <description>Slot 1 route (EXDEVICE_1)</description>
+              <bitOffset>20</bitOffset>
+              <bitWidth>3</bitWidth>
+            </field>
+            <field>
+              <name>SLOT2</name>
+              <description>Slot 2 route (EXDEVICE_2)</description>
+              <bitOffset>24</bitOffset>
+              <bitWidth>3</bitWidth>
+            </field>
+            <field>
+              <name>SLOT3</name>
+              <description>Slot 3 route (EXDEVICE_3)</description>
+              <bitOffset>28</bitOffset>
+              <bitWidth>3</bitWidth>
+            </field>
+          </fields>
+        </register>
+        <register>
+          <name>PMU_WAKE_TRIG_CPUINTSEL1</name>
+          <description>CPU interrupt route select, slots 4–11 (3-bit field per slot at slot*4)</description>
+          <addressOffset>0x46C</addressOffset>
+          <access>read-write</access>
+          <resetValue>0x00000000</resetValue>
+          <fields>
+            <field>
+              <name>SLOT4</name>
+              <description>Slot 4 route (EXDEVICE_4)</description>
+              <bitOffset>0</bitOffset>
+              <bitWidth>3</bitWidth>
+            </field>
+            <field>
+              <name>SLOT5</name>
+              <description>Slot 5 route (EXDEVICE_5)</description>
+              <bitOffset>4</bitOffset>
+              <bitWidth>3</bitWidth>
+            </field>
+            <field>
+              <name>SLOT6</name>
+              <description>Slot 6 route (EXDEVICE_6)</description>
+              <bitOffset>8</bitOffset>
+              <bitWidth>3</bitWidth>
+            </field>
+            <field>
+              <name>SLOT7</name>
+              <description>Slot 7 route (EXDEVICE_7)</description>
+              <bitOffset>12</bitOffset>
+              <bitWidth>3</bitWidth>
+            </field>
+            <field>
+              <name>SLOT8</name>
+              <description>Slot 8 route (EXDEVICE_8)</description>
+              <bitOffset>16</bitOffset>
+              <bitWidth>3</bitWidth>
+            </field>
+            <field>
+              <name>SLOT9</name>
+              <description>Slot 9 route (EXDEVICE_9)</description>
+              <bitOffset>20</bitOffset>
+              <bitWidth>3</bitWidth>
+            </field>
+            <field>
+              <name>SLOT10</name>
+              <description>Slot 10 route (EXDEVICE_10)</description>
+              <bitOffset>24</bitOffset>
+              <bitWidth>3</bitWidth>
+            </field>
+            <field>
+              <name>SLOT11</name>
+              <description>Slot 11 route (EXDEVICE_11)</description>
+              <bitOffset>28</bitOffset>
+              <bitWidth>3</bitWidth>
+            </field>
+          </fields>
+        </register>
+        <register>
+          <name>PMU_WAKE_TRIG_CPUINTSEL2</name>
+          <description>CPU interrupt route select, second bank (unused by GPIO driver)</description>
+          <addressOffset>0x470</addressOffset>
+          <access>read-write</access>
+          <resetValue>0x00000000</resetValue>
+        </register>
+        <register>
+          <name>PMU_WAKE_TRIG_INTDET0</name>
+          <description>Interrupt detect polarity, slots 0–3 (3-bit field per slot at 16+slot*4)</description>
+          <addressOffset>0x474</addressOffset>
+          <access>read-write</access>
+          <resetValue>0x00000000</resetValue>
+          <fields>
+            <field>
+              <name>SLOT0</name>
+              <description>Slot 0 polarity (EXDEVICE_0)</description>
+              <bitOffset>16</bitOffset>
+              <bitWidth>3</bitWidth>
+            </field>
+            <field>
+              <name>SLOT1</name>
+              <description>Slot 1 polarity (EXDEVICE_1)</description>
+              <bitOffset>20</bitOffset>
+              <bitWidth>3</bitWidth>
+            </field>
+            <field>
+              <name>SLOT2</name>
+              <description>Slot 2 polarity (EXDEVICE_2)</description>
+              <bitOffset>24</bitOffset>
+              <bitWidth>3</bitWidth>
+            </field>
+            <field>
+              <name>SLOT3</name>
+              <description>Slot 3 polarity (EXDEVICE_3)</description>
+              <bitOffset>28</bitOffset>
+              <bitWidth>3</bitWidth>
+            </field>
+          </fields>
+        </register>
+        <register>
+          <name>PMU_WAKE_TRIG_INTDET1</name>
+          <description>Interrupt detect polarity, slots 4–11 (3-bit field per slot at slot*4)</description>
+          <addressOffset>0x478</addressOffset>
+          <access>read-write</access>
+          <resetValue>0x00000000</resetValue>
+          <fields>
+            <field>
+              <name>SLOT4</name>
+              <description>Slot 4 polarity (EXDEVICE_4)</description>
+              <bitOffset>0</bitOffset>
+              <bitWidth>3</bitWidth>
+            </field>
+            <field>
+              <name>SLOT5</name>
+              <description>Slot 5 polarity (EXDEVICE_5)</description>
+              <bitOffset>4</bitOffset>
+              <bitWidth>3</bitWidth>
+            </field>
+            <field>
+              <name>SLOT6</name>
+              <description>Slot 6 polarity (EXDEVICE_6)</description>
+              <bitOffset>8</bitOffset>
+              <bitWidth>3</bitWidth>
+            </field>
+            <field>
+              <name>SLOT7</name>
+              <description>Slot 7 polarity (EXDEVICE_7)</description>
+              <bitOffset>12</bitOffset>
+              <bitWidth>3</bitWidth>
+            </field>
+            <field>
+              <name>SLOT8</name>
+              <description>Slot 8 polarity (EXDEVICE_8)</description>
+              <bitOffset>16</bitOffset>
+              <bitWidth>3</bitWidth>
+            </field>
+            <field>
+              <name>SLOT9</name>
+              <description>Slot 9 polarity (EXDEVICE_9)</description>
+              <bitOffset>20</bitOffset>
+              <bitWidth>3</bitWidth>
+            </field>
+            <field>
+              <name>SLOT10</name>
+              <description>Slot 10 polarity (EXDEVICE_10)</description>
+              <bitOffset>24</bitOffset>
+              <bitWidth>3</bitWidth>
+            </field>
+            <field>
+              <name>SLOT11</name>
+              <description>Slot 11 polarity (EXDEVICE_11)</description>
+              <bitOffset>28</bitOffset>
+              <bitWidth>3</bitWidth>
+            </field>
+          </fields>
+        </register>
+        <register>
+          <name>PMU_WAKE_TRIG_INTDET2</name>
+          <description>Interrupt detect polarity, second bank (unused by GPIO driver)</description>
+          <addressOffset>0x47C</addressOffset>
           <access>read-write</access>
           <resetValue>0x00000000</resetValue>
         </register>
@@ -8404,6 +8915,60 @@
           </fields>
         </register>
         <register>
+          <name>IOCSYS_INTSEL0</name>
+          <description>SYS-domain GPIO interrupt slot mux, slots 0–3 (1 byte per slot, pin index 0–63)</description>
+          <addressOffset>0x7B0</addressOffset>
+          <access>read-write</access>
+          <resetValue>0x3F3F3F3F</resetValue>
+          <fields>
+            <field>
+              <name>SLOT0</name>
+              <description>Pin index for SYS slot 0 → EXDEVICE_0 (0x3f = unused)</description>
+              <bitOffset>0</bitOffset>
+              <bitWidth>6</bitWidth>
+            </field>
+            <field>
+              <name>SLOT1</name>
+              <description>Pin index for SYS slot 1 → EXDEVICE_1 (0x3f = unused)</description>
+              <bitOffset>8</bitOffset>
+              <bitWidth>6</bitWidth>
+            </field>
+            <field>
+              <name>SLOT2</name>
+              <description>Pin index for SYS slot 2 → EXDEVICE_2 (0x3f = unused)</description>
+              <bitOffset>16</bitOffset>
+              <bitWidth>6</bitWidth>
+            </field>
+            <field>
+              <name>SLOT3</name>
+              <description>Pin index for SYS slot 3 → EXDEVICE_3 (0x3f = unused)</description>
+              <bitOffset>24</bitOffset>
+              <bitWidth>6</bitWidth>
+            </field>
+          </fields>
+        </register>
+        <register>
+          <name>IOCSYS_INTSEL1</name>
+          <description>SYS-domain GPIO interrupt slot mux, slots 4–5</description>
+          <addressOffset>0x7B4</addressOffset>
+          <access>read-write</access>
+          <resetValue>0x00003F3F</resetValue>
+          <fields>
+            <field>
+              <name>SLOT4</name>
+              <description>Pin index for SYS slot 4 → EXDEVICE_4 (0x3f = unused)</description>
+              <bitOffset>0</bitOffset>
+              <bitWidth>6</bitWidth>
+            </field>
+            <field>
+              <name>SLOT5</name>
+              <description>Pin index for SYS slot 5 → EXDEVICE_5 (0x3f = unused)</description>
+              <bitOffset>8</bitOffset>
+              <bitWidth>6</bitWidth>
+            </field>
+          </fields>
+        </register>
+        <register>
           <name>IOCSYS_IOMD0</name>
           <description>SYSIOP IO-cell mode-mux register 0</description>
           <addressOffset>0x7C0</addressOffset>
@@ -8628,6 +9193,60 @@
               <description>Input enable: 0=disabled, 1=enabled</description>
               <bitOffset>0</bitOffset>
               <bitWidth>1</bitWidth>
+            </field>
+          </fields>
+        </register>
+        <register>
+          <name>IOCAPP_INTSEL0</name>
+          <description>APP-domain GPIO interrupt slot mux, slots 6–9 (1 byte per slot, pin index 0–63)</description>
+          <addressOffset>0x1490</addressOffset>
+          <access>read-write</access>
+          <resetValue>0x3F3F3F3F</resetValue>
+          <fields>
+            <field>
+              <name>SLOT6</name>
+              <description>Pin index for APP slot 6 → EXDEVICE_6 (0x3f = unused)</description>
+              <bitOffset>0</bitOffset>
+              <bitWidth>6</bitWidth>
+            </field>
+            <field>
+              <name>SLOT7</name>
+              <description>Pin index for APP slot 7 → EXDEVICE_7 (0x3f = unused)</description>
+              <bitOffset>8</bitOffset>
+              <bitWidth>6</bitWidth>
+            </field>
+            <field>
+              <name>SLOT8</name>
+              <description>Pin index for APP slot 8 → EXDEVICE_8 (0x3f = unused)</description>
+              <bitOffset>16</bitOffset>
+              <bitWidth>6</bitWidth>
+            </field>
+            <field>
+              <name>SLOT9</name>
+              <description>Pin index for APP slot 9 → EXDEVICE_9 (0x3f = unused)</description>
+              <bitOffset>24</bitOffset>
+              <bitWidth>6</bitWidth>
+            </field>
+          </fields>
+        </register>
+        <register>
+          <name>IOCAPP_INTSEL1</name>
+          <description>APP-domain GPIO interrupt slot mux, slots 10–11</description>
+          <addressOffset>0x1494</addressOffset>
+          <access>read-write</access>
+          <resetValue>0x00003F3F</resetValue>
+          <fields>
+            <field>
+              <name>SLOT10</name>
+              <description>Pin index for APP slot 10 → EXDEVICE_10 (0x3f = unused)</description>
+              <bitOffset>0</bitOffset>
+              <bitWidth>6</bitWidth>
+            </field>
+            <field>
+              <name>SLOT11</name>
+              <description>Pin index for APP slot 11 → EXDEVICE_11 (0x3f = unused)</description>
+              <bitOffset>8</bitOffset>
+              <bitWidth>6</bitWidth>
             </field>
           </fields>
         </register>
@@ -8937,6 +9556,270 @@
               <bitWidth>1</bitWidth>
             </field>
           </fields>
+        </register>
+        <register>
+          <name>PMU_WAKE_TRIG0_CLR</name>
+          <description>GPIO interrupt clear register, slots 0–11 (write 1&lt;&lt;(16+slot) to clear)</description>
+          <addressOffset>0x430</addressOffset>
+          <access>read-write</access>
+          <resetValue>0x00000000</resetValue>
+          <fields>
+            <field>
+              <name>SLOT0</name>
+              <description>Clear slot 0 latched interrupt (EXDEVICE_0)</description>
+              <bitOffset>16</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>SLOT1</name>
+              <description>Clear slot 1 latched interrupt (EXDEVICE_1)</description>
+              <bitOffset>17</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>SLOT2</name>
+              <description>Clear slot 2 latched interrupt (EXDEVICE_2)</description>
+              <bitOffset>18</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>SLOT3</name>
+              <description>Clear slot 3 latched interrupt (EXDEVICE_3)</description>
+              <bitOffset>19</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>SLOT4</name>
+              <description>Clear slot 4 latched interrupt (EXDEVICE_4)</description>
+              <bitOffset>20</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>SLOT5</name>
+              <description>Clear slot 5 latched interrupt (EXDEVICE_5)</description>
+              <bitOffset>21</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>SLOT6</name>
+              <description>Clear slot 6 latched interrupt (EXDEVICE_6)</description>
+              <bitOffset>22</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>SLOT7</name>
+              <description>Clear slot 7 latched interrupt (EXDEVICE_7)</description>
+              <bitOffset>23</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>SLOT8</name>
+              <description>Clear slot 8 latched interrupt (EXDEVICE_8)</description>
+              <bitOffset>24</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>SLOT9</name>
+              <description>Clear slot 9 latched interrupt (EXDEVICE_9)</description>
+              <bitOffset>25</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>SLOT10</name>
+              <description>Clear slot 10 latched interrupt (EXDEVICE_10)</description>
+              <bitOffset>26</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>SLOT11</name>
+              <description>Clear slot 11 latched interrupt (EXDEVICE_11)</description>
+              <bitOffset>27</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+          </fields>
+        </register>
+        <register>
+          <name>PMU_WAKE_TRIG1_CLR</name>
+          <description>GPIO interrupt clear register, second bank</description>
+          <addressOffset>0x434</addressOffset>
+          <access>read-write</access>
+          <resetValue>0x00000000</resetValue>
+        </register>
+        <register>
+          <name>PMU_WAKE_TRIG0_RAW</name>
+          <description>GPIO interrupt raw (pre-mask) status, slots 0–11</description>
+          <addressOffset>0x438</addressOffset>
+          <access>read-only</access>
+          <resetValue>0x00000000</resetValue>
+          <fields>
+            <field>
+              <name>SLOT0</name>
+              <description>Slot 0 raw trigger status (EXDEVICE_0)</description>
+              <bitOffset>16</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>SLOT1</name>
+              <description>Slot 1 raw trigger status (EXDEVICE_1)</description>
+              <bitOffset>17</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>SLOT2</name>
+              <description>Slot 2 raw trigger status (EXDEVICE_2)</description>
+              <bitOffset>18</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>SLOT3</name>
+              <description>Slot 3 raw trigger status (EXDEVICE_3)</description>
+              <bitOffset>19</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>SLOT4</name>
+              <description>Slot 4 raw trigger status (EXDEVICE_4)</description>
+              <bitOffset>20</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>SLOT5</name>
+              <description>Slot 5 raw trigger status (EXDEVICE_5)</description>
+              <bitOffset>21</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>SLOT6</name>
+              <description>Slot 6 raw trigger status (EXDEVICE_6)</description>
+              <bitOffset>22</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>SLOT7</name>
+              <description>Slot 7 raw trigger status (EXDEVICE_7)</description>
+              <bitOffset>23</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>SLOT8</name>
+              <description>Slot 8 raw trigger status (EXDEVICE_8)</description>
+              <bitOffset>24</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>SLOT9</name>
+              <description>Slot 9 raw trigger status (EXDEVICE_9)</description>
+              <bitOffset>25</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>SLOT10</name>
+              <description>Slot 10 raw trigger status (EXDEVICE_10)</description>
+              <bitOffset>26</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>SLOT11</name>
+              <description>Slot 11 raw trigger status (EXDEVICE_11)</description>
+              <bitOffset>27</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+          </fields>
+        </register>
+        <register>
+          <name>PMU_WAKE_TRIG1_RAW</name>
+          <description>GPIO interrupt raw status, second bank</description>
+          <addressOffset>0x43C</addressOffset>
+          <access>read-only</access>
+          <resetValue>0x00000000</resetValue>
+        </register>
+        <register>
+          <name>PMU_WAKE_TRIG0</name>
+          <description>GPIO interrupt masked status, slots 0–11 (ISR reads this)</description>
+          <addressOffset>0x440</addressOffset>
+          <access>read-only</access>
+          <resetValue>0x00000000</resetValue>
+          <fields>
+            <field>
+              <name>SLOT0</name>
+              <description>Slot 0 masked trigger status (EXDEVICE_0)</description>
+              <bitOffset>16</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>SLOT1</name>
+              <description>Slot 1 masked trigger status (EXDEVICE_1)</description>
+              <bitOffset>17</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>SLOT2</name>
+              <description>Slot 2 masked trigger status (EXDEVICE_2)</description>
+              <bitOffset>18</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>SLOT3</name>
+              <description>Slot 3 masked trigger status (EXDEVICE_3)</description>
+              <bitOffset>19</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>SLOT4</name>
+              <description>Slot 4 masked trigger status (EXDEVICE_4)</description>
+              <bitOffset>20</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>SLOT5</name>
+              <description>Slot 5 masked trigger status (EXDEVICE_5)</description>
+              <bitOffset>21</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>SLOT6</name>
+              <description>Slot 6 masked trigger status (EXDEVICE_6)</description>
+              <bitOffset>22</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>SLOT7</name>
+              <description>Slot 7 masked trigger status (EXDEVICE_7)</description>
+              <bitOffset>23</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>SLOT8</name>
+              <description>Slot 8 masked trigger status (EXDEVICE_8)</description>
+              <bitOffset>24</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>SLOT9</name>
+              <description>Slot 9 masked trigger status (EXDEVICE_9)</description>
+              <bitOffset>25</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>SLOT10</name>
+              <description>Slot 10 masked trigger status (EXDEVICE_10)</description>
+              <bitOffset>26</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>SLOT11</name>
+              <description>Slot 11 masked trigger status (EXDEVICE_11)</description>
+              <bitOffset>27</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+          </fields>
+        </register>
+        <register>
+          <name>PMU_WAKE_TRIG1</name>
+          <description>GPIO interrupt masked status, second bank</description>
+          <addressOffset>0x444</addressOffset>
+          <access>read-only</access>
+          <resetValue>0x00000000</resetValue>
         </register>
         <register>
           <name>GNSDSP_CKEN</name>

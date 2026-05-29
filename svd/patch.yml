@@ -104,6 +104,45 @@ _add:
       offset: 0x0
       size: 0x2200
       usage: "registers"
+    # GPIO external interrupt slots 0–11 → EXDEVICE_0..11 → IRQ 36..47.
+    # Sources: arch/arm/include/cxd56xx/irq.h (CXD56_IRQ_EXDEVICE_0 = CXD56_IRQ_EXTINT+20 = 36).
+    interrupts:
+      EXDEVICE_0:
+        description: "GPIO external interrupt slot 0"
+        value: 36
+      EXDEVICE_1:
+        description: "GPIO external interrupt slot 1"
+        value: 37
+      EXDEVICE_2:
+        description: "GPIO external interrupt slot 2"
+        value: 38
+      EXDEVICE_3:
+        description: "GPIO external interrupt slot 3"
+        value: 39
+      EXDEVICE_4:
+        description: "GPIO external interrupt slot 4"
+        value: 40
+      EXDEVICE_5:
+        description: "GPIO external interrupt slot 5"
+        value: 41
+      EXDEVICE_6:
+        description: "GPIO external interrupt slot 6"
+        value: 42
+      EXDEVICE_7:
+        description: "GPIO external interrupt slot 7"
+        value: 43
+      EXDEVICE_8:
+        description: "GPIO external interrupt slot 8"
+        value: 44
+      EXDEVICE_9:
+        description: "GPIO external interrupt slot 9"
+        value: 45
+      EXDEVICE_10:
+        description: "GPIO external interrupt slot 10"
+        value: 46
+      EXDEVICE_11:
+        description: "GPIO external interrupt slot 11"
+        value: 47
     registers:
       PWD_CTL:
         description: "Power-domain control (1 = powered on)"
@@ -471,6 +510,564 @@ _add:
         addressOffset: 0x41c
         access: read-write
         resetValue: 0x00000000
+
+      # GPIO external interrupt (EXDEVICE) slot configuration.
+      # The 12 interrupt slots map to EXDEVICE_0..11 (IRQ 36..47) via cxd56_gpioint.c.
+      # Each slot bit is at bit (16+slot) for the 1-bit registers.
+      # 3-bit fields use shift = 16+(slot*4), spilling slots 4-11 into the *1 register.
+      # Source: nuttx/arch/arm/src/cxd56xx/hardware/cxd5602_topreg.h
+      PMU_WAKE_TRIG_EN0:
+        description: "Positive wake-trigger enable, slots 0–11"
+        addressOffset: 0x454
+        access: read-write
+        resetValue: 0x00000000
+        fields:
+          SLOT0:
+            description: "Slot 0 positive-trigger enable (EXDEVICE_0)"
+            bitOffset: 16
+            bitWidth: 1
+          SLOT1:
+            description: "Slot 1 positive-trigger enable (EXDEVICE_1)"
+            bitOffset: 17
+            bitWidth: 1
+          SLOT2:
+            description: "Slot 2 positive-trigger enable (EXDEVICE_2)"
+            bitOffset: 18
+            bitWidth: 1
+          SLOT3:
+            description: "Slot 3 positive-trigger enable (EXDEVICE_3)"
+            bitOffset: 19
+            bitWidth: 1
+          SLOT4:
+            description: "Slot 4 positive-trigger enable (EXDEVICE_4)"
+            bitOffset: 20
+            bitWidth: 1
+          SLOT5:
+            description: "Slot 5 positive-trigger enable (EXDEVICE_5)"
+            bitOffset: 21
+            bitWidth: 1
+          SLOT6:
+            description: "Slot 6 positive-trigger enable (EXDEVICE_6)"
+            bitOffset: 22
+            bitWidth: 1
+          SLOT7:
+            description: "Slot 7 positive-trigger enable (EXDEVICE_7)"
+            bitOffset: 23
+            bitWidth: 1
+          SLOT8:
+            description: "Slot 8 positive-trigger enable (EXDEVICE_8)"
+            bitOffset: 24
+            bitWidth: 1
+          SLOT9:
+            description: "Slot 9 positive-trigger enable (EXDEVICE_9)"
+            bitOffset: 25
+            bitWidth: 1
+          SLOT10:
+            description: "Slot 10 positive-trigger enable (EXDEVICE_10)"
+            bitOffset: 26
+            bitWidth: 1
+          SLOT11:
+            description: "Slot 11 positive-trigger enable (EXDEVICE_11)"
+            bitOffset: 27
+            bitWidth: 1
+      PMU_WAKE_TRIG_EN1:
+        description: "Positive wake-trigger enable, second bank"
+        addressOffset: 0x458
+        access: read-write
+        resetValue: 0x00000000
+      PMU_WAKE_TRIG_NEGEN0:
+        description: "Negative wake-trigger enable, slots 0–11"
+        addressOffset: 0x45c
+        access: read-write
+        resetValue: 0x00000000
+        fields:
+          SLOT0:
+            description: "Slot 0 negative-trigger enable (EXDEVICE_0)"
+            bitOffset: 16
+            bitWidth: 1
+          SLOT1:
+            description: "Slot 1 negative-trigger enable (EXDEVICE_1)"
+            bitOffset: 17
+            bitWidth: 1
+          SLOT2:
+            description: "Slot 2 negative-trigger enable (EXDEVICE_2)"
+            bitOffset: 18
+            bitWidth: 1
+          SLOT3:
+            description: "Slot 3 negative-trigger enable (EXDEVICE_3)"
+            bitOffset: 19
+            bitWidth: 1
+          SLOT4:
+            description: "Slot 4 negative-trigger enable (EXDEVICE_4)"
+            bitOffset: 20
+            bitWidth: 1
+          SLOT5:
+            description: "Slot 5 negative-trigger enable (EXDEVICE_5)"
+            bitOffset: 21
+            bitWidth: 1
+          SLOT6:
+            description: "Slot 6 negative-trigger enable (EXDEVICE_6)"
+            bitOffset: 22
+            bitWidth: 1
+          SLOT7:
+            description: "Slot 7 negative-trigger enable (EXDEVICE_7)"
+            bitOffset: 23
+            bitWidth: 1
+          SLOT8:
+            description: "Slot 8 negative-trigger enable (EXDEVICE_8)"
+            bitOffset: 24
+            bitWidth: 1
+          SLOT9:
+            description: "Slot 9 negative-trigger enable (EXDEVICE_9)"
+            bitOffset: 25
+            bitWidth: 1
+          SLOT10:
+            description: "Slot 10 negative-trigger enable (EXDEVICE_10)"
+            bitOffset: 26
+            bitWidth: 1
+          SLOT11:
+            description: "Slot 11 negative-trigger enable (EXDEVICE_11)"
+            bitOffset: 27
+            bitWidth: 1
+      PMU_WAKE_TRIG_NEGEN1:
+        description: "Negative wake-trigger enable, second bank"
+        addressOffset: 0x460
+        access: read-write
+        resetValue: 0x00000000
+      PMU_WAKE_TRIG_NOISECUTEN0:
+        description: "Noise filter enable for interrupt slots 0–11"
+        addressOffset: 0x464
+        access: read-write
+        resetValue: 0x00000000
+        fields:
+          SLOT0:
+            description: "Slot 0 noise filter enable (EXDEVICE_0)"
+            bitOffset: 16
+            bitWidth: 1
+          SLOT1:
+            description: "Slot 1 noise filter enable (EXDEVICE_1)"
+            bitOffset: 17
+            bitWidth: 1
+          SLOT2:
+            description: "Slot 2 noise filter enable (EXDEVICE_2)"
+            bitOffset: 18
+            bitWidth: 1
+          SLOT3:
+            description: "Slot 3 noise filter enable (EXDEVICE_3)"
+            bitOffset: 19
+            bitWidth: 1
+          SLOT4:
+            description: "Slot 4 noise filter enable (EXDEVICE_4)"
+            bitOffset: 20
+            bitWidth: 1
+          SLOT5:
+            description: "Slot 5 noise filter enable (EXDEVICE_5)"
+            bitOffset: 21
+            bitWidth: 1
+          SLOT6:
+            description: "Slot 6 noise filter enable (EXDEVICE_6)"
+            bitOffset: 22
+            bitWidth: 1
+          SLOT7:
+            description: "Slot 7 noise filter enable (EXDEVICE_7)"
+            bitOffset: 23
+            bitWidth: 1
+          SLOT8:
+            description: "Slot 8 noise filter enable (EXDEVICE_8)"
+            bitOffset: 24
+            bitWidth: 1
+          SLOT9:
+            description: "Slot 9 noise filter enable (EXDEVICE_9)"
+            bitOffset: 25
+            bitWidth: 1
+          SLOT10:
+            description: "Slot 10 noise filter enable (EXDEVICE_10)"
+            bitOffset: 26
+            bitWidth: 1
+          SLOT11:
+            description: "Slot 11 noise filter enable (EXDEVICE_11)"
+            bitOffset: 27
+            bitWidth: 1
+      PMU_WAKE_TRIG_CPUINTSEL0:
+        description: "CPU interrupt route select, slots 0–3 (3-bit field per slot at 16+slot*4)"
+        addressOffset: 0x468
+        access: read-write
+        resetValue: 0x00000000
+        fields:
+          SLOT0:
+            description: "Slot 0 route (EXDEVICE_0)"
+            bitOffset: 16
+            bitWidth: 3
+            enumeratedValues:
+              - name: Through
+                description: "Level-high without filter — direct to IRQ"
+                value: 0
+              - name: Inverter
+                description: "Level-low without filter — inverted to IRQ"
+                value: 1
+              - name: Pmu
+                description: "Level with noise filter via PMU"
+                value: 2
+              - name: PmuLatch
+                description: "Edge — PMU latch; clear via PMU_WAKE_TRIG0_CLR"
+                value: 3
+          SLOT1:
+            description: "Slot 1 route (EXDEVICE_1)"
+            bitOffset: 20
+            bitWidth: 3
+            enumeratedValues:
+              - name: Through
+                value: 0
+              - name: Inverter
+                value: 1
+              - name: Pmu
+                value: 2
+              - name: PmuLatch
+                value: 3
+          SLOT2:
+            description: "Slot 2 route (EXDEVICE_2)"
+            bitOffset: 24
+            bitWidth: 3
+            enumeratedValues:
+              - name: Through
+                value: 0
+              - name: Inverter
+                value: 1
+              - name: Pmu
+                value: 2
+              - name: PmuLatch
+                value: 3
+          SLOT3:
+            description: "Slot 3 route (EXDEVICE_3)"
+            bitOffset: 28
+            bitWidth: 3
+            enumeratedValues:
+              - name: Through
+                value: 0
+              - name: Inverter
+                value: 1
+              - name: Pmu
+                value: 2
+              - name: PmuLatch
+                value: 3
+      PMU_WAKE_TRIG_CPUINTSEL1:
+        description: "CPU interrupt route select, slots 4–11 (3-bit field per slot at slot*4)"
+        addressOffset: 0x46c
+        access: read-write
+        resetValue: 0x00000000
+        fields:
+          SLOT4:
+            description: "Slot 4 route (EXDEVICE_4)"
+            bitOffset: 0
+            bitWidth: 3
+            enumeratedValues:
+              - name: Through
+                value: 0
+              - name: Inverter
+                value: 1
+              - name: Pmu
+                value: 2
+              - name: PmuLatch
+                value: 3
+          SLOT5:
+            description: "Slot 5 route (EXDEVICE_5)"
+            bitOffset: 4
+            bitWidth: 3
+            enumeratedValues:
+              - name: Through
+                value: 0
+              - name: Inverter
+                value: 1
+              - name: Pmu
+                value: 2
+              - name: PmuLatch
+                value: 3
+          SLOT6:
+            description: "Slot 6 route (EXDEVICE_6)"
+            bitOffset: 8
+            bitWidth: 3
+            enumeratedValues:
+              - name: Through
+                value: 0
+              - name: Inverter
+                value: 1
+              - name: Pmu
+                value: 2
+              - name: PmuLatch
+                value: 3
+          SLOT7:
+            description: "Slot 7 route (EXDEVICE_7)"
+            bitOffset: 12
+            bitWidth: 3
+            enumeratedValues:
+              - name: Through
+                value: 0
+              - name: Inverter
+                value: 1
+              - name: Pmu
+                value: 2
+              - name: PmuLatch
+                value: 3
+          SLOT8:
+            description: "Slot 8 route (EXDEVICE_8)"
+            bitOffset: 16
+            bitWidth: 3
+            enumeratedValues:
+              - name: Through
+                value: 0
+              - name: Inverter
+                value: 1
+              - name: Pmu
+                value: 2
+              - name: PmuLatch
+                value: 3
+          SLOT9:
+            description: "Slot 9 route (EXDEVICE_9)"
+            bitOffset: 20
+            bitWidth: 3
+            enumeratedValues:
+              - name: Through
+                value: 0
+              - name: Inverter
+                value: 1
+              - name: Pmu
+                value: 2
+              - name: PmuLatch
+                value: 3
+          SLOT10:
+            description: "Slot 10 route (EXDEVICE_10)"
+            bitOffset: 24
+            bitWidth: 3
+            enumeratedValues:
+              - name: Through
+                value: 0
+              - name: Inverter
+                value: 1
+              - name: Pmu
+                value: 2
+              - name: PmuLatch
+                value: 3
+          SLOT11:
+            description: "Slot 11 route (EXDEVICE_11)"
+            bitOffset: 28
+            bitWidth: 3
+            enumeratedValues:
+              - name: Through
+                value: 0
+              - name: Inverter
+                value: 1
+              - name: Pmu
+                value: 2
+              - name: PmuLatch
+                value: 3
+      PMU_WAKE_TRIG_CPUINTSEL2:
+        description: "CPU interrupt route select, second bank (unused by GPIO driver)"
+        addressOffset: 0x470
+        access: read-write
+        resetValue: 0x00000000
+      PMU_WAKE_TRIG_INTDET0:
+        description: "Interrupt detect polarity, slots 0–3 (3-bit field per slot at 16+slot*4)"
+        addressOffset: 0x474
+        access: read-write
+        resetValue: 0x00000000
+        fields:
+          SLOT0:
+            description: "Slot 0 polarity (EXDEVICE_0)"
+            bitOffset: 16
+            bitWidth: 3
+            enumeratedValues:
+              - name: LevelHigh
+                description: "High level (GPIOINT_LEVEL_HIGH)"
+                value: 2
+              - name: LevelLow
+                description: "Low level (GPIOINT_LEVEL_LOW)"
+                value: 3
+              - name: EdgeRise
+                description: "Rising edge (GPIOINT_EDGE_RISE)"
+                value: 4
+              - name: EdgeFall
+                description: "Falling edge (GPIOINT_EDGE_FALL)"
+                value: 5
+              - name: EdgeBoth
+                description: "Both edges (GPIOINT_EDGE_BOTH)"
+                value: 7
+          SLOT1:
+            description: "Slot 1 polarity (EXDEVICE_1)"
+            bitOffset: 20
+            bitWidth: 3
+            enumeratedValues:
+              - name: LevelHigh
+                value: 2
+              - name: LevelLow
+                value: 3
+              - name: EdgeRise
+                value: 4
+              - name: EdgeFall
+                value: 5
+              - name: EdgeBoth
+                value: 7
+          SLOT2:
+            description: "Slot 2 polarity (EXDEVICE_2)"
+            bitOffset: 24
+            bitWidth: 3
+            enumeratedValues:
+              - name: LevelHigh
+                value: 2
+              - name: LevelLow
+                value: 3
+              - name: EdgeRise
+                value: 4
+              - name: EdgeFall
+                value: 5
+              - name: EdgeBoth
+                value: 7
+          SLOT3:
+            description: "Slot 3 polarity (EXDEVICE_3)"
+            bitOffset: 28
+            bitWidth: 3
+            enumeratedValues:
+              - name: LevelHigh
+                value: 2
+              - name: LevelLow
+                value: 3
+              - name: EdgeRise
+                value: 4
+              - name: EdgeFall
+                value: 5
+              - name: EdgeBoth
+                value: 7
+      PMU_WAKE_TRIG_INTDET1:
+        description: "Interrupt detect polarity, slots 4–11 (3-bit field per slot at slot*4)"
+        addressOffset: 0x478
+        access: read-write
+        resetValue: 0x00000000
+        fields:
+          SLOT4:
+            description: "Slot 4 polarity (EXDEVICE_4)"
+            bitOffset: 0
+            bitWidth: 3
+            enumeratedValues:
+              - name: LevelHigh
+                value: 2
+              - name: LevelLow
+                value: 3
+              - name: EdgeRise
+                value: 4
+              - name: EdgeFall
+                value: 5
+              - name: EdgeBoth
+                value: 7
+          SLOT5:
+            description: "Slot 5 polarity (EXDEVICE_5)"
+            bitOffset: 4
+            bitWidth: 3
+            enumeratedValues:
+              - name: LevelHigh
+                value: 2
+              - name: LevelLow
+                value: 3
+              - name: EdgeRise
+                value: 4
+              - name: EdgeFall
+                value: 5
+              - name: EdgeBoth
+                value: 7
+          SLOT6:
+            description: "Slot 6 polarity (EXDEVICE_6)"
+            bitOffset: 8
+            bitWidth: 3
+            enumeratedValues:
+              - name: LevelHigh
+                value: 2
+              - name: LevelLow
+                value: 3
+              - name: EdgeRise
+                value: 4
+              - name: EdgeFall
+                value: 5
+              - name: EdgeBoth
+                value: 7
+          SLOT7:
+            description: "Slot 7 polarity (EXDEVICE_7)"
+            bitOffset: 12
+            bitWidth: 3
+            enumeratedValues:
+              - name: LevelHigh
+                value: 2
+              - name: LevelLow
+                value: 3
+              - name: EdgeRise
+                value: 4
+              - name: EdgeFall
+                value: 5
+              - name: EdgeBoth
+                value: 7
+          SLOT8:
+            description: "Slot 8 polarity (EXDEVICE_8)"
+            bitOffset: 16
+            bitWidth: 3
+            enumeratedValues:
+              - name: LevelHigh
+                value: 2
+              - name: LevelLow
+                value: 3
+              - name: EdgeRise
+                value: 4
+              - name: EdgeFall
+                value: 5
+              - name: EdgeBoth
+                value: 7
+          SLOT9:
+            description: "Slot 9 polarity (EXDEVICE_9)"
+            bitOffset: 20
+            bitWidth: 3
+            enumeratedValues:
+              - name: LevelHigh
+                value: 2
+              - name: LevelLow
+                value: 3
+              - name: EdgeRise
+                value: 4
+              - name: EdgeFall
+                value: 5
+              - name: EdgeBoth
+                value: 7
+          SLOT10:
+            description: "Slot 10 polarity (EXDEVICE_10)"
+            bitOffset: 24
+            bitWidth: 3
+            enumeratedValues:
+              - name: LevelHigh
+                value: 2
+              - name: LevelLow
+                value: 3
+              - name: EdgeRise
+                value: 4
+              - name: EdgeFall
+                value: 5
+              - name: EdgeBoth
+                value: 7
+          SLOT11:
+            description: "Slot 11 polarity (EXDEVICE_11)"
+            bitOffset: 28
+            bitWidth: 3
+            enumeratedValues:
+              - name: LevelHigh
+                value: 2
+              - name: LevelLow
+                value: 3
+              - name: EdgeRise
+                value: 4
+              - name: EdgeFall
+                value: 5
+              - name: EdgeBoth
+                value: 7
+      PMU_WAKE_TRIG_INTDET2:
+        description: "Interrupt detect polarity, second bank (unused by GPIO driver)"
+        addressOffset: 0x47c
+        access: read-write
+        resetValue: 0x00000000
+
       PMU_CORE_CKEN:
         description: "PMU core clock enable"
         addressOffset: 0x4c0
@@ -1354,6 +1951,47 @@ _add:
             bitOffset: 0
             bitWidth: 1
 
+      # GPIO interrupt slot mux — SYS domain (SYSIOP pins, slots 0–5 → EXDEVICE_0..5).
+      # Each byte holds a pin index (0–63); value 0x3f = "unused" sentinel (INTSEL_DEFAULT_VAL).
+      # Byte offset within the register = local slot index (0–5 for SYS domain).
+      # Source: cxd56_gpioint.c alloc_slot(); CXD56_TOPREG_IOCSYS_INTSEL0/1 = BASE+0x7b0/0x7b4.
+      IOCSYS_INTSEL0:
+        description: "SYS-domain GPIO interrupt slot mux, slots 0–3 (1 byte per slot, pin index 0–63)"
+        addressOffset: 0x7b0
+        access: read-write
+        resetValue: 0x3f3f3f3f
+        fields:
+          SLOT0:
+            description: "Pin index for SYS slot 0 → EXDEVICE_0 (0x3f = unused)"
+            bitOffset: 0
+            bitWidth: 6
+          SLOT1:
+            description: "Pin index for SYS slot 1 → EXDEVICE_1 (0x3f = unused)"
+            bitOffset: 8
+            bitWidth: 6
+          SLOT2:
+            description: "Pin index for SYS slot 2 → EXDEVICE_2 (0x3f = unused)"
+            bitOffset: 16
+            bitWidth: 6
+          SLOT3:
+            description: "Pin index for SYS slot 3 → EXDEVICE_3 (0x3f = unused)"
+            bitOffset: 24
+            bitWidth: 6
+      IOCSYS_INTSEL1:
+        description: "SYS-domain GPIO interrupt slot mux, slots 4–5"
+        addressOffset: 0x7b4
+        access: read-write
+        resetValue: 0x00003f3f
+        fields:
+          SLOT4:
+            description: "Pin index for SYS slot 4 → EXDEVICE_4 (0x3f = unused)"
+            bitOffset: 0
+            bitWidth: 6
+          SLOT5:
+            description: "Pin index for SYS slot 5 → EXDEVICE_5 (0x3f = unused)"
+            bitOffset: 8
+            bitWidth: 6
+
       # IOCELL mode-mux for the SYSIOP (COM-bus) pins.
       # Bits [1:0] per group = mode (0=GPIO, 1=Func1, 2=Func2, 3=Func3).
       # Group SPI0A [13:12] controls SPI0_CS_X and SPI0_SCK; mode 1 = UART1.
@@ -1568,6 +2206,46 @@ _add:
             description: "Input enable: 0=disabled, 1=enabled"
             bitOffset: 0
             bitWidth: 1
+
+      # GPIO interrupt slot mux — APP domain (IMG pins, slots 6–11 → EXDEVICE_6..11).
+      # Same byte-per-slot layout as IOCSYS_INTSEL; APP slot local index 0 = global slot 6.
+      # Source: cxd56_gpioint.c; CXD56_TOPREG_IOCAPP_INTSEL0/1 = BASE+0x1490/0x1494.
+      IOCAPP_INTSEL0:
+        description: "APP-domain GPIO interrupt slot mux, slots 6–9 (1 byte per slot, pin index 0–63)"
+        addressOffset: 0x1490
+        access: read-write
+        resetValue: 0x3f3f3f3f
+        fields:
+          SLOT6:
+            description: "Pin index for APP slot 6 → EXDEVICE_6 (0x3f = unused)"
+            bitOffset: 0
+            bitWidth: 6
+          SLOT7:
+            description: "Pin index for APP slot 7 → EXDEVICE_7 (0x3f = unused)"
+            bitOffset: 8
+            bitWidth: 6
+          SLOT8:
+            description: "Pin index for APP slot 8 → EXDEVICE_8 (0x3f = unused)"
+            bitOffset: 16
+            bitWidth: 6
+          SLOT9:
+            description: "Pin index for APP slot 9 → EXDEVICE_9 (0x3f = unused)"
+            bitOffset: 24
+            bitWidth: 6
+      IOCAPP_INTSEL1:
+        description: "APP-domain GPIO interrupt slot mux, slots 10–11"
+        addressOffset: 0x1494
+        access: read-write
+        resetValue: 0x00003f3f
+        fields:
+          SLOT10:
+            description: "Pin index for APP slot 10 → EXDEVICE_10 (0x3f = unused)"
+            bitOffset: 0
+            bitWidth: 6
+          SLOT11:
+            description: "Pin index for APP slot 11 → EXDEVICE_11 (0x3f = unused)"
+            bitOffset: 8
+            bitWidth: 6
 
       # IOCELL mode-mux for the APP-domain (IMG) pins.
       # Group UART2 [3:2] controls the UART2_TXD/RXD pins; mode 1 = UART2.
@@ -2012,6 +2690,188 @@ _add:
               - name: Enabled
                 description: ""
                 value: 1
+      # GPIO external interrupt live status, clear, and raw registers.
+      # Each slot bit is at bit (16+slot); slots 0–11 → bits 16–27.
+      # Write 1<<(16+slot) to TRIG0_CLR to clear a latched edge interrupt.
+      # Source: cxd56_gpioint.c gpioint_handler(); CXD56_TOPREG_PMU_WAKE_TRIG0 = SUB_BASE+0x0440.
+      PMU_WAKE_TRIG0_CLR:
+        description: "GPIO interrupt clear register, slots 0–11 (write 1<<(16+slot) to clear)"
+        addressOffset: 0x430
+        access: read-write
+        resetValue: 0x00000000
+        fields:
+          SLOT0:
+            description: "Clear slot 0 latched interrupt (EXDEVICE_0)"
+            bitOffset: 16
+            bitWidth: 1
+          SLOT1:
+            description: "Clear slot 1 latched interrupt (EXDEVICE_1)"
+            bitOffset: 17
+            bitWidth: 1
+          SLOT2:
+            description: "Clear slot 2 latched interrupt (EXDEVICE_2)"
+            bitOffset: 18
+            bitWidth: 1
+          SLOT3:
+            description: "Clear slot 3 latched interrupt (EXDEVICE_3)"
+            bitOffset: 19
+            bitWidth: 1
+          SLOT4:
+            description: "Clear slot 4 latched interrupt (EXDEVICE_4)"
+            bitOffset: 20
+            bitWidth: 1
+          SLOT5:
+            description: "Clear slot 5 latched interrupt (EXDEVICE_5)"
+            bitOffset: 21
+            bitWidth: 1
+          SLOT6:
+            description: "Clear slot 6 latched interrupt (EXDEVICE_6)"
+            bitOffset: 22
+            bitWidth: 1
+          SLOT7:
+            description: "Clear slot 7 latched interrupt (EXDEVICE_7)"
+            bitOffset: 23
+            bitWidth: 1
+          SLOT8:
+            description: "Clear slot 8 latched interrupt (EXDEVICE_8)"
+            bitOffset: 24
+            bitWidth: 1
+          SLOT9:
+            description: "Clear slot 9 latched interrupt (EXDEVICE_9)"
+            bitOffset: 25
+            bitWidth: 1
+          SLOT10:
+            description: "Clear slot 10 latched interrupt (EXDEVICE_10)"
+            bitOffset: 26
+            bitWidth: 1
+          SLOT11:
+            description: "Clear slot 11 latched interrupt (EXDEVICE_11)"
+            bitOffset: 27
+            bitWidth: 1
+      PMU_WAKE_TRIG1_CLR:
+        description: "GPIO interrupt clear register, second bank"
+        addressOffset: 0x434
+        access: read-write
+        resetValue: 0x00000000
+      PMU_WAKE_TRIG0_RAW:
+        description: "GPIO interrupt raw (pre-mask) status, slots 0–11"
+        addressOffset: 0x438
+        access: read-only
+        resetValue: 0x00000000
+        fields:
+          SLOT0:
+            description: "Slot 0 raw trigger status (EXDEVICE_0)"
+            bitOffset: 16
+            bitWidth: 1
+          SLOT1:
+            description: "Slot 1 raw trigger status (EXDEVICE_1)"
+            bitOffset: 17
+            bitWidth: 1
+          SLOT2:
+            description: "Slot 2 raw trigger status (EXDEVICE_2)"
+            bitOffset: 18
+            bitWidth: 1
+          SLOT3:
+            description: "Slot 3 raw trigger status (EXDEVICE_3)"
+            bitOffset: 19
+            bitWidth: 1
+          SLOT4:
+            description: "Slot 4 raw trigger status (EXDEVICE_4)"
+            bitOffset: 20
+            bitWidth: 1
+          SLOT5:
+            description: "Slot 5 raw trigger status (EXDEVICE_5)"
+            bitOffset: 21
+            bitWidth: 1
+          SLOT6:
+            description: "Slot 6 raw trigger status (EXDEVICE_6)"
+            bitOffset: 22
+            bitWidth: 1
+          SLOT7:
+            description: "Slot 7 raw trigger status (EXDEVICE_7)"
+            bitOffset: 23
+            bitWidth: 1
+          SLOT8:
+            description: "Slot 8 raw trigger status (EXDEVICE_8)"
+            bitOffset: 24
+            bitWidth: 1
+          SLOT9:
+            description: "Slot 9 raw trigger status (EXDEVICE_9)"
+            bitOffset: 25
+            bitWidth: 1
+          SLOT10:
+            description: "Slot 10 raw trigger status (EXDEVICE_10)"
+            bitOffset: 26
+            bitWidth: 1
+          SLOT11:
+            description: "Slot 11 raw trigger status (EXDEVICE_11)"
+            bitOffset: 27
+            bitWidth: 1
+      PMU_WAKE_TRIG1_RAW:
+        description: "GPIO interrupt raw status, second bank"
+        addressOffset: 0x43c
+        access: read-only
+        resetValue: 0x00000000
+      PMU_WAKE_TRIG0:
+        description: "GPIO interrupt masked status, slots 0–11 (ISR reads this)"
+        addressOffset: 0x440
+        access: read-only
+        resetValue: 0x00000000
+        fields:
+          SLOT0:
+            description: "Slot 0 masked trigger status (EXDEVICE_0)"
+            bitOffset: 16
+            bitWidth: 1
+          SLOT1:
+            description: "Slot 1 masked trigger status (EXDEVICE_1)"
+            bitOffset: 17
+            bitWidth: 1
+          SLOT2:
+            description: "Slot 2 masked trigger status (EXDEVICE_2)"
+            bitOffset: 18
+            bitWidth: 1
+          SLOT3:
+            description: "Slot 3 masked trigger status (EXDEVICE_3)"
+            bitOffset: 19
+            bitWidth: 1
+          SLOT4:
+            description: "Slot 4 masked trigger status (EXDEVICE_4)"
+            bitOffset: 20
+            bitWidth: 1
+          SLOT5:
+            description: "Slot 5 masked trigger status (EXDEVICE_5)"
+            bitOffset: 21
+            bitWidth: 1
+          SLOT6:
+            description: "Slot 6 masked trigger status (EXDEVICE_6)"
+            bitOffset: 22
+            bitWidth: 1
+          SLOT7:
+            description: "Slot 7 masked trigger status (EXDEVICE_7)"
+            bitOffset: 23
+            bitWidth: 1
+          SLOT8:
+            description: "Slot 8 masked trigger status (EXDEVICE_8)"
+            bitOffset: 24
+            bitWidth: 1
+          SLOT9:
+            description: "Slot 9 masked trigger status (EXDEVICE_9)"
+            bitOffset: 25
+            bitWidth: 1
+          SLOT10:
+            description: "Slot 10 masked trigger status (EXDEVICE_10)"
+            bitOffset: 26
+            bitWidth: 1
+          SLOT11:
+            description: "Slot 11 masked trigger status (EXDEVICE_11)"
+            bitOffset: 27
+            bitWidth: 1
+      PMU_WAKE_TRIG1:
+        description: "GPIO interrupt masked status, second bank"
+        addressOffset: 0x444
+        access: read-only
+        resetValue: 0x00000000
+
       GNSDSP_CKEN:
         description: "GNSS DSP clock enables"
         addressOffset: 0xc20
