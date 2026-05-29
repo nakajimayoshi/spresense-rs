@@ -10,11 +10,18 @@ pub struct RegisterBlock {
     app_cksel: AppCksel,
     app_div: AppDiv,
     sysiop_sub_cken: SysiopSubCken,
-    _reserved7: [u8; 0x07fc],
+    _reserved7: [u8; 0x0c],
+    pmu_wake_trig0_clr: PmuWakeTrig0Clr,
+    pmu_wake_trig1_clr: PmuWakeTrig1Clr,
+    pmu_wake_trig0_raw: PmuWakeTrig0Raw,
+    pmu_wake_trig1_raw: PmuWakeTrig1Raw,
+    pmu_wake_trig0: PmuWakeTrig0,
+    pmu_wake_trig1: PmuWakeTrig1,
+    _reserved13: [u8; 0x07d8],
     gnsdsp_cken: GnsdspCken,
-    _reserved8: [u8; 0x04],
+    _reserved14: [u8; 0x04],
     gnss_div: GnssDiv,
-    _reserved9: [u8; 0x0864],
+    _reserved15: [u8; 0x0864],
     chip_id: ChipId,
 }
 impl RegisterBlock {
@@ -52,6 +59,36 @@ impl RegisterBlock {
     #[inline(always)]
     pub const fn sysiop_sub_cken(&self) -> &SysiopSubCken {
         &self.sysiop_sub_cken
+    }
+    ///0x430 - GPIO interrupt clear register, slots 0–11 (write 1<<(16+slot) to clear)
+    #[inline(always)]
+    pub const fn pmu_wake_trig0_clr(&self) -> &PmuWakeTrig0Clr {
+        &self.pmu_wake_trig0_clr
+    }
+    ///0x434 - GPIO interrupt clear register, second bank
+    #[inline(always)]
+    pub const fn pmu_wake_trig1_clr(&self) -> &PmuWakeTrig1Clr {
+        &self.pmu_wake_trig1_clr
+    }
+    ///0x438 - GPIO interrupt raw (pre-mask) status, slots 0–11
+    #[inline(always)]
+    pub const fn pmu_wake_trig0_raw(&self) -> &PmuWakeTrig0Raw {
+        &self.pmu_wake_trig0_raw
+    }
+    ///0x43c - GPIO interrupt raw status, second bank
+    #[inline(always)]
+    pub const fn pmu_wake_trig1_raw(&self) -> &PmuWakeTrig1Raw {
+        &self.pmu_wake_trig1_raw
+    }
+    ///0x440 - GPIO interrupt masked status, slots 0–11 (ISR reads this)
+    #[inline(always)]
+    pub const fn pmu_wake_trig0(&self) -> &PmuWakeTrig0 {
+        &self.pmu_wake_trig0
+    }
+    ///0x444 - GPIO interrupt masked status, second bank
+    #[inline(always)]
+    pub const fn pmu_wake_trig1(&self) -> &PmuWakeTrig1 {
+        &self.pmu_wake_trig1
     }
     ///0xc20 - GNSS DSP clock enables
     #[inline(always)]
@@ -132,6 +169,60 @@ For information about available fields see [`mod@sysiop_sub_cken`] module*/
 pub type SysiopSubCken = crate::Reg<sysiop_sub_cken::SysiopSubCkenSpec>;
 ///SYSIOP sub-domain peripheral clock enables
 pub mod sysiop_sub_cken;
+/**PMU_WAKE_TRIG0_CLR (rw) register accessor: GPIO interrupt clear register, slots 0–11 (write 1<<(16+slot) to clear)
+
+You can [`read`](crate::Reg::read) this register and get [`pmu_wake_trig0_clr::R`]. You can [`reset`](crate::Reg::reset), [`write`](crate::Reg::write), [`write_with_zero`](crate::Reg::write_with_zero) this register using [`pmu_wake_trig0_clr::W`]. You can also [`modify`](crate::Reg::modify) this register. See [API](https://docs.rs/svd2rust/#read--modify--write-api).
+
+For information about available fields see [`mod@pmu_wake_trig0_clr`] module*/
+#[doc(alias = "PMU_WAKE_TRIG0_CLR")]
+pub type PmuWakeTrig0Clr = crate::Reg<pmu_wake_trig0_clr::PmuWakeTrig0ClrSpec>;
+///GPIO interrupt clear register, slots 0–11 (write 1<<(16+slot) to clear)
+pub mod pmu_wake_trig0_clr;
+/**PMU_WAKE_TRIG1_CLR (rw) register accessor: GPIO interrupt clear register, second bank
+
+You can [`read`](crate::Reg::read) this register and get [`pmu_wake_trig1_clr::R`]. You can [`reset`](crate::Reg::reset), [`write`](crate::Reg::write), [`write_with_zero`](crate::Reg::write_with_zero) this register using [`pmu_wake_trig1_clr::W`]. You can also [`modify`](crate::Reg::modify) this register. See [API](https://docs.rs/svd2rust/#read--modify--write-api).
+
+For information about available fields see [`mod@pmu_wake_trig1_clr`] module*/
+#[doc(alias = "PMU_WAKE_TRIG1_CLR")]
+pub type PmuWakeTrig1Clr = crate::Reg<pmu_wake_trig1_clr::PmuWakeTrig1ClrSpec>;
+///GPIO interrupt clear register, second bank
+pub mod pmu_wake_trig1_clr;
+/**PMU_WAKE_TRIG0_RAW (r) register accessor: GPIO interrupt raw (pre-mask) status, slots 0–11
+
+You can [`read`](crate::Reg::read) this register and get [`pmu_wake_trig0_raw::R`]. See [API](https://docs.rs/svd2rust/#read--modify--write-api).
+
+For information about available fields see [`mod@pmu_wake_trig0_raw`] module*/
+#[doc(alias = "PMU_WAKE_TRIG0_RAW")]
+pub type PmuWakeTrig0Raw = crate::Reg<pmu_wake_trig0_raw::PmuWakeTrig0RawSpec>;
+///GPIO interrupt raw (pre-mask) status, slots 0–11
+pub mod pmu_wake_trig0_raw;
+/**PMU_WAKE_TRIG1_RAW (r) register accessor: GPIO interrupt raw status, second bank
+
+You can [`read`](crate::Reg::read) this register and get [`pmu_wake_trig1_raw::R`]. See [API](https://docs.rs/svd2rust/#read--modify--write-api).
+
+For information about available fields see [`mod@pmu_wake_trig1_raw`] module*/
+#[doc(alias = "PMU_WAKE_TRIG1_RAW")]
+pub type PmuWakeTrig1Raw = crate::Reg<pmu_wake_trig1_raw::PmuWakeTrig1RawSpec>;
+///GPIO interrupt raw status, second bank
+pub mod pmu_wake_trig1_raw;
+/**PMU_WAKE_TRIG0 (r) register accessor: GPIO interrupt masked status, slots 0–11 (ISR reads this)
+
+You can [`read`](crate::Reg::read) this register and get [`pmu_wake_trig0::R`]. See [API](https://docs.rs/svd2rust/#read--modify--write-api).
+
+For information about available fields see [`mod@pmu_wake_trig0`] module*/
+#[doc(alias = "PMU_WAKE_TRIG0")]
+pub type PmuWakeTrig0 = crate::Reg<pmu_wake_trig0::PmuWakeTrig0Spec>;
+///GPIO interrupt masked status, slots 0–11 (ISR reads this)
+pub mod pmu_wake_trig0;
+/**PMU_WAKE_TRIG1 (r) register accessor: GPIO interrupt masked status, second bank
+
+You can [`read`](crate::Reg::read) this register and get [`pmu_wake_trig1::R`]. See [API](https://docs.rs/svd2rust/#read--modify--write-api).
+
+For information about available fields see [`mod@pmu_wake_trig1`] module*/
+#[doc(alias = "PMU_WAKE_TRIG1")]
+pub type PmuWakeTrig1 = crate::Reg<pmu_wake_trig1::PmuWakeTrig1Spec>;
+///GPIO interrupt masked status, second bank
+pub mod pmu_wake_trig1;
 /**GNSDSP_CKEN (rw) register accessor: GNSS DSP clock enables
 
 You can [`read`](crate::Reg::read) this register and get [`gnsdsp_cken::R`]. You can [`reset`](crate::Reg::reset), [`write`](crate::Reg::write), [`write_with_zero`](crate::Reg::write_with_zero) this register using [`gnsdsp_cken::W`]. You can also [`modify`](crate::Reg::modify) this register. See [API](https://docs.rs/svd2rust/#read--modify--write-api).

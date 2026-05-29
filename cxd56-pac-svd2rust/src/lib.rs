@@ -23,6 +23,18 @@ extern "C" {
     fn UART1();
     fn SPI3();
     fn I2C0();
+    fn EXDEVICE_0();
+    fn EXDEVICE_1();
+    fn EXDEVICE_2();
+    fn EXDEVICE_3();
+    fn EXDEVICE_4();
+    fn EXDEVICE_5();
+    fn EXDEVICE_6();
+    fn EXDEVICE_7();
+    fn EXDEVICE_8();
+    fn EXDEVICE_9();
+    fn EXDEVICE_10();
+    fn EXDEVICE_11();
     fn SPI0();
     fn _2D();
     fn ROT();
@@ -80,18 +92,42 @@ pub static __INTERRUPTS: [Vector; 135] = [
     Vector { _handler: I2C0 },
     Vector { _reserved: 0 },
     Vector { _reserved: 0 },
-    Vector { _reserved: 0 },
-    Vector { _reserved: 0 },
-    Vector { _reserved: 0 },
-    Vector { _reserved: 0 },
-    Vector { _reserved: 0 },
-    Vector { _reserved: 0 },
-    Vector { _reserved: 0 },
-    Vector { _reserved: 0 },
-    Vector { _reserved: 0 },
-    Vector { _reserved: 0 },
-    Vector { _reserved: 0 },
-    Vector { _reserved: 0 },
+    Vector {
+        _handler: EXDEVICE_0,
+    },
+    Vector {
+        _handler: EXDEVICE_1,
+    },
+    Vector {
+        _handler: EXDEVICE_2,
+    },
+    Vector {
+        _handler: EXDEVICE_3,
+    },
+    Vector {
+        _handler: EXDEVICE_4,
+    },
+    Vector {
+        _handler: EXDEVICE_5,
+    },
+    Vector {
+        _handler: EXDEVICE_6,
+    },
+    Vector {
+        _handler: EXDEVICE_7,
+    },
+    Vector {
+        _handler: EXDEVICE_8,
+    },
+    Vector {
+        _handler: EXDEVICE_9,
+    },
+    Vector {
+        _handler: EXDEVICE_10,
+    },
+    Vector {
+        _handler: EXDEVICE_11,
+    },
     Vector { _reserved: 0 },
     Vector { _reserved: 0 },
     Vector { _reserved: 0 },
@@ -192,6 +228,30 @@ pub enum Interrupt {
     SPI3 = 32,
     ///33 - I2C0 (SCU_I2C0) interrupt
     I2C0 = 33,
+    ///36 - GPIO external interrupt slot 0
+    EXDEVICE_0 = 36,
+    ///37 - GPIO external interrupt slot 1
+    EXDEVICE_1 = 37,
+    ///38 - GPIO external interrupt slot 2
+    EXDEVICE_2 = 38,
+    ///39 - GPIO external interrupt slot 3
+    EXDEVICE_3 = 39,
+    ///40 - GPIO external interrupt slot 4
+    EXDEVICE_4 = 40,
+    ///41 - GPIO external interrupt slot 5
+    EXDEVICE_5 = 41,
+    ///42 - GPIO external interrupt slot 6
+    EXDEVICE_6 = 42,
+    ///43 - GPIO external interrupt slot 7
+    EXDEVICE_7 = 43,
+    ///44 - GPIO external interrupt slot 8
+    EXDEVICE_8 = 44,
+    ///45 - GPIO external interrupt slot 9
+    EXDEVICE_9 = 45,
+    ///46 - GPIO external interrupt slot 10
+    EXDEVICE_10 = 46,
+    ///47 - GPIO external interrupt slot 11
+    EXDEVICE_11 = 47,
     ///90 - SPI0 interrupt
     SPI0 = 90,
     ///106 - 2D interrupt

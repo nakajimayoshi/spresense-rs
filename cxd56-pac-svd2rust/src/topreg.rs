@@ -16,7 +16,19 @@ pub struct RegisterBlock {
     clseldiv_wake: ClseldivWake,
     ckdiv_cpu_dsp_bus_wake: CkdivCpuDspBusWake,
     cksel_root_wake: CkselRootWake,
-    _reserved10: [u8; 0xa0],
+    _reserved10: [u8; 0x34],
+    pmu_wake_trig_en0: PmuWakeTrigEn0,
+    pmu_wake_trig_en1: PmuWakeTrigEn1,
+    pmu_wake_trig_negen0: PmuWakeTrigNegen0,
+    pmu_wake_trig_negen1: PmuWakeTrigNegen1,
+    pmu_wake_trig_noisecuten0: PmuWakeTrigNoisecuten0,
+    pmu_wake_trig_cpuintsel0: PmuWakeTrigCpuintsel0,
+    pmu_wake_trig_cpuintsel1: PmuWakeTrigCpuintsel1,
+    pmu_wake_trig_cpuintsel2: PmuWakeTrigCpuintsel2,
+    pmu_wake_trig_intdet0: PmuWakeTrigIntdet0,
+    pmu_wake_trig_intdet1: PmuWakeTrigIntdet1,
+    pmu_wake_trig_intdet2: PmuWakeTrigIntdet2,
+    _reserved21: [u8; 0x40],
     pmu_core_cken: PmuCoreCken,
     cksel_root: CkselRoot,
     cksel_pmu: CkselPmu,
@@ -40,7 +52,7 @@ pub struct RegisterBlock {
     usbphy_cken: UsbphyCken,
     crg_mon: CrgMon,
     gear_stat: GearStat,
-    _reserved33: [u8; 0x64],
+    _reserved44: [u8; 0x64],
     xosc_ctrl: XoscCtrl,
     xosc_ctrl2: XoscCtrl2,
     sys_pll_ctrl1: SysPllCtrl1,
@@ -48,37 +60,43 @@ pub struct RegisterBlock {
     rcosc_ctrl1: RcoscCtrl1,
     rcosc_ctrl2: RcoscCtrl2,
     rf_gpmbi_en: RfGpmbiEn,
-    _reserved40: [u8; 0xa8],
+    _reserved51: [u8; 0xa8],
     force_cken: ForceCken,
-    _reserved41: [u8; 0x18],
+    _reserved52: [u8; 0x18],
     ckgate_ctl: CkgateCtl,
-    _reserved42: [u8; 0x9c],
+    _reserved53: [u8; 0x9c],
     swreset_bus: SwresetBus,
     swreset_scu: SwresetScu,
-    _reserved44: [u8; 0x08],
+    _reserved55: [u8; 0x08],
     busrom_cken: BusromCken,
     sysiop_cken: SysiopCken,
-    _reserved46: [u8; 0x04],
+    _reserved57: [u8; 0x04],
     scu_cken: ScuCken,
-    _reserved47: [u8; 0x10],
+    _reserved58: [u8; 0x10],
     rtc0_ctl: Rtc0Ctl,
-    _reserved48: [u8; 0x8c],
+    _reserved59: [u8; 0x7c],
+    iocsys_intsel0: IocsysIntsel0,
+    iocsys_intsel1: IocsysIntsel1,
+    _reserved61: [u8; 0x08],
     iocsys_iomd0: IocsysIomd0,
     iocsys_iomd1: IocsysIomd1,
-    _reserved50: [u8; 0x7c],
+    _reserved63: [u8; 0x7c],
     io_spi0_cs_x: IoSpi0CsX,
     io_spi0_sck: IoSpi0Sck,
-    _reserved52: [u8; 0x64],
+    _reserved65: [u8; 0x64],
     io_i2c0_bck: IoI2c0Bck,
     io_i2c0_bdt: IoI2c0Bdt,
-    _reserved54: [u8; 0x54],
+    _reserved67: [u8; 0x54],
     io_uart2_txd: IoUart2Txd,
     io_uart2_rxd: IoUart2Rxd,
-    _reserved56: [u8; 0x0b8c],
+    _reserved69: [u8; 0x0b7c],
+    iocapp_intsel0: IocappIntsel0,
+    iocapp_intsel1: IocappIntsel1,
+    _reserved71: [u8; 0x08],
     iocapp_iomd: IocappIomd,
-    _reserved57: [u8; 0x0b5c],
+    _reserved72: [u8; 0x0b5c],
     gp_i2c4_bck: GpI2c4Bck,
-    _reserved58: [u8; 0x0164],
+    _reserved73: [u8; 0x0164],
     gp_i2s1_bck: GpI2s1Bck,
     gp_i2s1_lrck: GpI2s1Lrck,
     gp_i2s1_data_in: GpI2s1DataIn,
@@ -134,6 +152,61 @@ impl RegisterBlock {
     #[inline(always)]
     pub const fn cksel_root_wake(&self) -> &CkselRootWake {
         &self.cksel_root_wake
+    }
+    ///0x454 - Positive wake-trigger enable, slots 0–11
+    #[inline(always)]
+    pub const fn pmu_wake_trig_en0(&self) -> &PmuWakeTrigEn0 {
+        &self.pmu_wake_trig_en0
+    }
+    ///0x458 - Positive wake-trigger enable, second bank
+    #[inline(always)]
+    pub const fn pmu_wake_trig_en1(&self) -> &PmuWakeTrigEn1 {
+        &self.pmu_wake_trig_en1
+    }
+    ///0x45c - Negative wake-trigger enable, slots 0–11
+    #[inline(always)]
+    pub const fn pmu_wake_trig_negen0(&self) -> &PmuWakeTrigNegen0 {
+        &self.pmu_wake_trig_negen0
+    }
+    ///0x460 - Negative wake-trigger enable, second bank
+    #[inline(always)]
+    pub const fn pmu_wake_trig_negen1(&self) -> &PmuWakeTrigNegen1 {
+        &self.pmu_wake_trig_negen1
+    }
+    ///0x464 - Noise filter enable for interrupt slots 0–11
+    #[inline(always)]
+    pub const fn pmu_wake_trig_noisecuten0(&self) -> &PmuWakeTrigNoisecuten0 {
+        &self.pmu_wake_trig_noisecuten0
+    }
+    ///0x468 - CPU interrupt route select, slots 0–3 (3-bit field per slot at 16+slot*4)
+    #[inline(always)]
+    pub const fn pmu_wake_trig_cpuintsel0(&self) -> &PmuWakeTrigCpuintsel0 {
+        &self.pmu_wake_trig_cpuintsel0
+    }
+    ///0x46c - CPU interrupt route select, slots 4–11 (3-bit field per slot at slot*4)
+    #[inline(always)]
+    pub const fn pmu_wake_trig_cpuintsel1(&self) -> &PmuWakeTrigCpuintsel1 {
+        &self.pmu_wake_trig_cpuintsel1
+    }
+    ///0x470 - CPU interrupt route select, second bank (unused by GPIO driver)
+    #[inline(always)]
+    pub const fn pmu_wake_trig_cpuintsel2(&self) -> &PmuWakeTrigCpuintsel2 {
+        &self.pmu_wake_trig_cpuintsel2
+    }
+    ///0x474 - Interrupt detect polarity, slots 0–3 (3-bit field per slot at 16+slot*4)
+    #[inline(always)]
+    pub const fn pmu_wake_trig_intdet0(&self) -> &PmuWakeTrigIntdet0 {
+        &self.pmu_wake_trig_intdet0
+    }
+    ///0x478 - Interrupt detect polarity, slots 4–11 (3-bit field per slot at slot*4)
+    #[inline(always)]
+    pub const fn pmu_wake_trig_intdet1(&self) -> &PmuWakeTrigIntdet1 {
+        &self.pmu_wake_trig_intdet1
+    }
+    ///0x47c - Interrupt detect polarity, second bank (unused by GPIO driver)
+    #[inline(always)]
+    pub const fn pmu_wake_trig_intdet2(&self) -> &PmuWakeTrigIntdet2 {
+        &self.pmu_wake_trig_intdet2
     }
     ///0x4c0 - PMU core clock enable
     #[inline(always)]
@@ -325,6 +398,16 @@ impl RegisterBlock {
     pub const fn rtc0_ctl(&self) -> &Rtc0Ctl {
         &self.rtc0_ctl
     }
+    ///0x7b0 - SYS-domain GPIO interrupt slot mux, slots 0–3 (1 byte per slot, pin index 0–63)
+    #[inline(always)]
+    pub const fn iocsys_intsel0(&self) -> &IocsysIntsel0 {
+        &self.iocsys_intsel0
+    }
+    ///0x7b4 - SYS-domain GPIO interrupt slot mux, slots 4–5
+    #[inline(always)]
+    pub const fn iocsys_intsel1(&self) -> &IocsysIntsel1 {
+        &self.iocsys_intsel1
+    }
     ///0x7c0 - SYSIOP IO-cell mode-mux register 0
     #[inline(always)]
     pub const fn iocsys_iomd0(&self) -> &IocsysIomd0 {
@@ -364,6 +447,16 @@ impl RegisterBlock {
     #[inline(always)]
     pub const fn io_uart2_rxd(&self) -> &IoUart2Rxd {
         &self.io_uart2_rxd
+    }
+    ///0x1490 - APP-domain GPIO interrupt slot mux, slots 6–9 (1 byte per slot, pin index 0–63)
+    #[inline(always)]
+    pub const fn iocapp_intsel0(&self) -> &IocappIntsel0 {
+        &self.iocapp_intsel0
+    }
+    ///0x1494 - APP-domain GPIO interrupt slot mux, slots 10–11
+    #[inline(always)]
+    pub const fn iocapp_intsel1(&self) -> &IocappIntsel1 {
+        &self.iocapp_intsel1
     }
     ///0x14a0 - APP-domain IO-cell mode-mux register
     #[inline(always)]
@@ -477,6 +570,105 @@ For information about available fields see [`mod@cksel_root_wake`] module*/
 pub type CkselRootWake = crate::Reg<cksel_root_wake::CkselRootWakeSpec>;
 ///Root clock source select used on wake from sleep
 pub mod cksel_root_wake;
+/**PMU_WAKE_TRIG_EN0 (rw) register accessor: Positive wake-trigger enable, slots 0–11
+
+You can [`read`](crate::Reg::read) this register and get [`pmu_wake_trig_en0::R`]. You can [`reset`](crate::Reg::reset), [`write`](crate::Reg::write), [`write_with_zero`](crate::Reg::write_with_zero) this register using [`pmu_wake_trig_en0::W`]. You can also [`modify`](crate::Reg::modify) this register. See [API](https://docs.rs/svd2rust/#read--modify--write-api).
+
+For information about available fields see [`mod@pmu_wake_trig_en0`] module*/
+#[doc(alias = "PMU_WAKE_TRIG_EN0")]
+pub type PmuWakeTrigEn0 = crate::Reg<pmu_wake_trig_en0::PmuWakeTrigEn0Spec>;
+///Positive wake-trigger enable, slots 0–11
+pub mod pmu_wake_trig_en0;
+/**PMU_WAKE_TRIG_EN1 (rw) register accessor: Positive wake-trigger enable, second bank
+
+You can [`read`](crate::Reg::read) this register and get [`pmu_wake_trig_en1::R`]. You can [`reset`](crate::Reg::reset), [`write`](crate::Reg::write), [`write_with_zero`](crate::Reg::write_with_zero) this register using [`pmu_wake_trig_en1::W`]. You can also [`modify`](crate::Reg::modify) this register. See [API](https://docs.rs/svd2rust/#read--modify--write-api).
+
+For information about available fields see [`mod@pmu_wake_trig_en1`] module*/
+#[doc(alias = "PMU_WAKE_TRIG_EN1")]
+pub type PmuWakeTrigEn1 = crate::Reg<pmu_wake_trig_en1::PmuWakeTrigEn1Spec>;
+///Positive wake-trigger enable, second bank
+pub mod pmu_wake_trig_en1;
+/**PMU_WAKE_TRIG_NEGEN0 (rw) register accessor: Negative wake-trigger enable, slots 0–11
+
+You can [`read`](crate::Reg::read) this register and get [`pmu_wake_trig_negen0::R`]. You can [`reset`](crate::Reg::reset), [`write`](crate::Reg::write), [`write_with_zero`](crate::Reg::write_with_zero) this register using [`pmu_wake_trig_negen0::W`]. You can also [`modify`](crate::Reg::modify) this register. See [API](https://docs.rs/svd2rust/#read--modify--write-api).
+
+For information about available fields see [`mod@pmu_wake_trig_negen0`] module*/
+#[doc(alias = "PMU_WAKE_TRIG_NEGEN0")]
+pub type PmuWakeTrigNegen0 = crate::Reg<pmu_wake_trig_negen0::PmuWakeTrigNegen0Spec>;
+///Negative wake-trigger enable, slots 0–11
+pub mod pmu_wake_trig_negen0;
+/**PMU_WAKE_TRIG_NEGEN1 (rw) register accessor: Negative wake-trigger enable, second bank
+
+You can [`read`](crate::Reg::read) this register and get [`pmu_wake_trig_negen1::R`]. You can [`reset`](crate::Reg::reset), [`write`](crate::Reg::write), [`write_with_zero`](crate::Reg::write_with_zero) this register using [`pmu_wake_trig_negen1::W`]. You can also [`modify`](crate::Reg::modify) this register. See [API](https://docs.rs/svd2rust/#read--modify--write-api).
+
+For information about available fields see [`mod@pmu_wake_trig_negen1`] module*/
+#[doc(alias = "PMU_WAKE_TRIG_NEGEN1")]
+pub type PmuWakeTrigNegen1 = crate::Reg<pmu_wake_trig_negen1::PmuWakeTrigNegen1Spec>;
+///Negative wake-trigger enable, second bank
+pub mod pmu_wake_trig_negen1;
+/**PMU_WAKE_TRIG_NOISECUTEN0 (rw) register accessor: Noise filter enable for interrupt slots 0–11
+
+You can [`read`](crate::Reg::read) this register and get [`pmu_wake_trig_noisecuten0::R`]. You can [`reset`](crate::Reg::reset), [`write`](crate::Reg::write), [`write_with_zero`](crate::Reg::write_with_zero) this register using [`pmu_wake_trig_noisecuten0::W`]. You can also [`modify`](crate::Reg::modify) this register. See [API](https://docs.rs/svd2rust/#read--modify--write-api).
+
+For information about available fields see [`mod@pmu_wake_trig_noisecuten0`] module*/
+#[doc(alias = "PMU_WAKE_TRIG_NOISECUTEN0")]
+pub type PmuWakeTrigNoisecuten0 = crate::Reg<pmu_wake_trig_noisecuten0::PmuWakeTrigNoisecuten0Spec>;
+///Noise filter enable for interrupt slots 0–11
+pub mod pmu_wake_trig_noisecuten0;
+/**PMU_WAKE_TRIG_CPUINTSEL0 (rw) register accessor: CPU interrupt route select, slots 0–3 (3-bit field per slot at 16+slot*4)
+
+You can [`read`](crate::Reg::read) this register and get [`pmu_wake_trig_cpuintsel0::R`]. You can [`reset`](crate::Reg::reset), [`write`](crate::Reg::write), [`write_with_zero`](crate::Reg::write_with_zero) this register using [`pmu_wake_trig_cpuintsel0::W`]. You can also [`modify`](crate::Reg::modify) this register. See [API](https://docs.rs/svd2rust/#read--modify--write-api).
+
+For information about available fields see [`mod@pmu_wake_trig_cpuintsel0`] module*/
+#[doc(alias = "PMU_WAKE_TRIG_CPUINTSEL0")]
+pub type PmuWakeTrigCpuintsel0 = crate::Reg<pmu_wake_trig_cpuintsel0::PmuWakeTrigCpuintsel0Spec>;
+///CPU interrupt route select, slots 0–3 (3-bit field per slot at 16+slot*4)
+pub mod pmu_wake_trig_cpuintsel0;
+/**PMU_WAKE_TRIG_CPUINTSEL1 (rw) register accessor: CPU interrupt route select, slots 4–11 (3-bit field per slot at slot*4)
+
+You can [`read`](crate::Reg::read) this register and get [`pmu_wake_trig_cpuintsel1::R`]. You can [`reset`](crate::Reg::reset), [`write`](crate::Reg::write), [`write_with_zero`](crate::Reg::write_with_zero) this register using [`pmu_wake_trig_cpuintsel1::W`]. You can also [`modify`](crate::Reg::modify) this register. See [API](https://docs.rs/svd2rust/#read--modify--write-api).
+
+For information about available fields see [`mod@pmu_wake_trig_cpuintsel1`] module*/
+#[doc(alias = "PMU_WAKE_TRIG_CPUINTSEL1")]
+pub type PmuWakeTrigCpuintsel1 = crate::Reg<pmu_wake_trig_cpuintsel1::PmuWakeTrigCpuintsel1Spec>;
+///CPU interrupt route select, slots 4–11 (3-bit field per slot at slot*4)
+pub mod pmu_wake_trig_cpuintsel1;
+/**PMU_WAKE_TRIG_CPUINTSEL2 (rw) register accessor: CPU interrupt route select, second bank (unused by GPIO driver)
+
+You can [`read`](crate::Reg::read) this register and get [`pmu_wake_trig_cpuintsel2::R`]. You can [`reset`](crate::Reg::reset), [`write`](crate::Reg::write), [`write_with_zero`](crate::Reg::write_with_zero) this register using [`pmu_wake_trig_cpuintsel2::W`]. You can also [`modify`](crate::Reg::modify) this register. See [API](https://docs.rs/svd2rust/#read--modify--write-api).
+
+For information about available fields see [`mod@pmu_wake_trig_cpuintsel2`] module*/
+#[doc(alias = "PMU_WAKE_TRIG_CPUINTSEL2")]
+pub type PmuWakeTrigCpuintsel2 = crate::Reg<pmu_wake_trig_cpuintsel2::PmuWakeTrigCpuintsel2Spec>;
+///CPU interrupt route select, second bank (unused by GPIO driver)
+pub mod pmu_wake_trig_cpuintsel2;
+/**PMU_WAKE_TRIG_INTDET0 (rw) register accessor: Interrupt detect polarity, slots 0–3 (3-bit field per slot at 16+slot*4)
+
+You can [`read`](crate::Reg::read) this register and get [`pmu_wake_trig_intdet0::R`]. You can [`reset`](crate::Reg::reset), [`write`](crate::Reg::write), [`write_with_zero`](crate::Reg::write_with_zero) this register using [`pmu_wake_trig_intdet0::W`]. You can also [`modify`](crate::Reg::modify) this register. See [API](https://docs.rs/svd2rust/#read--modify--write-api).
+
+For information about available fields see [`mod@pmu_wake_trig_intdet0`] module*/
+#[doc(alias = "PMU_WAKE_TRIG_INTDET0")]
+pub type PmuWakeTrigIntdet0 = crate::Reg<pmu_wake_trig_intdet0::PmuWakeTrigIntdet0Spec>;
+///Interrupt detect polarity, slots 0–3 (3-bit field per slot at 16+slot*4)
+pub mod pmu_wake_trig_intdet0;
+/**PMU_WAKE_TRIG_INTDET1 (rw) register accessor: Interrupt detect polarity, slots 4–11 (3-bit field per slot at slot*4)
+
+You can [`read`](crate::Reg::read) this register and get [`pmu_wake_trig_intdet1::R`]. You can [`reset`](crate::Reg::reset), [`write`](crate::Reg::write), [`write_with_zero`](crate::Reg::write_with_zero) this register using [`pmu_wake_trig_intdet1::W`]. You can also [`modify`](crate::Reg::modify) this register. See [API](https://docs.rs/svd2rust/#read--modify--write-api).
+
+For information about available fields see [`mod@pmu_wake_trig_intdet1`] module*/
+#[doc(alias = "PMU_WAKE_TRIG_INTDET1")]
+pub type PmuWakeTrigIntdet1 = crate::Reg<pmu_wake_trig_intdet1::PmuWakeTrigIntdet1Spec>;
+///Interrupt detect polarity, slots 4–11 (3-bit field per slot at slot*4)
+pub mod pmu_wake_trig_intdet1;
+/**PMU_WAKE_TRIG_INTDET2 (rw) register accessor: Interrupt detect polarity, second bank (unused by GPIO driver)
+
+You can [`read`](crate::Reg::read) this register and get [`pmu_wake_trig_intdet2::R`]. You can [`reset`](crate::Reg::reset), [`write`](crate::Reg::write), [`write_with_zero`](crate::Reg::write_with_zero) this register using [`pmu_wake_trig_intdet2::W`]. You can also [`modify`](crate::Reg::modify) this register. See [API](https://docs.rs/svd2rust/#read--modify--write-api).
+
+For information about available fields see [`mod@pmu_wake_trig_intdet2`] module*/
+#[doc(alias = "PMU_WAKE_TRIG_INTDET2")]
+pub type PmuWakeTrigIntdet2 = crate::Reg<pmu_wake_trig_intdet2::PmuWakeTrigIntdet2Spec>;
+///Interrupt detect polarity, second bank (unused by GPIO driver)
+pub mod pmu_wake_trig_intdet2;
 /**PMU_CORE_CKEN (rw) register accessor: PMU core clock enable
 
 You can [`read`](crate::Reg::read) this register and get [`pmu_core_cken::R`]. You can [`reset`](crate::Reg::reset), [`write`](crate::Reg::write), [`write_with_zero`](crate::Reg::write_with_zero) this register using [`pmu_core_cken::W`]. You can also [`modify`](crate::Reg::modify) this register. See [API](https://docs.rs/svd2rust/#read--modify--write-api).
@@ -828,6 +1020,24 @@ For information about available fields see [`mod@pmu_pw_ctl`] module*/
 pub type PmuPwCtl = crate::Reg<pmu_pw_ctl::PmuPwCtlSpec>;
 ///PMU power-supply control request (write-only kick register)
 pub mod pmu_pw_ctl;
+/**IOCSYS_INTSEL0 (rw) register accessor: SYS-domain GPIO interrupt slot mux, slots 0–3 (1 byte per slot, pin index 0–63)
+
+You can [`read`](crate::Reg::read) this register and get [`iocsys_intsel0::R`]. You can [`reset`](crate::Reg::reset), [`write`](crate::Reg::write), [`write_with_zero`](crate::Reg::write_with_zero) this register using [`iocsys_intsel0::W`]. You can also [`modify`](crate::Reg::modify) this register. See [API](https://docs.rs/svd2rust/#read--modify--write-api).
+
+For information about available fields see [`mod@iocsys_intsel0`] module*/
+#[doc(alias = "IOCSYS_INTSEL0")]
+pub type IocsysIntsel0 = crate::Reg<iocsys_intsel0::IocsysIntsel0Spec>;
+///SYS-domain GPIO interrupt slot mux, slots 0–3 (1 byte per slot, pin index 0–63)
+pub mod iocsys_intsel0;
+/**IOCSYS_INTSEL1 (rw) register accessor: SYS-domain GPIO interrupt slot mux, slots 4–5
+
+You can [`read`](crate::Reg::read) this register and get [`iocsys_intsel1::R`]. You can [`reset`](crate::Reg::reset), [`write`](crate::Reg::write), [`write_with_zero`](crate::Reg::write_with_zero) this register using [`iocsys_intsel1::W`]. You can also [`modify`](crate::Reg::modify) this register. See [API](https://docs.rs/svd2rust/#read--modify--write-api).
+
+For information about available fields see [`mod@iocsys_intsel1`] module*/
+#[doc(alias = "IOCSYS_INTSEL1")]
+pub type IocsysIntsel1 = crate::Reg<iocsys_intsel1::IocsysIntsel1Spec>;
+///SYS-domain GPIO interrupt slot mux, slots 4–5
+pub mod iocsys_intsel1;
 /**IOCSYS_IOMD0 (rw) register accessor: SYSIOP IO-cell mode-mux register 0
 
 You can [`read`](crate::Reg::read) this register and get [`iocsys_iomd0::R`]. You can [`reset`](crate::Reg::reset), [`write`](crate::Reg::write), [`write_with_zero`](crate::Reg::write_with_zero) this register using [`iocsys_iomd0::W`]. You can also [`modify`](crate::Reg::modify) this register. See [API](https://docs.rs/svd2rust/#read--modify--write-api).
@@ -900,6 +1110,24 @@ For information about available fields see [`mod@io_uart2_rxd`] module*/
 pub type IoUart2Rxd = crate::Reg<io_uart2_rxd::IoUart2RxdSpec>;
 ///IOCELL control for UART2 RXD pin
 pub mod io_uart2_rxd;
+/**IOCAPP_INTSEL0 (rw) register accessor: APP-domain GPIO interrupt slot mux, slots 6–9 (1 byte per slot, pin index 0–63)
+
+You can [`read`](crate::Reg::read) this register and get [`iocapp_intsel0::R`]. You can [`reset`](crate::Reg::reset), [`write`](crate::Reg::write), [`write_with_zero`](crate::Reg::write_with_zero) this register using [`iocapp_intsel0::W`]. You can also [`modify`](crate::Reg::modify) this register. See [API](https://docs.rs/svd2rust/#read--modify--write-api).
+
+For information about available fields see [`mod@iocapp_intsel0`] module*/
+#[doc(alias = "IOCAPP_INTSEL0")]
+pub type IocappIntsel0 = crate::Reg<iocapp_intsel0::IocappIntsel0Spec>;
+///APP-domain GPIO interrupt slot mux, slots 6–9 (1 byte per slot, pin index 0–63)
+pub mod iocapp_intsel0;
+/**IOCAPP_INTSEL1 (rw) register accessor: APP-domain GPIO interrupt slot mux, slots 10–11
+
+You can [`read`](crate::Reg::read) this register and get [`iocapp_intsel1::R`]. You can [`reset`](crate::Reg::reset), [`write`](crate::Reg::write), [`write_with_zero`](crate::Reg::write_with_zero) this register using [`iocapp_intsel1::W`]. You can also [`modify`](crate::Reg::modify) this register. See [API](https://docs.rs/svd2rust/#read--modify--write-api).
+
+For information about available fields see [`mod@iocapp_intsel1`] module*/
+#[doc(alias = "IOCAPP_INTSEL1")]
+pub type IocappIntsel1 = crate::Reg<iocapp_intsel1::IocappIntsel1Spec>;
+///APP-domain GPIO interrupt slot mux, slots 10–11
+pub mod iocapp_intsel1;
 /**IOCAPP_IOMD (rw) register accessor: APP-domain IO-cell mode-mux register
 
 You can [`read`](crate::Reg::read) this register and get [`iocapp_iomd::R`]. You can [`reset`](crate::Reg::reset), [`write`](crate::Reg::write), [`write_with_zero`](crate::Reg::write_with_zero) this register using [`iocapp_iomd::W`]. You can also [`modify`](crate::Reg::modify) this register. See [API](https://docs.rs/svd2rust/#read--modify--write-api).
