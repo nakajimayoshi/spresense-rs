@@ -99,6 +99,7 @@ impl PeripheralId {
             PeripheralId::Uart1 => uart1_enable(),
             PeripheralId::Spim => spim_enable(),
             PeripheralId::I2cm => i2cm_enable(),
+            PeripheralId::I2c0 => scu_i2c0_enable(),
             _ => Err(ClockError::Unimplemented),
         }
     }
@@ -114,6 +115,7 @@ impl PeripheralId {
             PeripheralId::Uart1 => uart1_disable(),
             PeripheralId::Spim => spim_disable(),
             PeripheralId::I2cm => i2cm_disable(),
+            PeripheralId::I2c0 => scu_i2c0_disable(),
             _ => Err(ClockError::Unimplemented),
         }
     }
@@ -365,5 +367,151 @@ fn i2cm_enable() -> Result<(), ClockError> {
 
 fn i2cm_disable() -> Result<(), ClockError> {
     sysiop_sub_peripheral_disable(SysiopBridgeClient::I2cm, sysiop_sub_bits::CK_I2CM, 1 << 11);
+    Ok(())
+}
+
+// ============================================================================
+// SCU-domain peripherals (I2C0, I2C1, SPI3/SCU, ADCs)
+// ============================================================================
+//
+// The SCU has its own clock domain gated by SYSIOP_CKEN.CKEN_BRG_SCU (bit 14)
+// and its own umbrella blocks in SCU_CKEN. Per-peripheral enable is a three-step
+// sequence: set cken → pulse off → release reset → set cken again. Each step
+// polls CRG_INT_STAT_RAW0 for the corresponding ready bit.
+// Mirrors cxd56_scu_clock_enable + cxd56_scu_peri_clock_enable in cxd56_clock.c.
+
+// SYSIOP_CKEN bit 14 — SCU bridge enable.
+const CKEN_BRG_SCU: u32 = 1 << 14;
+
+// SCU_CKEN bits for the SCU umbrella blocks.
+const SCU_SCU: u32 = 1 << 0; // SCU core
+const SCU_SEQ: u32 = 1 << 4; // SCU sequencer
+const SCU_32K: u32 = 1 << 5; // SCU 32 K block
+const SCU_SC: u32 = 1 << 8; // SCU SC block
+
+// CRG_INT_STAT_RAW0 / CRG_INT_CLR0 ready bits for the SCU umbrella.
+const CRG_CK_SCU: u32 = 1 << 9;
+const CRG_CK_BRG_SCU: u32 = 1 << 8;
+const CRG_CK_SCU_SEQ: u32 = 1 << 13;
+const CRG_CK_SCU_SC: u32 = 1 << 14;
+const CRG_CK_32K: u32 = 1 << 15;
+
+// CRG_INT_STAT_RAW0 bit 11 — I2C0 clock ready.
+const CRG_CK_I2C0: u32 = 1 << 11;
+
+// SCU_CKEN bit 1 — I2C0 enable.
+const SCU_I2C0: u32 = 1 << 1;
+
+// SWRESET_SCU bit 5 — I2C0 reset release.
+const XRST_I2C0: u32 = 1 << 5;
+
+/// Enable the SCU umbrella clock (bridge + core blocks). Idempotent.
+/// Mirrors `cxd56_scu_clock_enable` (cxd56_clock.c:1876).
+fn scu_clock_enable() {
+    let topreg = unsafe { &*pac::Topreg::PTR };
+
+    if topreg.sysiop_cken().read().bits() & CKEN_BRG_SCU != 0 {
+        return;
+    }
+
+    // Default SCU clock source: RCOSC (sel = 0).
+    topreg.cksel_scu().write(|w| unsafe { w.bits(0) });
+
+    topreg.crg_int_clr0().write(|w| unsafe { w.bits(0xffff_ffff) });
+
+    // Enable SCU bridge.
+    let v = topreg.sysiop_cken().read().bits();
+    topreg
+        .sysiop_cken()
+        .write(|w| unsafe { w.bits(v | CKEN_BRG_SCU) });
+
+    // Enable SCU umbrella blocks.
+    let v = topreg.scu_cken().read().bits();
+    topreg
+        .scu_cken()
+        .write(|w| unsafe { w.bits(v | SCU_SCU | SCU_SC | SCU_32K | SCU_SEQ) });
+
+    // Poll for all blocks ready.
+    const INTR_MASK: u32 = CRG_CK_SCU | CRG_CK_SCU_SC | CRG_CK_BRG_SCU | CRG_CK_32K | CRG_CK_SCU_SEQ;
+    let mut retry = 1000i32;
+    loop {
+        if topreg.crg_int_stat_raw0().read().bits() & INTR_MASK == INTR_MASK {
+            break;
+        }
+        pmu::busy_wait(1000);
+        retry -= 1;
+        if retry <= 0 {
+            break;
+        }
+    }
+
+    topreg.crg_int_clr0().write(|w| unsafe { w.bits(0xffff_ffff) });
+}
+
+/// Set or clear `block` bits in SCU_CKEN, polling `intr` in CRG_INT_STAT_RAW0.
+/// Mirrors `cxd56_scu_clock_ctrl` (cxd56_clock.c:1834).
+fn scu_clock_ctrl(block: u32, intr: u32, on: bool) {
+    let topreg = unsafe { &*pac::Topreg::PTR };
+
+    topreg.crg_int_clr0().write(|w| unsafe { w.bits(0xffff_ffff) });
+
+    let val = topreg.scu_cken().read().bits();
+    if on {
+        if val & block == block {
+            return; // already on
+        }
+        topreg.scu_cken().write(|w| unsafe { w.bits(val | block) });
+    } else {
+        if val & block == 0 {
+            return; // already off
+        }
+        topreg.scu_cken().write(|w| unsafe { w.bits(val & !block) });
+    }
+
+    let mut retry = 10_000i32;
+    loop {
+        if topreg.crg_int_stat_raw0().read().bits() & intr != 0 {
+            break;
+        }
+        pmu::busy_wait(1000);
+        retry -= 1;
+        if retry <= 0 {
+            break;
+        }
+    }
+
+    topreg.crg_int_clr0().write(|w| unsafe { w.bits(0xffff_ffff) });
+}
+
+/// Enable I2C0 in the SCU domain. Mirrors `cxd56_scu_peri_clock_enable(&g_scui2c0)`.
+fn scu_i2c0_enable() -> Result<(), ClockError> {
+    pmu::enable_domain(pmu::PmuDomain::Scu)?;
+    scu_clock_enable();
+
+    let topreg = unsafe { &*pac::Topreg::PTR };
+    if topreg.scu_cken().read().bits() & SCU_I2C0 != 0 {
+        return Ok(()); // already enabled
+    }
+
+    scu_clock_ctrl(SCU_I2C0, CRG_CK_I2C0, true);
+    scu_clock_ctrl(SCU_I2C0, CRG_CK_I2C0, false); // reset pulse
+    let rst = topreg.swreset_scu().read().bits();
+    topreg
+        .swreset_scu()
+        .write(|w| unsafe { w.bits(rst | XRST_I2C0) }); // release reset
+    scu_clock_ctrl(SCU_I2C0, CRG_CK_I2C0, true);
+
+    Ok(())
+}
+
+/// Disable I2C0 in the SCU domain.
+fn scu_i2c0_disable() -> Result<(), ClockError> {
+    let topreg = unsafe { &*pac::Topreg::PTR };
+    scu_clock_ctrl(SCU_I2C0, CRG_CK_I2C0, false);
+    let rst = topreg.swreset_scu().read().bits();
+    topreg
+        .swreset_scu()
+        .write(|w| unsafe { w.bits(rst & !XRST_I2C0) });
+    pmu::disable_domain(pmu::PmuDomain::Scu)?;
     Ok(())
 }
