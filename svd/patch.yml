@@ -32,6 +32,18 @@ _modify:
     POSSIBILITY OF SUCH DAMAGE.\\n"
 
 CPU_FIFO:
+  # Inter-CPU mailbox interrupts (NuttX full-vector index = source idx + 16).
+  # Source: nuttx/arch/arm/include/cxd56xx/irq.h
+  #   FIFO_TO   = EXTINT+78 = 94  (PUSH/transmit FIFO is no longer full)
+  #   FIFO_FROM = EXTINT+79 = 95  (PULL/receive FIFO has a message — the main RX IRQ)
+  _add:
+    _interrupts:
+      FIFO_TO:
+        description: "CPU FIFO transmit ready (PUSH FIFO not full)"
+        value: 94
+      FIFO_FROM:
+        description: "CPU FIFO message received (PULL FIFO not empty)"
+        value: 95
   FIF_PUSH_CMP:
     PUSH_CMP:
       _replace_enum:
@@ -54,7 +66,26 @@ CPU_FIFO:
         Empty: [1, ""]
 
 
+# GE2D / ROT image-engine interrupts: the base SVD carries raw NuttX *source
+# offsets* (106 / 107) instead of this project's full-vector convention
+# (value = CXD56_IRQ_EXTINT(16) + source_offset, as used by I2C0=33, EXDEVICE,
+# SPI0=90, CISIF=124, FIFO, SPH). Correct them to 122 / 123 — this also removes
+# the collision with the new SPH10 (16+90=106) / SPH11 (16+91=107) vectors.
+# Source: nuttx/arch/arm/include/cxd56xx/irq.h (GE2D=EXTINT+106, ROT=EXTINT+107).
+GE2D:
+  _modify:
+    _interrupts:
+      # Base SVD names this interrupt "2D" (→ svd2rust `_2D`); rename to GE2D and
+      # fix the value to the full-vector convention (16 + 106 = 122).
+      "2D":
+        name: GE2D
+        value: 122
+
 ROT:
+  _modify:
+    _interrupts:
+      ROT:
+        value: 123
   CONV_CTRL:
     CONV_CALC_SEL:
       _replace_enum:
@@ -92,6 +123,127 @@ SPI3:
       size: "0x400"
 
 _add:
+  # SPH: 16 hardware semaphores for cross-core mutual exclusion. These are the only
+  # sound primitive for cross-core locking on this SoC — the Cortex-M4 LDREX/STREX
+  # exclusive monitors do NOT extend across the AHB matrix between cores. Base
+  # 0x4600C800, per-semaphore stride 0x10: REQ@+0x00 (W), STS@+0x04 (R). Locking is
+  # test-and-set: write REQ=Lock, then read STS — you hold it iff STATE==Locked and
+  # LOCK_OWNER==your CPU id. A reserving CPU (REQ=Reserve) is woken by IRQ SPHn
+  # (96..111) when the current holder unlocks.
+  # Source: nuttx/arch/arm/src/cxd56xx/cxd56_sph.c, hardware/cxd56_sph.h
+  SPH:
+    description: "Hardware semaphores (16) for inter-CPU mutual exclusion"
+    baseAddress: 0x4600C800
+    addressBlock:
+      offset: 0x0
+      size: 0x100
+      usage: "registers"
+    interrupts:
+      SPH0:
+        description: "Hardware semaphore 0 released-to-reserver wake"
+        value: 96
+      SPH1:
+        description: "Hardware semaphore 1 released-to-reserver wake"
+        value: 97
+      SPH2:
+        description: "Hardware semaphore 2 released-to-reserver wake"
+        value: 98
+      SPH3:
+        description: "Hardware semaphore 3 released-to-reserver wake"
+        value: 99
+      SPH4:
+        description: "Hardware semaphore 4 released-to-reserver wake"
+        value: 100
+      SPH5:
+        description: "Hardware semaphore 5 released-to-reserver wake"
+        value: 101
+      SPH6:
+        description: "Hardware semaphore 6 released-to-reserver wake"
+        value: 102
+      SPH7:
+        description: "Hardware semaphore 7 released-to-reserver wake"
+        value: 103
+      SPH8:
+        description: "Hardware semaphore 8 released-to-reserver wake"
+        value: 104
+      SPH9:
+        description: "Hardware semaphore 9 released-to-reserver wake"
+        value: 105
+      SPH10:
+        description: "Hardware semaphore 10 released-to-reserver wake"
+        value: 106
+      SPH11:
+        description: "Hardware semaphore 11 released-to-reserver wake"
+        value: 107
+      SPH12:
+        description: "Hardware semaphore 12 released-to-reserver wake"
+        value: 108
+      SPH13:
+        description: "Hardware semaphore 13 released-to-reserver wake"
+        value: 109
+      SPH14:
+        description: "Hardware semaphore 14 released-to-reserver wake"
+        value: 110
+      SPH15:
+        description: "Hardware semaphore 15 released-to-reserver wake"
+        value: 111
+    registers:
+      REQ[%s]:
+        description: "Semaphore request command (write-only)"
+        dim: 16
+        dimIncrement: 0x10
+        addressOffset: 0x0
+        access: write-only
+        resetValue: 0x00000000
+        fields:
+          REQ:
+            description: "Request command"
+            bitOffset: 0
+            bitWidth: 2
+            enumeratedValues:
+              - name: Unlock
+                description: "Release the lock"
+                value: 0
+              - name: Lock
+                description: "Acquire the lock (atomic test-and-set)"
+                value: 1
+              - name: Reserve
+                description: "Reserve; SPH IRQ fires when the holder unlocks"
+                value: 2
+              - name: IntrClr
+                description: "Clear the semaphore interrupt"
+                value: 3
+      STS[%s]:
+        description: "Semaphore status (read-only)"
+        dim: 16
+        dimIncrement: 0x10
+        addressOffset: 0x4
+        access: read-only
+        resetValue: 0x00000000
+        fields:
+          STATE:
+            description: "Lock state"
+            bitOffset: 0
+            bitWidth: 4
+            enumeratedValues:
+              - name: Idle
+                description: "Unlocked, no reservation"
+                value: 0
+              - name: Locked
+                description: "Locked by LOCK_OWNER"
+                value: 1
+              - name: LockedAndReserved
+                description: "Locked, with a pending reservation"
+                value: 2
+          LOCK_OWNER:
+            description: "CPU id currently holding the lock"
+            bitOffset: 16
+            bitWidth: 5
+          RESV_OWNER:
+            description: "CPU id holding the reservation"
+            bitOffset: 24
+            bitWidth: 5
+
   # TOPREG: top-of-chip clock / PMU / oscillator / PLL controller.
   # Base: CXD56_SYS_MIRROR(0x04000000) + 0x00100000 = 0x04100000.
   # addressBlock covers clock / PMU / IOCELL / IOMD / GP_* registers (0x000–0x2174).

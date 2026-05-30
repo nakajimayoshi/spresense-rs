@@ -815,9 +815,9 @@
         <usage>registers</usage>
       </addressBlock>
       <interrupt>
-        <name>2D</name>
+        <name>GE2D</name>
         <description>2D interrupt</description>
-        <value>106</value>
+        <value>122</value>
       </interrupt>
       <registers>
         <register>
@@ -994,7 +994,7 @@
       <interrupt>
         <name>ROT</name>
         <description>Rotation interrupt</description>
-        <value>107</value>
+        <value>123</value>
       </interrupt>
       <registers>
         <register>
@@ -1335,6 +1335,16 @@
         <size>0x20</size>
         <usage>registers</usage>
       </addressBlock>
+      <interrupt>
+        <name>FIFO_TO</name>
+        <description>CPU FIFO transmit ready (PUSH FIFO not full)</description>
+        <value>94</value>
+      </interrupt>
+      <interrupt>
+        <name>FIFO_FROM</name>
+        <description>CPU FIFO message received (PULL FIFO not empty)</description>
+        <value>95</value>
+      </interrupt>
       <registers>
         <register>
           <name>FIF_PUSH_FULL</name>
@@ -1481,6 +1491,144 @@
                   <value>1</value>
                 </enumeratedValue>
               </enumeratedValues>
+            </field>
+          </fields>
+        </register>
+      </registers>
+    </peripheral>
+    <peripheral>
+      <name>SPH</name>
+      <description>Hardware semaphores (16) for inter-CPU mutual exclusion</description>
+      <baseAddress>0x4600C800</baseAddress>
+      <addressBlock>
+        <offset>0x0</offset>
+        <size>0x100</size>
+        <usage>registers</usage>
+      </addressBlock>
+      <interrupt>
+        <name>SPH0</name>
+        <description>Hardware semaphore 0 released-to-reserver wake</description>
+        <value>96</value>
+      </interrupt>
+      <interrupt>
+        <name>SPH1</name>
+        <description>Hardware semaphore 1 released-to-reserver wake</description>
+        <value>97</value>
+      </interrupt>
+      <interrupt>
+        <name>SPH2</name>
+        <description>Hardware semaphore 2 released-to-reserver wake</description>
+        <value>98</value>
+      </interrupt>
+      <interrupt>
+        <name>SPH3</name>
+        <description>Hardware semaphore 3 released-to-reserver wake</description>
+        <value>99</value>
+      </interrupt>
+      <interrupt>
+        <name>SPH4</name>
+        <description>Hardware semaphore 4 released-to-reserver wake</description>
+        <value>100</value>
+      </interrupt>
+      <interrupt>
+        <name>SPH5</name>
+        <description>Hardware semaphore 5 released-to-reserver wake</description>
+        <value>101</value>
+      </interrupt>
+      <interrupt>
+        <name>SPH6</name>
+        <description>Hardware semaphore 6 released-to-reserver wake</description>
+        <value>102</value>
+      </interrupt>
+      <interrupt>
+        <name>SPH7</name>
+        <description>Hardware semaphore 7 released-to-reserver wake</description>
+        <value>103</value>
+      </interrupt>
+      <interrupt>
+        <name>SPH8</name>
+        <description>Hardware semaphore 8 released-to-reserver wake</description>
+        <value>104</value>
+      </interrupt>
+      <interrupt>
+        <name>SPH9</name>
+        <description>Hardware semaphore 9 released-to-reserver wake</description>
+        <value>105</value>
+      </interrupt>
+      <interrupt>
+        <name>SPH10</name>
+        <description>Hardware semaphore 10 released-to-reserver wake</description>
+        <value>106</value>
+      </interrupt>
+      <interrupt>
+        <name>SPH11</name>
+        <description>Hardware semaphore 11 released-to-reserver wake</description>
+        <value>107</value>
+      </interrupt>
+      <interrupt>
+        <name>SPH12</name>
+        <description>Hardware semaphore 12 released-to-reserver wake</description>
+        <value>108</value>
+      </interrupt>
+      <interrupt>
+        <name>SPH13</name>
+        <description>Hardware semaphore 13 released-to-reserver wake</description>
+        <value>109</value>
+      </interrupt>
+      <interrupt>
+        <name>SPH14</name>
+        <description>Hardware semaphore 14 released-to-reserver wake</description>
+        <value>110</value>
+      </interrupt>
+      <interrupt>
+        <name>SPH15</name>
+        <description>Hardware semaphore 15 released-to-reserver wake</description>
+        <value>111</value>
+      </interrupt>
+      <registers>
+        <register>
+          <dim>16</dim>
+          <dimIncrement>0x10</dimIncrement>
+          <name>REQ[%s]</name>
+          <description>Semaphore request command (write-only)</description>
+          <addressOffset>0x0</addressOffset>
+          <access>write-only</access>
+          <resetValue>0x00000000</resetValue>
+          <fields>
+            <field>
+              <name>REQ</name>
+              <description>Request command</description>
+              <bitOffset>0</bitOffset>
+              <bitWidth>2</bitWidth>
+            </field>
+          </fields>
+        </register>
+        <register>
+          <dim>16</dim>
+          <dimIncrement>0x10</dimIncrement>
+          <name>STS[%s]</name>
+          <description>Semaphore status (read-only)</description>
+          <addressOffset>0x4</addressOffset>
+          <access>read-only</access>
+          <resetValue>0x00000000</resetValue>
+          <fields>
+            <field>
+              <name>STATE</name>
+              <description>Lock state</description>
+              <bitOffset>0</bitOffset>
+              <bitWidth>4</bitWidth>
+            </field>
+            <field>
+              <name>LOCK_OWNER</name>
+              <description>CPU id currently holding the lock</description>
+              <bitOffset>16</bitOffset>
+              <bitWidth>5</bitWidth>
+            </field>
+            <field>
+              <name>RESV_OWNER</name>
+              <description>CPU id holding the reservation</description>
+              <bitOffset>24</bitOffset>
+              <bitWidth>5</bitWidth>
             </field>
           </fields>
         </register>
