@@ -36,7 +36,25 @@ extern "C" {
     fn EXDEVICE_10();
     fn EXDEVICE_11();
     fn SPI0();
-    fn _2D();
+    fn FIFO_TO();
+    fn FIFO_FROM();
+    fn SPH0();
+    fn SPH1();
+    fn SPH2();
+    fn SPH3();
+    fn SPH4();
+    fn SPH5();
+    fn SPH6();
+    fn SPH7();
+    fn SPH8();
+    fn SPH9();
+    fn SPH10();
+    fn SPH11();
+    fn SPH12();
+    fn SPH13();
+    fn SPH14();
+    fn SPH15();
+    fn GE2D();
     fn ROT();
     fn CISIF();
     fn SPI5();
@@ -174,6 +192,26 @@ pub static __INTERRUPTS: [Vector; 135] = [
     Vector { _reserved: 0 },
     Vector { _reserved: 0 },
     Vector { _reserved: 0 },
+    Vector { _handler: FIFO_TO },
+    Vector {
+        _handler: FIFO_FROM,
+    },
+    Vector { _handler: SPH0 },
+    Vector { _handler: SPH1 },
+    Vector { _handler: SPH2 },
+    Vector { _handler: SPH3 },
+    Vector { _handler: SPH4 },
+    Vector { _handler: SPH5 },
+    Vector { _handler: SPH6 },
+    Vector { _handler: SPH7 },
+    Vector { _handler: SPH8 },
+    Vector { _handler: SPH9 },
+    Vector { _handler: SPH10 },
+    Vector { _handler: SPH11 },
+    Vector { _handler: SPH12 },
+    Vector { _handler: SPH13 },
+    Vector { _handler: SPH14 },
+    Vector { _handler: SPH15 },
     Vector { _reserved: 0 },
     Vector { _reserved: 0 },
     Vector { _reserved: 0 },
@@ -184,26 +222,8 @@ pub static __INTERRUPTS: [Vector; 135] = [
     Vector { _reserved: 0 },
     Vector { _reserved: 0 },
     Vector { _reserved: 0 },
-    Vector { _reserved: 0 },
-    Vector { _reserved: 0 },
-    Vector { _handler: _2D },
+    Vector { _handler: GE2D },
     Vector { _handler: ROT },
-    Vector { _reserved: 0 },
-    Vector { _reserved: 0 },
-    Vector { _reserved: 0 },
-    Vector { _reserved: 0 },
-    Vector { _reserved: 0 },
-    Vector { _reserved: 0 },
-    Vector { _reserved: 0 },
-    Vector { _reserved: 0 },
-    Vector { _reserved: 0 },
-    Vector { _reserved: 0 },
-    Vector { _reserved: 0 },
-    Vector { _reserved: 0 },
-    Vector { _reserved: 0 },
-    Vector { _reserved: 0 },
-    Vector { _reserved: 0 },
-    Vector { _reserved: 0 },
     Vector { _handler: CISIF },
     Vector { _handler: SPI5 },
     Vector { _handler: DMAC3 },
@@ -254,10 +274,46 @@ pub enum Interrupt {
     EXDEVICE_11 = 47,
     ///90 - SPI0 interrupt
     SPI0 = 90,
-    ///106 - 2D interrupt
-    _2D = 106,
-    ///107 - Rotation interrupt
-    ROT = 107,
+    ///94 - CPU FIFO transmit ready (PUSH FIFO not full)
+    FIFO_TO = 94,
+    ///95 - CPU FIFO message received (PULL FIFO not empty)
+    FIFO_FROM = 95,
+    ///96 - Hardware semaphore 0 released-to-reserver wake
+    SPH0 = 96,
+    ///97 - Hardware semaphore 1 released-to-reserver wake
+    SPH1 = 97,
+    ///98 - Hardware semaphore 2 released-to-reserver wake
+    SPH2 = 98,
+    ///99 - Hardware semaphore 3 released-to-reserver wake
+    SPH3 = 99,
+    ///100 - Hardware semaphore 4 released-to-reserver wake
+    SPH4 = 100,
+    ///101 - Hardware semaphore 5 released-to-reserver wake
+    SPH5 = 101,
+    ///102 - Hardware semaphore 6 released-to-reserver wake
+    SPH6 = 102,
+    ///103 - Hardware semaphore 7 released-to-reserver wake
+    SPH7 = 103,
+    ///104 - Hardware semaphore 8 released-to-reserver wake
+    SPH8 = 104,
+    ///105 - Hardware semaphore 9 released-to-reserver wake
+    SPH9 = 105,
+    ///106 - Hardware semaphore 10 released-to-reserver wake
+    SPH10 = 106,
+    ///107 - Hardware semaphore 11 released-to-reserver wake
+    SPH11 = 107,
+    ///108 - Hardware semaphore 12 released-to-reserver wake
+    SPH12 = 108,
+    ///109 - Hardware semaphore 13 released-to-reserver wake
+    SPH13 = 109,
+    ///110 - Hardware semaphore 14 released-to-reserver wake
+    SPH14 = 110,
+    ///111 - Hardware semaphore 15 released-to-reserver wake
+    SPH15 = 111,
+    ///122 - 2D interrupt
+    GE2D = 122,
+    ///123 - Rotation interrupt
+    ROT = 123,
     ///124 - CISIF interrupt
     CISIF = 124,
     ///125 - SPI5 interrupt
@@ -331,6 +387,15 @@ impl core::fmt::Debug for CpuFifo {
 }
 ///CPU FIFO Control
 pub mod cpu_fifo;
+///Hardware semaphores (16) for inter-CPU mutual exclusion
+pub type Sph = crate::Periph<sph::RegisterBlock, 0x4600_c800>;
+impl core::fmt::Debug for Sph {
+    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+        f.debug_struct("Sph").finish()
+    }
+}
+///Hardware semaphores (16) for inter-CPU mutual exclusion
+pub mod sph;
 ///ARM PrimeCell SP804 dual-input timer 0
 pub type Timer0 = crate::Periph<timer0::RegisterBlock, 0xe004_3000>;
 impl core::fmt::Debug for Timer0 {
@@ -501,6 +566,8 @@ pub struct Peripherals {
     pub rot: Rot,
     ///CPU_FIFO
     pub cpu_fifo: CpuFifo,
+    ///SPH
+    pub sph: Sph,
     ///TIMER0
     pub timer0: Timer0,
     ///TIMER1
@@ -563,6 +630,7 @@ impl Peripherals {
             ge2d: Ge2d::steal(),
             rot: Rot::steal(),
             cpu_fifo: CpuFifo::steal(),
+            sph: Sph::steal(),
             timer0: Timer0::steal(),
             timer1: Timer1::steal(),
             wdog: Wdog::steal(),
