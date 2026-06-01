@@ -817,7 +817,7 @@
       <interrupt>
         <name>GE2D</name>
         <description>2D interrupt</description>
-        <value>122</value>
+        <value>106</value>
       </interrupt>
       <registers>
         <register>
@@ -994,7 +994,7 @@
       <interrupt>
         <name>ROT</name>
         <description>Rotation interrupt</description>
-        <value>123</value>
+        <value>107</value>
       </interrupt>
       <registers>
         <register>
@@ -1338,12 +1338,12 @@
       <interrupt>
         <name>FIFO_TO</name>
         <description>CPU FIFO transmit ready (PUSH FIFO not full)</description>
-        <value>94</value>
+        <value>78</value>
       </interrupt>
       <interrupt>
         <name>FIFO_FROM</name>
         <description>CPU FIFO message received (PULL FIFO not empty)</description>
-        <value>95</value>
+        <value>79</value>
       </interrupt>
       <registers>
         <register>
@@ -1508,82 +1508,82 @@
       <interrupt>
         <name>SPH0</name>
         <description>Hardware semaphore 0 released-to-reserver wake</description>
-        <value>96</value>
+        <value>80</value>
       </interrupt>
       <interrupt>
         <name>SPH1</name>
         <description>Hardware semaphore 1 released-to-reserver wake</description>
-        <value>97</value>
+        <value>81</value>
       </interrupt>
       <interrupt>
         <name>SPH2</name>
         <description>Hardware semaphore 2 released-to-reserver wake</description>
-        <value>98</value>
+        <value>82</value>
       </interrupt>
       <interrupt>
         <name>SPH3</name>
         <description>Hardware semaphore 3 released-to-reserver wake</description>
-        <value>99</value>
+        <value>83</value>
       </interrupt>
       <interrupt>
         <name>SPH4</name>
         <description>Hardware semaphore 4 released-to-reserver wake</description>
-        <value>100</value>
+        <value>84</value>
       </interrupt>
       <interrupt>
         <name>SPH5</name>
         <description>Hardware semaphore 5 released-to-reserver wake</description>
-        <value>101</value>
+        <value>85</value>
       </interrupt>
       <interrupt>
         <name>SPH6</name>
         <description>Hardware semaphore 6 released-to-reserver wake</description>
-        <value>102</value>
+        <value>86</value>
       </interrupt>
       <interrupt>
         <name>SPH7</name>
         <description>Hardware semaphore 7 released-to-reserver wake</description>
-        <value>103</value>
+        <value>87</value>
       </interrupt>
       <interrupt>
         <name>SPH8</name>
         <description>Hardware semaphore 8 released-to-reserver wake</description>
-        <value>104</value>
+        <value>88</value>
       </interrupt>
       <interrupt>
         <name>SPH9</name>
         <description>Hardware semaphore 9 released-to-reserver wake</description>
-        <value>105</value>
+        <value>89</value>
       </interrupt>
       <interrupt>
         <name>SPH10</name>
         <description>Hardware semaphore 10 released-to-reserver wake</description>
-        <value>106</value>
+        <value>90</value>
       </interrupt>
       <interrupt>
         <name>SPH11</name>
         <description>Hardware semaphore 11 released-to-reserver wake</description>
-        <value>107</value>
+        <value>91</value>
       </interrupt>
       <interrupt>
         <name>SPH12</name>
         <description>Hardware semaphore 12 released-to-reserver wake</description>
-        <value>108</value>
+        <value>92</value>
       </interrupt>
       <interrupt>
         <name>SPH13</name>
         <description>Hardware semaphore 13 released-to-reserver wake</description>
-        <value>109</value>
+        <value>93</value>
       </interrupt>
       <interrupt>
         <name>SPH14</name>
         <description>Hardware semaphore 14 released-to-reserver wake</description>
-        <value>110</value>
+        <value>94</value>
       </interrupt>
       <interrupt>
         <name>SPH15</name>
         <description>Hardware semaphore 15 released-to-reserver wake</description>
-        <value>111</value>
+        <value>95</value>
       </interrupt>
       <registers>
         <register>
@@ -1868,7 +1868,7 @@
       <interrupt>
         <name>UART1</name>
         <description>UART1 interrupt</description>
-        <value>27</value>
+        <value>11</value>
       </interrupt>
       <registers>
         <register>
@@ -2875,7 +2875,7 @@
       <interrupt>
         <name>UART2</name>
         <description>UART2 interrupt</description>
-        <value>127</value>
+        <value>111</value>
       </interrupt>
       <registers>
         <register>
@@ -3964,7 +3964,7 @@
       <interrupt>
         <name>DMAC1</name>
         <description>DMAC1 interrupt</description>
-        <value>134</value>
+        <value>118</value>
       </interrupt>
       <registers>
         <register>
@@ -4478,7 +4478,7 @@
       <interrupt>
         <name>DMAC3</name>
         <description>DMAC3 interrupt</description>
-        <value>126</value>
+        <value>110</value>
       </interrupt>
       <registers>
         <register>
@@ -5202,7 +5202,7 @@
       <interrupt>
         <name>SPI0</name>
         <description>SPI0 interrupt</description>
-        <value>90</value>
+        <value>74</value>
       </interrupt>
       <registers>
         <register>
@@ -5901,7 +5901,7 @@
       <interrupt>
         <name>SPI3</name>
         <description>SPI3 interrupt</description>
-        <value>32</value>
+        <value>16</value>
       </interrupt>
     </peripheral>
     <peripheral>
@@ -5916,7 +5916,7 @@
       <interrupt>
         <name>I2C0</name>
         <description>I2C0 (SCU_I2C0) interrupt</description>
-        <value>33</value>
+        <value>17</value>
       </interrupt>
       <registers>
         <register>
@@ -6787,7 +6787,7 @@
       <interrupt>
         <name>SPI4</name>
         <description>SPI4 interrupt</description>
-        <value>129</value>
+        <value>113</value>
       </interrupt>
       <registers>
         <register>
@@ -7412,7 +7412,7 @@
       <interrupt>
         <name>SPI5</name>
         <description>SPI5 interrupt</description>
-        <value>125</value>
+        <value>109</value>
       </interrupt>
     </peripheral>
     <peripheral>
@@ -7427,62 +7427,62 @@
       <interrupt>
         <name>EXDEVICE_0</name>
         <description>GPIO external interrupt slot 0</description>
-        <value>36</value>
+        <value>20</value>
       </interrupt>
       <interrupt>
         <name>EXDEVICE_1</name>
         <description>GPIO external interrupt slot 1</description>
-        <value>37</value>
+        <value>21</value>
       </interrupt>
       <interrupt>
         <name>EXDEVICE_2</name>
         <description>GPIO external interrupt slot 2</description>
-        <value>38</value>
+        <value>22</value>
       </interrupt>
       <interrupt>
         <name>EXDEVICE_3</name>
         <description>GPIO external interrupt slot 3</description>
-        <value>39</value>
+        <value>23</value>
       </interrupt>
       <interrupt>
         <name>EXDEVICE_4</name>
         <description>GPIO external interrupt slot 4</description>
-        <value>40</value>
+        <value>24</value>
       </interrupt>
       <interrupt>
         <name>EXDEVICE_5</name>
         <description>GPIO external interrupt slot 5</description>
-        <value>41</value>
+        <value>25</value>
       </interrupt>
       <interrupt>
         <name>EXDEVICE_6</name>
         <description>GPIO external interrupt slot 6</description>
-        <value>42</value>
+        <value>26</value>
       </interrupt>
       <interrupt>
         <name>EXDEVICE_7</name>
         <description>GPIO external interrupt slot 7</description>
-        <value>43</value>
+        <value>27</value>
       </interrupt>
       <interrupt>
         <name>EXDEVICE_8</name>
         <description>GPIO external interrupt slot 8</description>
-        <value>44</value>
+        <value>28</value>
       </interrupt>
       <interrupt>
         <name>EXDEVICE_9</name>
         <description>GPIO external interrupt slot 9</description>
-        <value>45</value>
+        <value>29</value>
       </interrupt>
       <interrupt>
         <name>EXDEVICE_10</name>
         <description>GPIO external interrupt slot 10</description>
-        <value>46</value>
+        <value>30</value>
       </interrupt>
       <interrupt>
         <name>EXDEVICE_11</name>
         <description>GPIO external interrupt slot 11</description>
-        <value>47</value>
+        <value>31</value>
       </interrupt>
       <registers>
         <register>
@@ -10445,7 +10445,7 @@
       <interrupt>
         <name>CISIF</name>
         <description>CISIF interrupt</description>
-        <value>124</value>
+        <value>108</value>
       </interrupt>
       <registers>
         <register>

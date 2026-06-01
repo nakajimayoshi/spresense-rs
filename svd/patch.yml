@@ -31,19 +31,43 @@ _modify:
     ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE\\n\
     POSSIBILITY OF SUCH DAMAGE.\\n"
 
+# =============================================================================
+# Interrupt numbering convention  (READ BEFORE CHANGING ANY `value:` BELOW)
+# -----------------------------------------------------------------------------
+# Every interrupt `value` in this file is the 0-based NVIC external-interrupt
+# number. svd2rust/chiptool copy it verbatim into the `Interrupt` enum
+# discriminant, and cortex-m-rt places `__INTERRUPTS[value]` at vector slot
+# `16 + value` (the 16 leading words are SP + Reset + 14 core exceptions). So:
+#
+#     discriminant = 0-based NVIC IRQ = vector slot - 16
+#
+# Two ground-truth sources, cross-checked and in full agreement (no discrepancy):
+#   * NuttX base — nuttx/arch/arm/include/cxd56xx/irq.h: defines
+#       CXD56_IRQ_EXTINT = 16 and every CXD56_IRQ_<x> = CXD56_IRQ_EXTINT + N.
+#       NuttX's number is the "+16" full-vector form; our value = N = NuttX - 16.
+#   * Technical docs (GROUND TRUTH on any conflict) — CXD5602 User Manual
+#       §3.3.2.1 "Interrupt Registers of Application Processor", Tables
+#       Interrupt-32/-33 (pp. 122-124). The APP controller is a 128-bit factor
+#       space INT_CAUSE0..3 (0xE0045000/4/8/C); a factor's BIT POSITION in that
+#       space IS the 0-based NVIC IRQ: CAUSE0->0..31, CAUSE1->32..63,
+#       CAUSE2->64..95, CAUSE3->96..127.
+# =============================================================================
 CPU_FIFO:
-  # Inter-CPU mailbox interrupts (NuttX full-vector index = source idx + 16).
-  # Source: nuttx/arch/arm/include/cxd56xx/irq.h
-  #   FIFO_TO   = EXTINT+78 = 94  (PUSH/transmit FIFO is no longer full)
-  #   FIFO_FROM = EXTINT+79 = 95  (PULL/receive FIFO has a message — the main RX IRQ)
+  # Inter-CPU mailbox interrupts (see convention header above).
+  #   FIFO_TO   = 78: NuttX CXD56_IRQ_FIFO_TO   = EXTINT+78 (irq.h:143);
+  #                   Manual Table Interrupt-33 INT_CAUSE2[14] FIFOTO   = 64+14 (p.123).
+  #                   PUSH/transmit FIFO is no longer full.
+  #   FIFO_FROM = 79: NuttX CXD56_IRQ_FIFO_FROM = EXTINT+79 (irq.h:144);
+  #                   Manual Table Interrupt-33 INT_CAUSE2[15] FIFOFROM = 64+15 (p.123).
+  #                   PULL/receive FIFO has a message — the main RX IRQ.
   _add:
     _interrupts:
       FIFO_TO:
         description: "CPU FIFO transmit ready (PUSH FIFO not full)"
-        value: 94
+        value: 78
       FIFO_FROM:
         description: "CPU FIFO message received (PULL FIFO not empty)"
-        value: 95
+        value: 79
   FIF_PUSH_CMP:
     PUSH_CMP:
       _replace_enum:
@@ -66,26 +90,27 @@ CPU_FIFO:
         Empty: [1, ""]
 
 
-# GE2D / ROT image-engine interrupts: the base SVD carries raw NuttX *source
-# offsets* (106 / 107) instead of this project's full-vector convention
-# (value = CXD56_IRQ_EXTINT(16) + source_offset, as used by I2C0=33, EXDEVICE,
-# SPI0=90, CISIF=124, FIFO, SPH). Correct them to 122 / 123 — this also removes
-# the collision with the new SPH10 (16+90=106) / SPH11 (16+91=107) vectors.
-# Source: nuttx/arch/arm/include/cxd56xx/irq.h (GE2D=EXTINT+106, ROT=EXTINT+107).
+# GE2D / ROT image-engine interrupts (see convention header above). The base SVD
+# already carries these at the correct 0-based offsets, so the _modify blocks
+# below only keep them explicit and rename "2D" → GE2D.
+#   GE2D = 106: NuttX CXD56_IRQ_GE2D = EXTINT+106 (irq.h:171);
+#               Manual Table Interrupt-33 INT_CAUSE3[10] IMG2D  "2D Graphics"      = 96+10 (p.124).
+#   ROT  = 107: NuttX CXD56_IRQ_ROT  = EXTINT+107 (irq.h:172);
+#               Manual Table Interrupt-33 INT_CAUSE3[11] IMGROT "Imaging rotation" = 96+11 (p.124).
 GE2D:
   _modify:
     _interrupts:
-      # Base SVD names this interrupt "2D" (→ svd2rust `_2D`); rename to GE2D and
-      # fix the value to the full-vector convention (16 + 106 = 122).
+      # Base SVD names this interrupt "2D" (→ svd2rust `_2D`); rename to GE2D.
+      # Value stays at the 0-based NVIC number 106 (= irq.h GE2D source offset).
       "2D":
         name: GE2D
-        value: 122
+        value: 106
 
 ROT:
   _modify:
     _interrupts:
       ROT:
-        value: 123
+        value: 107
   CONV_CTRL:
     CONV_CALC_SEL:
       _replace_enum:
@@ -108,10 +133,22 @@ UART1:
   _modify:
     RSR:
       access: read-write
+    # UART1 = 11 (see convention header): NuttX CXD56_IRQ_UART1 = EXTINT+11 (irq.h:76);
+    # Manual Table Interrupt-33 INT_CAUSE0[11] UARTDBG "UART1" = 11 (p.123).
+    # base SVD carried the full-vector value 27.
+    _interrupts:
+      UART1:
+        value: 11
 UART2:
   _modify:
     RSR:
       access: read-write
+    # UART2 = 111 (see convention header): NuttX CXD56_IRQ_APP_UART = EXTINT+111 (irq.h:176);
+    # Manual Table Interrupt-33 INT_CAUSE3[15] IMGUART "UART2" = 96+15 (p.124).
+    # base SVD carried the full-vector value 127.
+    _interrupts:
+      UART2:
+        value: 111
 
 # SPI3 (SCU_SPI) inherits addressBlock size 0x1000 from SPI0 via derivedFrom, but the
 # SCU APB sub-blocks are packed on a 0x400 stride (§3.9.3 Figure SCU-80). The 0x1000
@@ -121,6 +158,57 @@ SPI3:
   _modify:
     addressBlock:
       size: "0x400"
+    # SPI3 = 16 (see convention header): NuttX CXD56_IRQ_SCU_SPI = EXTINT+16 (irq.h:81).
+    # Manual Table Interrupt-33 INT_CAUSE0[19:16] "SCU" block, sub-bit 16 (p.123):
+    # the manual aggregates the 4 SCU vectors (16..19); NuttX breaks them out
+    # (SCU_SPI=16, SCU_I2C0=17, SCU_I2C1=18, SCU_3=19). base SVD carried full-vector 32.
+    _interrupts:
+      SPI3:
+        value: 16
+
+# Interrupt-number corrections for base-SVD peripherals that carried the NuttX
+# full-vector value (source offset + 16) instead of the 0-based NVIC number
+# (see convention header above). Each peripheral cites NuttX irq.h and the
+# manual's Table Interrupt-33 factor (CXD5602 User Manual §3.3.2.1, pp.122-124);
+# NuttX offset and manual bit position agree on every value below. The SVD's
+# peripheral names differ from NuttX/manual (DMAC1↔APP_DMAC0↔ADMAC,
+# DMAC3↔IDMAC↔IMGDMAC) — only the values matter for vectoring.
+# NuttX CXD56_IRQ_SPIM = EXTINT+74 (irq.h:139); Manual INT_CAUSE2[10] SPIMCOM "SPI0" = 64+10 (p.123). base SVD: 90
+SPI0:
+  _modify:
+    _interrupts:
+      SPI0:
+        value: 74
+# NuttX CXD56_IRQ_IMG_SPI = EXTINT+113 (irq.h:178); Manual INT_CAUSE3[17] IMGSSP "SPI4" = 96+17 (p.124). base SVD: 129
+SPI4:
+  _modify:
+    _interrupts:
+      SPI4:
+        value: 113
+# NuttX CXD56_IRQ_IMG_WSPI = EXTINT+109 (irq.h:174); Manual INT_CAUSE3[13] IMGWSSP "SPI5" = 96+13 (p.124). base SVD: 125
+SPI5:
+  _modify:
+    _interrupts:
+      SPI5:
+        value: 109
+# NuttX CXD56_IRQ_CISIF = EXTINT+108 (irq.h:173); Manual INT_CAUSE3[12] IMGCIS "CIS I/F" = 96+12 (p.124). base SVD: 124
+CISIF:
+  _modify:
+    _interrupts:
+      CISIF:
+        value: 108
+# NuttX CXD56_IRQ_APP_DMAC0 = EXTINT+118 (irq.h:183); Manual INT_CAUSE3[23:22] ADMAC = 96+22 (p.124). base SVD: 134
+DMAC1:
+  _modify:
+    _interrupts:
+      DMAC1:
+        value: 118
+# NuttX CXD56_IRQ_IDMAC = EXTINT+110 (irq.h:175); Manual INT_CAUSE3[14] IMGDMAC "IDMAC" = 96+14 (p.124). base SVD: 126
+DMAC3:
+  _modify:
+    _interrupts:
+      DMAC3:
+        value: 110
 
 _add:
   # SPH: 16 hardware semaphores for cross-core mutual exclusion. These are the only
@@ -129,7 +217,9 @@ _add:
   # 0x4600C800, per-semaphore stride 0x10: REQ@+0x00 (W), STS@+0x04 (R). Locking is
   # test-and-set: write REQ=Lock, then read STS — you hold it iff STATE==Locked and
   # LOCK_OWNER==your CPU id. A reserving CPU (REQ=Reserve) is woken by IRQ SPHn
-  # (96..111) when the current holder unlocks.
+  # (0-based NVIC numbers 80..95) when the current holder unlocks.
+  # IRQ numbers (see convention header): NuttX CXD56_IRQ_SPH0..15 = EXTINT+80..95
+  #   (irq.h:145-160); Manual Table Interrupt-33 INT_CAUSE2[31:16] SPH = 64+16..31 (p.123).
   # Source: nuttx/arch/arm/src/cxd56xx/cxd56_sph.c, hardware/cxd56_sph.h
   SPH:
     description: "Hardware semaphores (16) for inter-CPU mutual exclusion"
@@ -141,52 +231,52 @@ _add:
     interrupts:
       SPH0:
         description: "Hardware semaphore 0 released-to-reserver wake"
-        value: 96
+        value: 80
       SPH1:
         description: "Hardware semaphore 1 released-to-reserver wake"
-        value: 97
+        value: 81
       SPH2:
         description: "Hardware semaphore 2 released-to-reserver wake"
-        value: 98
+        value: 82
       SPH3:
         description: "Hardware semaphore 3 released-to-reserver wake"
-        value: 99
+        value: 83
       SPH4:
         description: "Hardware semaphore 4 released-to-reserver wake"
-        value: 100
+        value: 84
       SPH5:
         description: "Hardware semaphore 5 released-to-reserver wake"
-        value: 101
+        value: 85
       SPH6:
         description: "Hardware semaphore 6 released-to-reserver wake"
-        value: 102
+        value: 86
       SPH7:
         description: "Hardware semaphore 7 released-to-reserver wake"
-        value: 103
+        value: 87
       SPH8:
         description: "Hardware semaphore 8 released-to-reserver wake"
-        value: 104
+        value: 88
       SPH9:
         description: "Hardware semaphore 9 released-to-reserver wake"
-        value: 105
+        value: 89
       SPH10:
         description: "Hardware semaphore 10 released-to-reserver wake"
-        value: 106
+        value: 90
       SPH11:
         description: "Hardware semaphore 11 released-to-reserver wake"
-        value: 107
+        value: 91
       SPH12:
         description: "Hardware semaphore 12 released-to-reserver wake"
-        value: 108
+        value: 92
       SPH13:
         description: "Hardware semaphore 13 released-to-reserver wake"
-        value: 109
+        value: 93
       SPH14:
         description: "Hardware semaphore 14 released-to-reserver wake"
-        value: 110
+        value: 94
       SPH15:
         description: "Hardware semaphore 15 released-to-reserver wake"
-        value: 111
+        value: 95
     registers:
       REQ[%s]:
         description: "Semaphore request command (write-only)"
@@ -256,45 +346,46 @@ _add:
       offset: 0x0
       size: 0x2200
       usage: "registers"
-    # GPIO external interrupt slots 0–11 → EXDEVICE_0..11 → IRQ 36..47.
-    # Sources: arch/arm/include/cxd56xx/irq.h (CXD56_IRQ_EXDEVICE_0 = CXD56_IRQ_EXTINT+20 = 36).
+    # GPIO external interrupt slots 0–11 → EXDEVICE_0..11 → 0-based NVIC IRQ 20..31
+    # (see convention header). NuttX CXD56_IRQ_EXDEVICE_0..11 = EXTINT+20..31
+    #   (irq.h:85-96); Manual Table Interrupt-33 INT_CAUSE0[31:20] EXDEVICE = 20..31 (p.123).
     interrupts:
       EXDEVICE_0:
         description: "GPIO external interrupt slot 0"
-        value: 36
+        value: 20
       EXDEVICE_1:
         description: "GPIO external interrupt slot 1"
-        value: 37
+        value: 21
       EXDEVICE_2:
         description: "GPIO external interrupt slot 2"
-        value: 38
+        value: 22
       EXDEVICE_3:
         description: "GPIO external interrupt slot 3"
-        value: 39
+        value: 23
       EXDEVICE_4:
         description: "GPIO external interrupt slot 4"
-        value: 40
+        value: 24
       EXDEVICE_5:
         description: "GPIO external interrupt slot 5"
-        value: 41
+        value: 25
       EXDEVICE_6:
         description: "GPIO external interrupt slot 6"
-        value: 42
+        value: 26
       EXDEVICE_7:
         description: "GPIO external interrupt slot 7"
-        value: 43
+        value: 27
       EXDEVICE_8:
         description: "GPIO external interrupt slot 8"
-        value: 44
+        value: 28
       EXDEVICE_9:
         description: "GPIO external interrupt slot 9"
-        value: 45
+        value: 29
       EXDEVICE_10:
         description: "GPIO external interrupt slot 10"
-        value: 46
+        value: 30
       EXDEVICE_11:
         description: "GPIO external interrupt slot 11"
-        value: 47
+        value: 31
     registers:
       PWD_CTL:
         description: "Power-domain control (1 = powered on)"
@@ -3615,8 +3706,11 @@ _add:
   # Base: CXD56_SCU_I2C0_BASE = SYS_MIRROR(0x04000000) + 0x18D400 = 0x0418D400.
   # SCU APB sub-blocks (§3.9.3 Figure SCU-80): SPI@0xD000, I2C0@0xD400, I2C1@0xD800.
   # Each sub-block owns a 0x400 decode window; registers end at 0xFC (IC_COMP_TYPE).
-  # Interrupt: SCU INT1 = I2C0 (§3.9.6 Table SCU-133) → SYSIOP source 17
-  #            → NuttX full-vector value = CXD56_IRQ_EXTINT(16) + 17 = 33.
+  # Interrupt = 17 (see convention header): NuttX CXD56_IRQ_SCU_I2C0 = EXTINT+17
+  #   (irq.h:82). Manual: APP controller Table Interrupt-33 INT_CAUSE0[19:16] "SCU"
+  #   block, sub-bit 17 (p.123) — the 4-bit SCU field decomposes to SCU_SPI=16,
+  #   SCU_I2C0=17, SCU_I2C1=18, SCU_3=19; the SCU's own §3.9.6 Table SCU-133 lists
+  #   this as SCU INT1 = I2C0. NuttX offset and manual agree.
   # Sources: nuttx/arch/arm/src/cxd56xx/hardware/cxd56_i2c.h (offsets + bit defs),
   #          cxd56_i2c.c (CXD56_SCU_I2C0_BASE, CXD56_IRQ_SCU_I2C0).
   I2C0:
@@ -3629,7 +3723,7 @@ _add:
     interrupts:
       I2C0:
         description: "I2C0 (SCU_I2C0) interrupt"
-        value: 33
+        value: 17
     registers:
       IC_CON:
         description: "I2C control register"
