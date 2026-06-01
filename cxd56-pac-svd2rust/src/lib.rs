@@ -73,25 +73,9 @@ pub union Vector {
 #[doc(hidden)]
 #[link_section = ".vector_table.interrupts"]
 #[no_mangle]
-pub static __INTERRUPTS: [Vector; 135] = [
+pub static __INTERRUPTS: [Vector; 119] = [
     Vector { _reserved: 0 },
     Vector { _handler: CRG },
-    Vector { _reserved: 0 },
-    Vector { _reserved: 0 },
-    Vector { _reserved: 0 },
-    Vector { _reserved: 0 },
-    Vector { _reserved: 0 },
-    Vector { _reserved: 0 },
-    Vector { _reserved: 0 },
-    Vector { _reserved: 0 },
-    Vector { _reserved: 0 },
-    Vector { _reserved: 0 },
-    Vector { _reserved: 0 },
-    Vector { _reserved: 0 },
-    Vector { _reserved: 0 },
-    Vector { _reserved: 0 },
-    Vector { _reserved: 0 },
-    Vector { _reserved: 0 },
     Vector { _reserved: 0 },
     Vector { _reserved: 0 },
     Vector { _reserved: 0 },
@@ -242,90 +226,90 @@ pub static __INTERRUPTS: [Vector; 135] = [
 pub enum Interrupt {
     ///1 - CRG interrupt
     CRG = 1,
-    ///27 - UART1 interrupt
-    UART1 = 27,
-    ///32 - SPI3 interrupt
-    SPI3 = 32,
-    ///33 - I2C0 (SCU_I2C0) interrupt
-    I2C0 = 33,
-    ///36 - GPIO external interrupt slot 0
-    EXDEVICE_0 = 36,
-    ///37 - GPIO external interrupt slot 1
-    EXDEVICE_1 = 37,
-    ///38 - GPIO external interrupt slot 2
-    EXDEVICE_2 = 38,
-    ///39 - GPIO external interrupt slot 3
-    EXDEVICE_3 = 39,
-    ///40 - GPIO external interrupt slot 4
-    EXDEVICE_4 = 40,
-    ///41 - GPIO external interrupt slot 5
-    EXDEVICE_5 = 41,
-    ///42 - GPIO external interrupt slot 6
-    EXDEVICE_6 = 42,
-    ///43 - GPIO external interrupt slot 7
-    EXDEVICE_7 = 43,
-    ///44 - GPIO external interrupt slot 8
-    EXDEVICE_8 = 44,
-    ///45 - GPIO external interrupt slot 9
-    EXDEVICE_9 = 45,
-    ///46 - GPIO external interrupt slot 10
-    EXDEVICE_10 = 46,
-    ///47 - GPIO external interrupt slot 11
-    EXDEVICE_11 = 47,
-    ///90 - SPI0 interrupt
-    SPI0 = 90,
-    ///94 - CPU FIFO transmit ready (PUSH FIFO not full)
-    FIFO_TO = 94,
-    ///95 - CPU FIFO message received (PULL FIFO not empty)
-    FIFO_FROM = 95,
-    ///96 - Hardware semaphore 0 released-to-reserver wake
-    SPH0 = 96,
-    ///97 - Hardware semaphore 1 released-to-reserver wake
-    SPH1 = 97,
-    ///98 - Hardware semaphore 2 released-to-reserver wake
-    SPH2 = 98,
-    ///99 - Hardware semaphore 3 released-to-reserver wake
-    SPH3 = 99,
-    ///100 - Hardware semaphore 4 released-to-reserver wake
-    SPH4 = 100,
-    ///101 - Hardware semaphore 5 released-to-reserver wake
-    SPH5 = 101,
-    ///102 - Hardware semaphore 6 released-to-reserver wake
-    SPH6 = 102,
-    ///103 - Hardware semaphore 7 released-to-reserver wake
-    SPH7 = 103,
-    ///104 - Hardware semaphore 8 released-to-reserver wake
-    SPH8 = 104,
-    ///105 - Hardware semaphore 9 released-to-reserver wake
-    SPH9 = 105,
-    ///106 - Hardware semaphore 10 released-to-reserver wake
-    SPH10 = 106,
-    ///107 - Hardware semaphore 11 released-to-reserver wake
-    SPH11 = 107,
-    ///108 - Hardware semaphore 12 released-to-reserver wake
-    SPH12 = 108,
-    ///109 - Hardware semaphore 13 released-to-reserver wake
-    SPH13 = 109,
-    ///110 - Hardware semaphore 14 released-to-reserver wake
-    SPH14 = 110,
-    ///111 - Hardware semaphore 15 released-to-reserver wake
-    SPH15 = 111,
-    ///122 - 2D interrupt
-    GE2D = 122,
-    ///123 - Rotation interrupt
-    ROT = 123,
-    ///124 - CISIF interrupt
-    CISIF = 124,
-    ///125 - SPI5 interrupt
-    SPI5 = 125,
-    ///126 - DMAC3 interrupt
-    DMAC3 = 126,
-    ///127 - UART2 interrupt
-    UART2 = 127,
-    ///129 - SPI4 interrupt
-    SPI4 = 129,
-    ///134 - DMAC1 interrupt
-    DMAC1 = 134,
+    ///11 - UART1 interrupt
+    UART1 = 11,
+    ///16 - SPI3 interrupt
+    SPI3 = 16,
+    ///17 - I2C0 (SCU_I2C0) interrupt
+    I2C0 = 17,
+    ///20 - GPIO external interrupt slot 0
+    EXDEVICE_0 = 20,
+    ///21 - GPIO external interrupt slot 1
+    EXDEVICE_1 = 21,
+    ///22 - GPIO external interrupt slot 2
+    EXDEVICE_2 = 22,
+    ///23 - GPIO external interrupt slot 3
+    EXDEVICE_3 = 23,
+    ///24 - GPIO external interrupt slot 4
+    EXDEVICE_4 = 24,
+    ///25 - GPIO external interrupt slot 5
+    EXDEVICE_5 = 25,
+    ///26 - GPIO external interrupt slot 6
+    EXDEVICE_6 = 26,
+    ///27 - GPIO external interrupt slot 7
+    EXDEVICE_7 = 27,
+    ///28 - GPIO external interrupt slot 8
+    EXDEVICE_8 = 28,
+    ///29 - GPIO external interrupt slot 9
+    EXDEVICE_9 = 29,
+    ///30 - GPIO external interrupt slot 10
+    EXDEVICE_10 = 30,
+    ///31 - GPIO external interrupt slot 11
+    EXDEVICE_11 = 31,
+    ///74 - SPI0 interrupt
+    SPI0 = 74,
+    ///78 - CPU FIFO transmit ready (PUSH FIFO not full)
+    FIFO_TO = 78,
+    ///79 - CPU FIFO message received (PULL FIFO not empty)
+    FIFO_FROM = 79,
+    ///80 - Hardware semaphore 0 released-to-reserver wake
+    SPH0 = 80,
+    ///81 - Hardware semaphore 1 released-to-reserver wake
+    SPH1 = 81,
+    ///82 - Hardware semaphore 2 released-to-reserver wake
+    SPH2 = 82,
+    ///83 - Hardware semaphore 3 released-to-reserver wake
+    SPH3 = 83,
+    ///84 - Hardware semaphore 4 released-to-reserver wake
+    SPH4 = 84,
+    ///85 - Hardware semaphore 5 released-to-reserver wake
+    SPH5 = 85,
+    ///86 - Hardware semaphore 6 released-to-reserver wake
+    SPH6 = 86,
+    ///87 - Hardware semaphore 7 released-to-reserver wake
+    SPH7 = 87,
+    ///88 - Hardware semaphore 8 released-to-reserver wake
+    SPH8 = 88,
+    ///89 - Hardware semaphore 9 released-to-reserver wake
+    SPH9 = 89,
+    ///90 - Hardware semaphore 10 released-to-reserver wake
+    SPH10 = 90,
+    ///91 - Hardware semaphore 11 released-to-reserver wake
+    SPH11 = 91,
+    ///92 - Hardware semaphore 12 released-to-reserver wake
+    SPH12 = 92,
+    ///93 - Hardware semaphore 13 released-to-reserver wake
+    SPH13 = 93,
+    ///94 - Hardware semaphore 14 released-to-reserver wake
+    SPH14 = 94,
+    ///95 - Hardware semaphore 15 released-to-reserver wake
+    SPH15 = 95,
+    ///106 - 2D interrupt
+    GE2D = 106,
+    ///107 - Rotation interrupt
+    ROT = 107,
+    ///108 - CISIF interrupt
+    CISIF = 108,
+    ///109 - SPI5 interrupt
+    SPI5 = 109,
+    ///110 - DMAC3 interrupt
+    DMAC3 = 110,
+    ///111 - UART2 interrupt
+    UART2 = 111,
+    ///113 - SPI4 interrupt
+    SPI4 = 113,
+    ///118 - DMAC1 interrupt
+    DMAC1 = 118,
 }
 unsafe impl cortex_m::interrupt::InterruptNumber for Interrupt {
     #[inline(always)]
