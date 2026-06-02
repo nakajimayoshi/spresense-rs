@@ -83,20 +83,57 @@ pub struct RegisterBlock {
     _reserved63: [u8; 0x7c],
     io_spi0_cs_x: IoSpi0CsX,
     io_spi0_sck: IoSpi0Sck,
-    _reserved65: [u8; 0x64],
+    _reserved65: [u8; 0x48],
+    io_sen_irq_in: IoSenIrqIn,
+    _reserved66: [u8; 0x18],
     io_i2c0_bck: IoI2c0Bck,
     io_i2c0_bdt: IoI2c0Bdt,
-    _reserved67: [u8; 0x54],
+    _reserved68: [u8; 0x54],
     io_uart2_txd: IoUart2Txd,
     io_uart2_rxd: IoUart2Rxd,
-    _reserved69: [u8; 0x0b7c],
+    io_uart2_cts: IoUart2Cts,
+    io_uart2_rts: IoUart2Rts,
+    _reserved72: [u8; 0x10],
+    io_emmc_clk: IoEmmcClk,
+    io_emmc_cmd: IoEmmcCmd,
+    io_emmc_data0: IoEmmcData0,
+    io_emmc_data1: IoEmmcData1,
+    io_emmc_data2: IoEmmcData2,
+    io_emmc_data3: IoEmmcData3,
+    _reserved78: [u8; 0x30],
+    io_i2s0_bck: IoI2s0Bck,
+    io_i2s0_lrck: IoI2s0Lrck,
+    io_i2s0_data_in: IoI2s0DataIn,
+    io_i2s0_data_out: IoI2s0DataOut,
+    _reserved82: [u8; 0x0b0c],
     iocapp_intsel0: IocappIntsel0,
     iocapp_intsel1: IocappIntsel1,
-    _reserved71: [u8; 0x08],
+    _reserved84: [u8; 0x08],
     iocapp_iomd: IocappIomd,
-    _reserved72: [u8; 0x0b5c],
+    _reserved85: [u8; 0x0b5c],
     gp_i2c4_bck: GpI2c4Bck,
-    _reserved73: [u8; 0x0164],
+    _reserved86: [u8; 0x8c],
+    gp_sen_irq_in: GpSenIrqIn,
+    _reserved87: [u8; 0x18],
+    gp_i2c0_bck: GpI2c0Bck,
+    gp_i2c0_bdt: GpI2c0Bdt,
+    _reserved89: [u8; 0x3c],
+    gp_uart2_txd: GpUart2Txd,
+    gp_uart2_rxd: GpUart2Rxd,
+    gp_uart2_cts: GpUart2Cts,
+    gp_uart2_rts: GpUart2Rts,
+    _reserved93: [u8; 0x10],
+    gp_emmc_clk: GpEmmcClk,
+    gp_emmc_cmd: GpEmmcCmd,
+    gp_emmc_data0: GpEmmcData0,
+    gp_emmc_data1: GpEmmcData1,
+    gp_emmc_data2: GpEmmcData2,
+    gp_emmc_data3: GpEmmcData3,
+    _reserved99: [u8; 0x30],
+    gp_i2s0_bck: GpI2s0Bck,
+    gp_i2s0_lrck: GpI2s0Lrck,
+    gp_i2s0_data_in: GpI2s0DataIn,
+    gp_i2s0_data_out: GpI2s0DataOut,
     gp_i2s1_bck: GpI2s1Bck,
     gp_i2s1_lrck: GpI2s1Lrck,
     gp_i2s1_data_in: GpI2s1DataIn,
@@ -428,6 +465,11 @@ impl RegisterBlock {
     pub const fn io_spi0_sck(&self) -> &IoSpi0Sck {
         &self.io_spi0_sck
     }
+    ///0x894 - IOCELL control for SEN_IRQ_IN pin
+    #[inline(always)]
+    pub const fn io_sen_irq_in(&self) -> &IoSenIrqIn {
+        &self.io_sen_irq_in
+    }
     ///0x8b0 - IOCELL control for I2C0_BCK pad
     #[inline(always)]
     pub const fn io_i2c0_bck(&self) -> &IoI2c0Bck {
@@ -448,6 +490,66 @@ impl RegisterBlock {
     pub const fn io_uart2_rxd(&self) -> &IoUart2Rxd {
         &self.io_uart2_rxd
     }
+    ///0x914 - IOCELL control for UART2 CTS pin
+    #[inline(always)]
+    pub const fn io_uart2_cts(&self) -> &IoUart2Cts {
+        &self.io_uart2_cts
+    }
+    ///0x918 - IOCELL control for UART2 RTS pin
+    #[inline(always)]
+    pub const fn io_uart2_rts(&self) -> &IoUart2Rts {
+        &self.io_uart2_rts
+    }
+    ///0x92c - IOCELL control for EMMC_CLK / SPI5_SCK pin
+    #[inline(always)]
+    pub const fn io_emmc_clk(&self) -> &IoEmmcClk {
+        &self.io_emmc_clk
+    }
+    ///0x930 - IOCELL control for EMMC_CMD / SPI5_CS_X pin
+    #[inline(always)]
+    pub const fn io_emmc_cmd(&self) -> &IoEmmcCmd {
+        &self.io_emmc_cmd
+    }
+    ///0x934 - IOCELL control for EMMC_DATA0 / SPI5_MOSI pin
+    #[inline(always)]
+    pub const fn io_emmc_data0(&self) -> &IoEmmcData0 {
+        &self.io_emmc_data0
+    }
+    ///0x938 - IOCELL control for EMMC_DATA1 / SPI5_MISO pin
+    #[inline(always)]
+    pub const fn io_emmc_data1(&self) -> &IoEmmcData1 {
+        &self.io_emmc_data1
+    }
+    ///0x93c - IOCELL control for EMMC_DATA2 pin
+    #[inline(always)]
+    pub const fn io_emmc_data2(&self) -> &IoEmmcData2 {
+        &self.io_emmc_data2
+    }
+    ///0x940 - IOCELL control for EMMC_DATA3 pin
+    #[inline(always)]
+    pub const fn io_emmc_data3(&self) -> &IoEmmcData3 {
+        &self.io_emmc_data3
+    }
+    ///0x974 - IOCELL control for I2S0_BCK pin
+    #[inline(always)]
+    pub const fn io_i2s0_bck(&self) -> &IoI2s0Bck {
+        &self.io_i2s0_bck
+    }
+    ///0x978 - IOCELL control for I2S0_LRCK pin
+    #[inline(always)]
+    pub const fn io_i2s0_lrck(&self) -> &IoI2s0Lrck {
+        &self.io_i2s0_lrck
+    }
+    ///0x97c - IOCELL control for I2S0_DATA_IN pin
+    #[inline(always)]
+    pub const fn io_i2s0_data_in(&self) -> &IoI2s0DataIn {
+        &self.io_i2s0_data_in
+    }
+    ///0x980 - IOCELL control for I2S0_DATA_OUT pin
+    #[inline(always)]
+    pub const fn io_i2s0_data_out(&self) -> &IoI2s0DataOut {
+        &self.io_i2s0_data_out
+    }
     ///0x1490 - APP-domain GPIO interrupt slot mux, slots 6–9 (1 byte per slot, pin index 0–63)
     #[inline(always)]
     pub const fn iocapp_intsel0(&self) -> &IocappIntsel0 {
@@ -467,6 +569,91 @@ impl RegisterBlock {
     #[inline(always)]
     pub const fn gp_i2c4_bck(&self) -> &GpI2c4Bck {
         &self.gp_i2c4_bck
+    }
+    ///0x2090 - GPIO SYS pin 37 — SEN_IRQ / Arduino D22 (JP1)
+    #[inline(always)]
+    pub const fn gp_sen_irq_in(&self) -> &GpSenIrqIn {
+        &self.gp_sen_irq_in
+    }
+    ///0x20ac - GPIO SYS pin 44 — I2C0_SCL / Arduino D15 (JP2)
+    #[inline(always)]
+    pub const fn gp_i2c0_bck(&self) -> &GpI2c0Bck {
+        &self.gp_i2c0_bck
+    }
+    ///0x20b0 - GPIO SYS pin 45 — I2C0_SDA / Arduino D14 (JP2)
+    #[inline(always)]
+    pub const fn gp_i2c0_bdt(&self) -> &GpI2c0Bdt {
+        &self.gp_i2c0_bdt
+    }
+    ///0x20f0 - GPIO APP pin 67 — UART2_TX / Arduino D01 (JP1)
+    #[inline(always)]
+    pub const fn gp_uart2_txd(&self) -> &GpUart2Txd {
+        &self.gp_uart2_txd
+    }
+    ///0x20f4 - GPIO APP pin 68 — UART2_RX / Arduino D00 (JP1)
+    #[inline(always)]
+    pub const fn gp_uart2_rxd(&self) -> &GpUart2Rxd {
+        &self.gp_uart2_rxd
+    }
+    ///0x20f8 - GPIO APP pin 69 — UART2_CTS / Arduino D27 (JP1)
+    #[inline(always)]
+    pub const fn gp_uart2_cts(&self) -> &GpUart2Cts {
+        &self.gp_uart2_cts
+    }
+    ///0x20fc - GPIO APP pin 70 — UART2_RTS / Arduino D28 (JP1)
+    #[inline(always)]
+    pub const fn gp_uart2_rts(&self) -> &GpUart2Rts {
+        &self.gp_uart2_rts
+    }
+    ///0x2110 - GPIO APP pin 75 — SPI5_SCK / Arduino D23 (JP1)
+    #[inline(always)]
+    pub const fn gp_emmc_clk(&self) -> &GpEmmcClk {
+        &self.gp_emmc_clk
+    }
+    ///0x2114 - GPIO APP pin 76 — SPI5_CS_X / Arduino D24 (JP1)
+    #[inline(always)]
+    pub const fn gp_emmc_cmd(&self) -> &GpEmmcCmd {
+        &self.gp_emmc_cmd
+    }
+    ///0x2118 - GPIO APP pin 77 — SPI5_MOSI / Arduino D16 (JP2)
+    #[inline(always)]
+    pub const fn gp_emmc_data0(&self) -> &GpEmmcData0 {
+        &self.gp_emmc_data0
+    }
+    ///0x211c - GPIO APP pin 78 — SPI5_MISO / Arduino D17 (JP2)
+    #[inline(always)]
+    pub const fn gp_emmc_data1(&self) -> &GpEmmcData1 {
+        &self.gp_emmc_data1
+    }
+    ///0x2120 - GPIO APP pin 79 — GPIO / Arduino D20 (JP2)
+    #[inline(always)]
+    pub const fn gp_emmc_data2(&self) -> &GpEmmcData2 {
+        &self.gp_emmc_data2
+    }
+    ///0x2124 - GPIO APP pin 80 — GPIO / Arduino D21 (JP2)
+    #[inline(always)]
+    pub const fn gp_emmc_data3(&self) -> &GpEmmcData3 {
+        &self.gp_emmc_data3
+    }
+    ///0x2158 - GPIO APP pin 93 — I2S0_BCK / Arduino D26 (JP1)
+    #[inline(always)]
+    pub const fn gp_i2s0_bck(&self) -> &GpI2s0Bck {
+        &self.gp_i2s0_bck
+    }
+    ///0x215c - GPIO APP pin 94 — I2S0_LRCK / Arduino D25 (JP1)
+    #[inline(always)]
+    pub const fn gp_i2s0_lrck(&self) -> &GpI2s0Lrck {
+        &self.gp_i2s0_lrck
+    }
+    ///0x2160 - GPIO APP pin 95 — I2S0_DATA_IN / Arduino D19 (JP2)
+    #[inline(always)]
+    pub const fn gp_i2s0_data_in(&self) -> &GpI2s0DataIn {
+        &self.gp_i2s0_data_in
+    }
+    ///0x2164 - GPIO APP pin 96 — I2S0_DATA_OUT / Arduino D18 (JP2)
+    #[inline(always)]
+    pub const fn gp_i2s0_data_out(&self) -> &GpI2s0DataOut {
+        &self.gp_i2s0_data_out
     }
     ///0x2168 - GPIO APP pin 97 — I2S1_BCK / LED0 on Spresense main board
     #[inline(always)]
@@ -1110,6 +1297,123 @@ For information about available fields see [`mod@io_uart2_rxd`] module*/
 pub type IoUart2Rxd = crate::Reg<io_uart2_rxd::IoUart2RxdSpec>;
 ///IOCELL control for UART2 RXD pin
 pub mod io_uart2_rxd;
+/**IO_UART2_RTS (rw) register accessor: IOCELL control for UART2 RTS pin
+
+You can [`read`](crate::Reg::read) this register and get [`io_uart2_rts::R`]. You can [`reset`](crate::Reg::reset), [`write`](crate::Reg::write), [`write_with_zero`](crate::Reg::write_with_zero) this register using [`io_uart2_rts::W`]. You can also [`modify`](crate::Reg::modify) this register. See [API](https://docs.rs/svd2rust/#read--modify--write-api).
+
+For information about available fields see [`mod@io_uart2_rts`] module*/
+#[doc(alias = "IO_UART2_RTS")]
+pub type IoUart2Rts = crate::Reg<io_uart2_rts::IoUart2RtsSpec>;
+///IOCELL control for UART2 RTS pin
+pub mod io_uart2_rts;
+/**IO_UART2_CTS (rw) register accessor: IOCELL control for UART2 CTS pin
+
+You can [`read`](crate::Reg::read) this register and get [`io_uart2_cts::R`]. You can [`reset`](crate::Reg::reset), [`write`](crate::Reg::write), [`write_with_zero`](crate::Reg::write_with_zero) this register using [`io_uart2_cts::W`]. You can also [`modify`](crate::Reg::modify) this register. See [API](https://docs.rs/svd2rust/#read--modify--write-api).
+
+For information about available fields see [`mod@io_uart2_cts`] module*/
+#[doc(alias = "IO_UART2_CTS")]
+pub type IoUart2Cts = crate::Reg<io_uart2_cts::IoUart2CtsSpec>;
+///IOCELL control for UART2 CTS pin
+pub mod io_uart2_cts;
+/**IO_I2S0_BCK (rw) register accessor: IOCELL control for I2S0_BCK pin
+
+You can [`read`](crate::Reg::read) this register and get [`io_i2s0_bck::R`]. You can [`reset`](crate::Reg::reset), [`write`](crate::Reg::write), [`write_with_zero`](crate::Reg::write_with_zero) this register using [`io_i2s0_bck::W`]. You can also [`modify`](crate::Reg::modify) this register. See [API](https://docs.rs/svd2rust/#read--modify--write-api).
+
+For information about available fields see [`mod@io_i2s0_bck`] module*/
+#[doc(alias = "IO_I2S0_BCK")]
+pub type IoI2s0Bck = crate::Reg<io_i2s0_bck::IoI2s0BckSpec>;
+///IOCELL control for I2S0_BCK pin
+pub mod io_i2s0_bck;
+/**IO_I2S0_LRCK (rw) register accessor: IOCELL control for I2S0_LRCK pin
+
+You can [`read`](crate::Reg::read) this register and get [`io_i2s0_lrck::R`]. You can [`reset`](crate::Reg::reset), [`write`](crate::Reg::write), [`write_with_zero`](crate::Reg::write_with_zero) this register using [`io_i2s0_lrck::W`]. You can also [`modify`](crate::Reg::modify) this register. See [API](https://docs.rs/svd2rust/#read--modify--write-api).
+
+For information about available fields see [`mod@io_i2s0_lrck`] module*/
+#[doc(alias = "IO_I2S0_LRCK")]
+pub type IoI2s0Lrck = crate::Reg<io_i2s0_lrck::IoI2s0LrckSpec>;
+///IOCELL control for I2S0_LRCK pin
+pub mod io_i2s0_lrck;
+/**IO_I2S0_DATA_IN (rw) register accessor: IOCELL control for I2S0_DATA_IN pin
+
+You can [`read`](crate::Reg::read) this register and get [`io_i2s0_data_in::R`]. You can [`reset`](crate::Reg::reset), [`write`](crate::Reg::write), [`write_with_zero`](crate::Reg::write_with_zero) this register using [`io_i2s0_data_in::W`]. You can also [`modify`](crate::Reg::modify) this register. See [API](https://docs.rs/svd2rust/#read--modify--write-api).
+
+For information about available fields see [`mod@io_i2s0_data_in`] module*/
+#[doc(alias = "IO_I2S0_DATA_IN")]
+pub type IoI2s0DataIn = crate::Reg<io_i2s0_data_in::IoI2s0DataInSpec>;
+///IOCELL control for I2S0_DATA_IN pin
+pub mod io_i2s0_data_in;
+/**IO_I2S0_DATA_OUT (rw) register accessor: IOCELL control for I2S0_DATA_OUT pin
+
+You can [`read`](crate::Reg::read) this register and get [`io_i2s0_data_out::R`]. You can [`reset`](crate::Reg::reset), [`write`](crate::Reg::write), [`write_with_zero`](crate::Reg::write_with_zero) this register using [`io_i2s0_data_out::W`]. You can also [`modify`](crate::Reg::modify) this register. See [API](https://docs.rs/svd2rust/#read--modify--write-api).
+
+For information about available fields see [`mod@io_i2s0_data_out`] module*/
+#[doc(alias = "IO_I2S0_DATA_OUT")]
+pub type IoI2s0DataOut = crate::Reg<io_i2s0_data_out::IoI2s0DataOutSpec>;
+///IOCELL control for I2S0_DATA_OUT pin
+pub mod io_i2s0_data_out;
+/**IO_EMMC_CLK (rw) register accessor: IOCELL control for EMMC_CLK / SPI5_SCK pin
+
+You can [`read`](crate::Reg::read) this register and get [`io_emmc_clk::R`]. You can [`reset`](crate::Reg::reset), [`write`](crate::Reg::write), [`write_with_zero`](crate::Reg::write_with_zero) this register using [`io_emmc_clk::W`]. You can also [`modify`](crate::Reg::modify) this register. See [API](https://docs.rs/svd2rust/#read--modify--write-api).
+
+For information about available fields see [`mod@io_emmc_clk`] module*/
+#[doc(alias = "IO_EMMC_CLK")]
+pub type IoEmmcClk = crate::Reg<io_emmc_clk::IoEmmcClkSpec>;
+///IOCELL control for EMMC_CLK / SPI5_SCK pin
+pub mod io_emmc_clk;
+/**IO_EMMC_CMD (rw) register accessor: IOCELL control for EMMC_CMD / SPI5_CS_X pin
+
+You can [`read`](crate::Reg::read) this register and get [`io_emmc_cmd::R`]. You can [`reset`](crate::Reg::reset), [`write`](crate::Reg::write), [`write_with_zero`](crate::Reg::write_with_zero) this register using [`io_emmc_cmd::W`]. You can also [`modify`](crate::Reg::modify) this register. See [API](https://docs.rs/svd2rust/#read--modify--write-api).
+
+For information about available fields see [`mod@io_emmc_cmd`] module*/
+#[doc(alias = "IO_EMMC_CMD")]
+pub type IoEmmcCmd = crate::Reg<io_emmc_cmd::IoEmmcCmdSpec>;
+///IOCELL control for EMMC_CMD / SPI5_CS_X pin
+pub mod io_emmc_cmd;
+/**IO_EMMC_DATA0 (rw) register accessor: IOCELL control for EMMC_DATA0 / SPI5_MOSI pin
+
+You can [`read`](crate::Reg::read) this register and get [`io_emmc_data0::R`]. You can [`reset`](crate::Reg::reset), [`write`](crate::Reg::write), [`write_with_zero`](crate::Reg::write_with_zero) this register using [`io_emmc_data0::W`]. You can also [`modify`](crate::Reg::modify) this register. See [API](https://docs.rs/svd2rust/#read--modify--write-api).
+
+For information about available fields see [`mod@io_emmc_data0`] module*/
+#[doc(alias = "IO_EMMC_DATA0")]
+pub type IoEmmcData0 = crate::Reg<io_emmc_data0::IoEmmcData0Spec>;
+///IOCELL control for EMMC_DATA0 / SPI5_MOSI pin
+pub mod io_emmc_data0;
+/**IO_EMMC_DATA1 (rw) register accessor: IOCELL control for EMMC_DATA1 / SPI5_MISO pin
+
+You can [`read`](crate::Reg::read) this register and get [`io_emmc_data1::R`]. You can [`reset`](crate::Reg::reset), [`write`](crate::Reg::write), [`write_with_zero`](crate::Reg::write_with_zero) this register using [`io_emmc_data1::W`]. You can also [`modify`](crate::Reg::modify) this register. See [API](https://docs.rs/svd2rust/#read--modify--write-api).
+
+For information about available fields see [`mod@io_emmc_data1`] module*/
+#[doc(alias = "IO_EMMC_DATA1")]
+pub type IoEmmcData1 = crate::Reg<io_emmc_data1::IoEmmcData1Spec>;
+///IOCELL control for EMMC_DATA1 / SPI5_MISO pin
+pub mod io_emmc_data1;
+/**IO_EMMC_DATA2 (rw) register accessor: IOCELL control for EMMC_DATA2 pin
+
+You can [`read`](crate::Reg::read) this register and get [`io_emmc_data2::R`]. You can [`reset`](crate::Reg::reset), [`write`](crate::Reg::write), [`write_with_zero`](crate::Reg::write_with_zero) this register using [`io_emmc_data2::W`]. You can also [`modify`](crate::Reg::modify) this register. See [API](https://docs.rs/svd2rust/#read--modify--write-api).
+
+For information about available fields see [`mod@io_emmc_data2`] module*/
+#[doc(alias = "IO_EMMC_DATA2")]
+pub type IoEmmcData2 = crate::Reg<io_emmc_data2::IoEmmcData2Spec>;
+///IOCELL control for EMMC_DATA2 pin
+pub mod io_emmc_data2;
+/**IO_EMMC_DATA3 (rw) register accessor: IOCELL control for EMMC_DATA3 pin
+
+You can [`read`](crate::Reg::read) this register and get [`io_emmc_data3::R`]. You can [`reset`](crate::Reg::reset), [`write`](crate::Reg::write), [`write_with_zero`](crate::Reg::write_with_zero) this register using [`io_emmc_data3::W`]. You can also [`modify`](crate::Reg::modify) this register. See [API](https://docs.rs/svd2rust/#read--modify--write-api).
+
+For information about available fields see [`mod@io_emmc_data3`] module*/
+#[doc(alias = "IO_EMMC_DATA3")]
+pub type IoEmmcData3 = crate::Reg<io_emmc_data3::IoEmmcData3Spec>;
+///IOCELL control for EMMC_DATA3 pin
+pub mod io_emmc_data3;
+/**IO_SEN_IRQ_IN (rw) register accessor: IOCELL control for SEN_IRQ_IN pin
+
+You can [`read`](crate::Reg::read) this register and get [`io_sen_irq_in::R`]. You can [`reset`](crate::Reg::reset), [`write`](crate::Reg::write), [`write_with_zero`](crate::Reg::write_with_zero) this register using [`io_sen_irq_in::W`]. You can also [`modify`](crate::Reg::modify) this register. See [API](https://docs.rs/svd2rust/#read--modify--write-api).
+
+For information about available fields see [`mod@io_sen_irq_in`] module*/
+#[doc(alias = "IO_SEN_IRQ_IN")]
+pub type IoSenIrqIn = crate::Reg<io_sen_irq_in::IoSenIrqInSpec>;
+///IOCELL control for SEN_IRQ_IN pin
+pub mod io_sen_irq_in;
 /**IOCAPP_INTSEL0 (rw) register accessor: APP-domain GPIO interrupt slot mux, slots 6–9 (1 byte per slot, pin index 0–63)
 
 You can [`read`](crate::Reg::read) this register and get [`iocapp_intsel0::R`]. You can [`reset`](crate::Reg::reset), [`write`](crate::Reg::write), [`write_with_zero`](crate::Reg::write_with_zero) this register using [`iocapp_intsel0::W`]. You can also [`modify`](crate::Reg::modify) this register. See [API](https://docs.rs/svd2rust/#read--modify--write-api).
@@ -1182,3 +1486,156 @@ For information about available fields see [`mod@gp_i2s1_data_out`] module*/
 pub type GpI2s1DataOut = crate::Reg<gp_i2s1_data_out::GpI2s1DataOutSpec>;
 ///GPIO APP pin 100 — I2S1_DATA_OUT / LED3 on Spresense main board
 pub mod gp_i2s1_data_out;
+/**GP_UART2_TXD (rw) register accessor: GPIO APP pin 67 — UART2_TX / Arduino D01 (JP1)
+
+You can [`read`](crate::Reg::read) this register and get [`gp_uart2_txd::R`]. You can [`reset`](crate::Reg::reset), [`write`](crate::Reg::write), [`write_with_zero`](crate::Reg::write_with_zero) this register using [`gp_uart2_txd::W`]. You can also [`modify`](crate::Reg::modify) this register. See [API](https://docs.rs/svd2rust/#read--modify--write-api).
+
+For information about available fields see [`mod@gp_uart2_txd`] module*/
+#[doc(alias = "GP_UART2_TXD")]
+pub type GpUart2Txd = crate::Reg<gp_uart2_txd::GpUart2TxdSpec>;
+///GPIO APP pin 67 — UART2_TX / Arduino D01 (JP1)
+pub mod gp_uart2_txd;
+/**GP_UART2_RXD (rw) register accessor: GPIO APP pin 68 — UART2_RX / Arduino D00 (JP1)
+
+You can [`read`](crate::Reg::read) this register and get [`gp_uart2_rxd::R`]. You can [`reset`](crate::Reg::reset), [`write`](crate::Reg::write), [`write_with_zero`](crate::Reg::write_with_zero) this register using [`gp_uart2_rxd::W`]. You can also [`modify`](crate::Reg::modify) this register. See [API](https://docs.rs/svd2rust/#read--modify--write-api).
+
+For information about available fields see [`mod@gp_uart2_rxd`] module*/
+#[doc(alias = "GP_UART2_RXD")]
+pub type GpUart2Rxd = crate::Reg<gp_uart2_rxd::GpUart2RxdSpec>;
+///GPIO APP pin 68 — UART2_RX / Arduino D00 (JP1)
+pub mod gp_uart2_rxd;
+/**GP_UART2_RTS (rw) register accessor: GPIO APP pin 70 — UART2_RTS / Arduino D28 (JP1)
+
+You can [`read`](crate::Reg::read) this register and get [`gp_uart2_rts::R`]. You can [`reset`](crate::Reg::reset), [`write`](crate::Reg::write), [`write_with_zero`](crate::Reg::write_with_zero) this register using [`gp_uart2_rts::W`]. You can also [`modify`](crate::Reg::modify) this register. See [API](https://docs.rs/svd2rust/#read--modify--write-api).
+
+For information about available fields see [`mod@gp_uart2_rts`] module*/
+#[doc(alias = "GP_UART2_RTS")]
+pub type GpUart2Rts = crate::Reg<gp_uart2_rts::GpUart2RtsSpec>;
+///GPIO APP pin 70 — UART2_RTS / Arduino D28 (JP1)
+pub mod gp_uart2_rts;
+/**GP_UART2_CTS (rw) register accessor: GPIO APP pin 69 — UART2_CTS / Arduino D27 (JP1)
+
+You can [`read`](crate::Reg::read) this register and get [`gp_uart2_cts::R`]. You can [`reset`](crate::Reg::reset), [`write`](crate::Reg::write), [`write_with_zero`](crate::Reg::write_with_zero) this register using [`gp_uart2_cts::W`]. You can also [`modify`](crate::Reg::modify) this register. See [API](https://docs.rs/svd2rust/#read--modify--write-api).
+
+For information about available fields see [`mod@gp_uart2_cts`] module*/
+#[doc(alias = "GP_UART2_CTS")]
+pub type GpUart2Cts = crate::Reg<gp_uart2_cts::GpUart2CtsSpec>;
+///GPIO APP pin 69 — UART2_CTS / Arduino D27 (JP1)
+pub mod gp_uart2_cts;
+/**GP_I2S0_BCK (rw) register accessor: GPIO APP pin 93 — I2S0_BCK / Arduino D26 (JP1)
+
+You can [`read`](crate::Reg::read) this register and get [`gp_i2s0_bck::R`]. You can [`reset`](crate::Reg::reset), [`write`](crate::Reg::write), [`write_with_zero`](crate::Reg::write_with_zero) this register using [`gp_i2s0_bck::W`]. You can also [`modify`](crate::Reg::modify) this register. See [API](https://docs.rs/svd2rust/#read--modify--write-api).
+
+For information about available fields see [`mod@gp_i2s0_bck`] module*/
+#[doc(alias = "GP_I2S0_BCK")]
+pub type GpI2s0Bck = crate::Reg<gp_i2s0_bck::GpI2s0BckSpec>;
+///GPIO APP pin 93 — I2S0_BCK / Arduino D26 (JP1)
+pub mod gp_i2s0_bck;
+/**GP_I2S0_LRCK (rw) register accessor: GPIO APP pin 94 — I2S0_LRCK / Arduino D25 (JP1)
+
+You can [`read`](crate::Reg::read) this register and get [`gp_i2s0_lrck::R`]. You can [`reset`](crate::Reg::reset), [`write`](crate::Reg::write), [`write_with_zero`](crate::Reg::write_with_zero) this register using [`gp_i2s0_lrck::W`]. You can also [`modify`](crate::Reg::modify) this register. See [API](https://docs.rs/svd2rust/#read--modify--write-api).
+
+For information about available fields see [`mod@gp_i2s0_lrck`] module*/
+#[doc(alias = "GP_I2S0_LRCK")]
+pub type GpI2s0Lrck = crate::Reg<gp_i2s0_lrck::GpI2s0LrckSpec>;
+///GPIO APP pin 94 — I2S0_LRCK / Arduino D25 (JP1)
+pub mod gp_i2s0_lrck;
+/**GP_EMMC_CMD (rw) register accessor: GPIO APP pin 76 — SPI5_CS_X / Arduino D24 (JP1)
+
+You can [`read`](crate::Reg::read) this register and get [`gp_emmc_cmd::R`]. You can [`reset`](crate::Reg::reset), [`write`](crate::Reg::write), [`write_with_zero`](crate::Reg::write_with_zero) this register using [`gp_emmc_cmd::W`]. You can also [`modify`](crate::Reg::modify) this register. See [API](https://docs.rs/svd2rust/#read--modify--write-api).
+
+For information about available fields see [`mod@gp_emmc_cmd`] module*/
+#[doc(alias = "GP_EMMC_CMD")]
+pub type GpEmmcCmd = crate::Reg<gp_emmc_cmd::GpEmmcCmdSpec>;
+///GPIO APP pin 76 — SPI5_CS_X / Arduino D24 (JP1)
+pub mod gp_emmc_cmd;
+/**GP_EMMC_CLK (rw) register accessor: GPIO APP pin 75 — SPI5_SCK / Arduino D23 (JP1)
+
+You can [`read`](crate::Reg::read) this register and get [`gp_emmc_clk::R`]. You can [`reset`](crate::Reg::reset), [`write`](crate::Reg::write), [`write_with_zero`](crate::Reg::write_with_zero) this register using [`gp_emmc_clk::W`]. You can also [`modify`](crate::Reg::modify) this register. See [API](https://docs.rs/svd2rust/#read--modify--write-api).
+
+For information about available fields see [`mod@gp_emmc_clk`] module*/
+#[doc(alias = "GP_EMMC_CLK")]
+pub type GpEmmcClk = crate::Reg<gp_emmc_clk::GpEmmcClkSpec>;
+///GPIO APP pin 75 — SPI5_SCK / Arduino D23 (JP1)
+pub mod gp_emmc_clk;
+/**GP_SEN_IRQ_IN (rw) register accessor: GPIO SYS pin 37 — SEN_IRQ / Arduino D22 (JP1)
+
+You can [`read`](crate::Reg::read) this register and get [`gp_sen_irq_in::R`]. You can [`reset`](crate::Reg::reset), [`write`](crate::Reg::write), [`write_with_zero`](crate::Reg::write_with_zero) this register using [`gp_sen_irq_in::W`]. You can also [`modify`](crate::Reg::modify) this register. See [API](https://docs.rs/svd2rust/#read--modify--write-api).
+
+For information about available fields see [`mod@gp_sen_irq_in`] module*/
+#[doc(alias = "GP_SEN_IRQ_IN")]
+pub type GpSenIrqIn = crate::Reg<gp_sen_irq_in::GpSenIrqInSpec>;
+///GPIO SYS pin 37 — SEN_IRQ / Arduino D22 (JP1)
+pub mod gp_sen_irq_in;
+/**GP_EMMC_DATA3 (rw) register accessor: GPIO APP pin 80 — GPIO / Arduino D21 (JP2)
+
+You can [`read`](crate::Reg::read) this register and get [`gp_emmc_data3::R`]. You can [`reset`](crate::Reg::reset), [`write`](crate::Reg::write), [`write_with_zero`](crate::Reg::write_with_zero) this register using [`gp_emmc_data3::W`]. You can also [`modify`](crate::Reg::modify) this register. See [API](https://docs.rs/svd2rust/#read--modify--write-api).
+
+For information about available fields see [`mod@gp_emmc_data3`] module*/
+#[doc(alias = "GP_EMMC_DATA3")]
+pub type GpEmmcData3 = crate::Reg<gp_emmc_data3::GpEmmcData3Spec>;
+///GPIO APP pin 80 — GPIO / Arduino D21 (JP2)
+pub mod gp_emmc_data3;
+/**GP_EMMC_DATA2 (rw) register accessor: GPIO APP pin 79 — GPIO / Arduino D20 (JP2)
+
+You can [`read`](crate::Reg::read) this register and get [`gp_emmc_data2::R`]. You can [`reset`](crate::Reg::reset), [`write`](crate::Reg::write), [`write_with_zero`](crate::Reg::write_with_zero) this register using [`gp_emmc_data2::W`]. You can also [`modify`](crate::Reg::modify) this register. See [API](https://docs.rs/svd2rust/#read--modify--write-api).
+
+For information about available fields see [`mod@gp_emmc_data2`] module*/
+#[doc(alias = "GP_EMMC_DATA2")]
+pub type GpEmmcData2 = crate::Reg<gp_emmc_data2::GpEmmcData2Spec>;
+///GPIO APP pin 79 — GPIO / Arduino D20 (JP2)
+pub mod gp_emmc_data2;
+/**GP_I2S0_DATA_IN (rw) register accessor: GPIO APP pin 95 — I2S0_DATA_IN / Arduino D19 (JP2)
+
+You can [`read`](crate::Reg::read) this register and get [`gp_i2s0_data_in::R`]. You can [`reset`](crate::Reg::reset), [`write`](crate::Reg::write), [`write_with_zero`](crate::Reg::write_with_zero) this register using [`gp_i2s0_data_in::W`]. You can also [`modify`](crate::Reg::modify) this register. See [API](https://docs.rs/svd2rust/#read--modify--write-api).
+
+For information about available fields see [`mod@gp_i2s0_data_in`] module*/
+#[doc(alias = "GP_I2S0_DATA_IN")]
+pub type GpI2s0DataIn = crate::Reg<gp_i2s0_data_in::GpI2s0DataInSpec>;
+///GPIO APP pin 95 — I2S0_DATA_IN / Arduino D19 (JP2)
+pub mod gp_i2s0_data_in;
+/**GP_I2S0_DATA_OUT (rw) register accessor: GPIO APP pin 96 — I2S0_DATA_OUT / Arduino D18 (JP2)
+
+You can [`read`](crate::Reg::read) this register and get [`gp_i2s0_data_out::R`]. You can [`reset`](crate::Reg::reset), [`write`](crate::Reg::write), [`write_with_zero`](crate::Reg::write_with_zero) this register using [`gp_i2s0_data_out::W`]. You can also [`modify`](crate::Reg::modify) this register. See [API](https://docs.rs/svd2rust/#read--modify--write-api).
+
+For information about available fields see [`mod@gp_i2s0_data_out`] module*/
+#[doc(alias = "GP_I2S0_DATA_OUT")]
+pub type GpI2s0DataOut = crate::Reg<gp_i2s0_data_out::GpI2s0DataOutSpec>;
+///GPIO APP pin 96 — I2S0_DATA_OUT / Arduino D18 (JP2)
+pub mod gp_i2s0_data_out;
+/**GP_EMMC_DATA1 (rw) register accessor: GPIO APP pin 78 — SPI5_MISO / Arduino D17 (JP2)
+
+You can [`read`](crate::Reg::read) this register and get [`gp_emmc_data1::R`]. You can [`reset`](crate::Reg::reset), [`write`](crate::Reg::write), [`write_with_zero`](crate::Reg::write_with_zero) this register using [`gp_emmc_data1::W`]. You can also [`modify`](crate::Reg::modify) this register. See [API](https://docs.rs/svd2rust/#read--modify--write-api).
+
+For information about available fields see [`mod@gp_emmc_data1`] module*/
+#[doc(alias = "GP_EMMC_DATA1")]
+pub type GpEmmcData1 = crate::Reg<gp_emmc_data1::GpEmmcData1Spec>;
+///GPIO APP pin 78 — SPI5_MISO / Arduino D17 (JP2)
+pub mod gp_emmc_data1;
+/**GP_EMMC_DATA0 (rw) register accessor: GPIO APP pin 77 — SPI5_MOSI / Arduino D16 (JP2)
+
+You can [`read`](crate::Reg::read) this register and get [`gp_emmc_data0::R`]. You can [`reset`](crate::Reg::reset), [`write`](crate::Reg::write), [`write_with_zero`](crate::Reg::write_with_zero) this register using [`gp_emmc_data0::W`]. You can also [`modify`](crate::Reg::modify) this register. See [API](https://docs.rs/svd2rust/#read--modify--write-api).
+
+For information about available fields see [`mod@gp_emmc_data0`] module*/
+#[doc(alias = "GP_EMMC_DATA0")]
+pub type GpEmmcData0 = crate::Reg<gp_emmc_data0::GpEmmcData0Spec>;
+///GPIO APP pin 77 — SPI5_MOSI / Arduino D16 (JP2)
+pub mod gp_emmc_data0;
+/**GP_I2C0_BCK (rw) register accessor: GPIO SYS pin 44 — I2C0_SCL / Arduino D15 (JP2)
+
+You can [`read`](crate::Reg::read) this register and get [`gp_i2c0_bck::R`]. You can [`reset`](crate::Reg::reset), [`write`](crate::Reg::write), [`write_with_zero`](crate::Reg::write_with_zero) this register using [`gp_i2c0_bck::W`]. You can also [`modify`](crate::Reg::modify) this register. See [API](https://docs.rs/svd2rust/#read--modify--write-api).
+
+For information about available fields see [`mod@gp_i2c0_bck`] module*/
+#[doc(alias = "GP_I2C0_BCK")]
+pub type GpI2c0Bck = crate::Reg<gp_i2c0_bck::GpI2c0BckSpec>;
+///GPIO SYS pin 44 — I2C0_SCL / Arduino D15 (JP2)
+pub mod gp_i2c0_bck;
+/**GP_I2C0_BDT (rw) register accessor: GPIO SYS pin 45 — I2C0_SDA / Arduino D14 (JP2)
+
+You can [`read`](crate::Reg::read) this register and get [`gp_i2c0_bdt::R`]. You can [`reset`](crate::Reg::reset), [`write`](crate::Reg::write), [`write_with_zero`](crate::Reg::write_with_zero) this register using [`gp_i2c0_bdt::W`]. You can also [`modify`](crate::Reg::modify) this register. See [API](https://docs.rs/svd2rust/#read--modify--write-api).
+
+For information about available fields see [`mod@gp_i2c0_bdt`] module*/
+#[doc(alias = "GP_I2C0_BDT")]
+pub type GpI2c0Bdt = crate::Reg<gp_i2c0_bdt::GpI2c0BdtSpec>;
+///GPIO SYS pin 45 — I2C0_SDA / Arduino D14 (JP2)
+pub mod gp_i2c0_bdt;

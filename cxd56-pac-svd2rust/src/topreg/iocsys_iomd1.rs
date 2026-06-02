@@ -2,11 +2,20 @@
 pub type R = crate::R<IocsysIomd1Spec>;
 ///Register `IOCSYS_IOMD1` writer
 pub type W = crate::W<IocsysIomd1Spec>;
+///Field `SEN_IRQ_IN` reader - Mode select for SEN_IRQ_IN pin (SEN_IRQ_IN = Func1)
+pub type SenIrqInR = crate::FieldReader;
+///Field `SEN_IRQ_IN` writer - Mode select for SEN_IRQ_IN pin (SEN_IRQ_IN = Func1)
+pub type SenIrqInW<'a, REG> = crate::FieldWriter<'a, REG, 2>;
 ///Field `I2C0` reader - Mode select for I2C0_BCK / I2C0_BDT (I2C0 = Func1)
 pub type I2c0R = crate::FieldReader;
 ///Field `I2C0` writer - Mode select for I2C0_BCK / I2C0_BDT (I2C0 = Func1)
 pub type I2c0W<'a, REG> = crate::FieldWriter<'a, REG, 2>;
 impl R {
+    ///Bits 8:9 - Mode select for SEN_IRQ_IN pin (SEN_IRQ_IN = Func1)
+    #[inline(always)]
+    pub fn sen_irq_in(&self) -> SenIrqInR {
+        SenIrqInR::new(((self.bits >> 8) & 3) as u8)
+    }
     ///Bits 18:19 - Mode select for I2C0_BCK / I2C0_BDT (I2C0 = Func1)
     #[inline(always)]
     pub fn i2c0(&self) -> I2c0R {
@@ -14,6 +23,11 @@ impl R {
     }
 }
 impl W {
+    ///Bits 8:9 - Mode select for SEN_IRQ_IN pin (SEN_IRQ_IN = Func1)
+    #[inline(always)]
+    pub fn sen_irq_in(&mut self) -> SenIrqInW<'_, IocsysIomd1Spec> {
+        SenIrqInW::new(self, 8)
+    }
     ///Bits 18:19 - Mode select for I2C0_BCK / I2C0_BDT (I2C0 = Func1)
     #[inline(always)]
     pub fn i2c0(&mut self) -> I2c0W<'_, IocsysIomd1Spec> {
