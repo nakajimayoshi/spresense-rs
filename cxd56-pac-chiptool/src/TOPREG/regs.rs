@@ -959,6 +959,558 @@ impl defmt::Format for CRG_INT_CLR1 {
         )
     }
 }
+///GPIO APP pin 75 — SPI5_SCK / Arduino D23 (JP1).
+#[repr(transparent)]
+#[derive(Copy, Clone, Eq, PartialEq)]
+pub struct GP_EMMC_CLK(pub u32);
+impl GP_EMMC_CLK {
+    ///Sampled pin level (read).
+    #[must_use]
+    #[inline(always)]
+    pub const fn IN(&self) -> bool {
+        let val = (self.0 >> 0usize) & 0x01;
+        val != 0
+    }
+    ///Sampled pin level (read).
+    #[inline(always)]
+    pub const fn set_IN(&mut self, val: bool) {
+        self.0 = (self.0 & !(0x01 << 0usize)) | (((val as u32) & 0x01) << 0usize);
+    }
+    ///Output data.
+    #[must_use]
+    #[inline(always)]
+    pub const fn OUT(&self) -> bool {
+        let val = (self.0 >> 8usize) & 0x01;
+        val != 0
+    }
+    ///Output data.
+    #[inline(always)]
+    pub const fn set_OUT(&mut self, val: bool) {
+        self.0 = (self.0 & !(0x01 << 8usize)) | (((val as u32) & 0x01) << 8usize);
+    }
+    ///Output enable, active-low (0 = drive output, 1 = high-Z input).
+    #[must_use]
+    #[inline(always)]
+    pub const fn DIR(&self) -> bool {
+        let val = (self.0 >> 16usize) & 0x01;
+        val != 0
+    }
+    ///Output enable, active-low (0 = drive output, 1 = high-Z input).
+    #[inline(always)]
+    pub const fn set_DIR(&mut self, val: bool) {
+        self.0 = (self.0 & !(0x01 << 16usize)) | (((val as u32) & 0x01) << 16usize);
+    }
+}
+impl Default for GP_EMMC_CLK {
+    #[inline(always)]
+    fn default() -> GP_EMMC_CLK {
+        GP_EMMC_CLK(0)
+    }
+}
+impl core::fmt::Debug for GP_EMMC_CLK {
+    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+        f.debug_struct("GP_EMMC_CLK")
+            .field("IN", &self.IN())
+            .field("OUT", &self.OUT())
+            .field("DIR", &self.DIR())
+            .finish()
+    }
+}
+#[cfg(feature = "defmt")]
+impl defmt::Format for GP_EMMC_CLK {
+    fn format(&self, f: defmt::Formatter) {
+        defmt::write!(
+            f,
+            "GP_EMMC_CLK {{ IN: {=bool:?}, OUT: {=bool:?}, DIR: {=bool:?} }}",
+            self.IN(),
+            self.OUT(),
+            self.DIR()
+        )
+    }
+}
+///GPIO APP pin 76 — SPI5_CS_X / Arduino D24 (JP1).
+#[repr(transparent)]
+#[derive(Copy, Clone, Eq, PartialEq)]
+pub struct GP_EMMC_CMD(pub u32);
+impl GP_EMMC_CMD {
+    ///Sampled pin level (read).
+    #[must_use]
+    #[inline(always)]
+    pub const fn IN(&self) -> bool {
+        let val = (self.0 >> 0usize) & 0x01;
+        val != 0
+    }
+    ///Sampled pin level (read).
+    #[inline(always)]
+    pub const fn set_IN(&mut self, val: bool) {
+        self.0 = (self.0 & !(0x01 << 0usize)) | (((val as u32) & 0x01) << 0usize);
+    }
+    ///Output data.
+    #[must_use]
+    #[inline(always)]
+    pub const fn OUT(&self) -> bool {
+        let val = (self.0 >> 8usize) & 0x01;
+        val != 0
+    }
+    ///Output data.
+    #[inline(always)]
+    pub const fn set_OUT(&mut self, val: bool) {
+        self.0 = (self.0 & !(0x01 << 8usize)) | (((val as u32) & 0x01) << 8usize);
+    }
+    ///Output enable, active-low (0 = drive output, 1 = high-Z input).
+    #[must_use]
+    #[inline(always)]
+    pub const fn DIR(&self) -> bool {
+        let val = (self.0 >> 16usize) & 0x01;
+        val != 0
+    }
+    ///Output enable, active-low (0 = drive output, 1 = high-Z input).
+    #[inline(always)]
+    pub const fn set_DIR(&mut self, val: bool) {
+        self.0 = (self.0 & !(0x01 << 16usize)) | (((val as u32) & 0x01) << 16usize);
+    }
+}
+impl Default for GP_EMMC_CMD {
+    #[inline(always)]
+    fn default() -> GP_EMMC_CMD {
+        GP_EMMC_CMD(0)
+    }
+}
+impl core::fmt::Debug for GP_EMMC_CMD {
+    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+        f.debug_struct("GP_EMMC_CMD")
+            .field("IN", &self.IN())
+            .field("OUT", &self.OUT())
+            .field("DIR", &self.DIR())
+            .finish()
+    }
+}
+#[cfg(feature = "defmt")]
+impl defmt::Format for GP_EMMC_CMD {
+    fn format(&self, f: defmt::Formatter) {
+        defmt::write!(
+            f,
+            "GP_EMMC_CMD {{ IN: {=bool:?}, OUT: {=bool:?}, DIR: {=bool:?} }}",
+            self.IN(),
+            self.OUT(),
+            self.DIR()
+        )
+    }
+}
+///GPIO APP pin 77 — SPI5_MOSI / Arduino D16 (JP2).
+#[repr(transparent)]
+#[derive(Copy, Clone, Eq, PartialEq)]
+pub struct GP_EMMC_DATA0(pub u32);
+impl GP_EMMC_DATA0 {
+    ///Sampled pin level (read).
+    #[must_use]
+    #[inline(always)]
+    pub const fn IN(&self) -> bool {
+        let val = (self.0 >> 0usize) & 0x01;
+        val != 0
+    }
+    ///Sampled pin level (read).
+    #[inline(always)]
+    pub const fn set_IN(&mut self, val: bool) {
+        self.0 = (self.0 & !(0x01 << 0usize)) | (((val as u32) & 0x01) << 0usize);
+    }
+    ///Output data.
+    #[must_use]
+    #[inline(always)]
+    pub const fn OUT(&self) -> bool {
+        let val = (self.0 >> 8usize) & 0x01;
+        val != 0
+    }
+    ///Output data.
+    #[inline(always)]
+    pub const fn set_OUT(&mut self, val: bool) {
+        self.0 = (self.0 & !(0x01 << 8usize)) | (((val as u32) & 0x01) << 8usize);
+    }
+    ///Output enable, active-low (0 = drive output, 1 = high-Z input).
+    #[must_use]
+    #[inline(always)]
+    pub const fn DIR(&self) -> bool {
+        let val = (self.0 >> 16usize) & 0x01;
+        val != 0
+    }
+    ///Output enable, active-low (0 = drive output, 1 = high-Z input).
+    #[inline(always)]
+    pub const fn set_DIR(&mut self, val: bool) {
+        self.0 = (self.0 & !(0x01 << 16usize)) | (((val as u32) & 0x01) << 16usize);
+    }
+}
+impl Default for GP_EMMC_DATA0 {
+    #[inline(always)]
+    fn default() -> GP_EMMC_DATA0 {
+        GP_EMMC_DATA0(0)
+    }
+}
+impl core::fmt::Debug for GP_EMMC_DATA0 {
+    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+        f.debug_struct("GP_EMMC_DATA0")
+            .field("IN", &self.IN())
+            .field("OUT", &self.OUT())
+            .field("DIR", &self.DIR())
+            .finish()
+    }
+}
+#[cfg(feature = "defmt")]
+impl defmt::Format for GP_EMMC_DATA0 {
+    fn format(&self, f: defmt::Formatter) {
+        defmt::write!(
+            f,
+            "GP_EMMC_DATA0 {{ IN: {=bool:?}, OUT: {=bool:?}, DIR: {=bool:?} }}",
+            self.IN(),
+            self.OUT(),
+            self.DIR()
+        )
+    }
+}
+///GPIO APP pin 78 — SPI5_MISO / Arduino D17 (JP2).
+#[repr(transparent)]
+#[derive(Copy, Clone, Eq, PartialEq)]
+pub struct GP_EMMC_DATA1(pub u32);
+impl GP_EMMC_DATA1 {
+    ///Sampled pin level (read).
+    #[must_use]
+    #[inline(always)]
+    pub const fn IN(&self) -> bool {
+        let val = (self.0 >> 0usize) & 0x01;
+        val != 0
+    }
+    ///Sampled pin level (read).
+    #[inline(always)]
+    pub const fn set_IN(&mut self, val: bool) {
+        self.0 = (self.0 & !(0x01 << 0usize)) | (((val as u32) & 0x01) << 0usize);
+    }
+    ///Output data.
+    #[must_use]
+    #[inline(always)]
+    pub const fn OUT(&self) -> bool {
+        let val = (self.0 >> 8usize) & 0x01;
+        val != 0
+    }
+    ///Output data.
+    #[inline(always)]
+    pub const fn set_OUT(&mut self, val: bool) {
+        self.0 = (self.0 & !(0x01 << 8usize)) | (((val as u32) & 0x01) << 8usize);
+    }
+    ///Output enable, active-low (0 = drive output, 1 = high-Z input).
+    #[must_use]
+    #[inline(always)]
+    pub const fn DIR(&self) -> bool {
+        let val = (self.0 >> 16usize) & 0x01;
+        val != 0
+    }
+    ///Output enable, active-low (0 = drive output, 1 = high-Z input).
+    #[inline(always)]
+    pub const fn set_DIR(&mut self, val: bool) {
+        self.0 = (self.0 & !(0x01 << 16usize)) | (((val as u32) & 0x01) << 16usize);
+    }
+}
+impl Default for GP_EMMC_DATA1 {
+    #[inline(always)]
+    fn default() -> GP_EMMC_DATA1 {
+        GP_EMMC_DATA1(0)
+    }
+}
+impl core::fmt::Debug for GP_EMMC_DATA1 {
+    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+        f.debug_struct("GP_EMMC_DATA1")
+            .field("IN", &self.IN())
+            .field("OUT", &self.OUT())
+            .field("DIR", &self.DIR())
+            .finish()
+    }
+}
+#[cfg(feature = "defmt")]
+impl defmt::Format for GP_EMMC_DATA1 {
+    fn format(&self, f: defmt::Formatter) {
+        defmt::write!(
+            f,
+            "GP_EMMC_DATA1 {{ IN: {=bool:?}, OUT: {=bool:?}, DIR: {=bool:?} }}",
+            self.IN(),
+            self.OUT(),
+            self.DIR()
+        )
+    }
+}
+///GPIO APP pin 79 — GPIO / Arduino D20 (JP2).
+#[repr(transparent)]
+#[derive(Copy, Clone, Eq, PartialEq)]
+pub struct GP_EMMC_DATA2(pub u32);
+impl GP_EMMC_DATA2 {
+    ///Sampled pin level (read).
+    #[must_use]
+    #[inline(always)]
+    pub const fn IN(&self) -> bool {
+        let val = (self.0 >> 0usize) & 0x01;
+        val != 0
+    }
+    ///Sampled pin level (read).
+    #[inline(always)]
+    pub const fn set_IN(&mut self, val: bool) {
+        self.0 = (self.0 & !(0x01 << 0usize)) | (((val as u32) & 0x01) << 0usize);
+    }
+    ///Output data.
+    #[must_use]
+    #[inline(always)]
+    pub const fn OUT(&self) -> bool {
+        let val = (self.0 >> 8usize) & 0x01;
+        val != 0
+    }
+    ///Output data.
+    #[inline(always)]
+    pub const fn set_OUT(&mut self, val: bool) {
+        self.0 = (self.0 & !(0x01 << 8usize)) | (((val as u32) & 0x01) << 8usize);
+    }
+    ///Output enable, active-low (0 = drive output, 1 = high-Z input).
+    #[must_use]
+    #[inline(always)]
+    pub const fn DIR(&self) -> bool {
+        let val = (self.0 >> 16usize) & 0x01;
+        val != 0
+    }
+    ///Output enable, active-low (0 = drive output, 1 = high-Z input).
+    #[inline(always)]
+    pub const fn set_DIR(&mut self, val: bool) {
+        self.0 = (self.0 & !(0x01 << 16usize)) | (((val as u32) & 0x01) << 16usize);
+    }
+}
+impl Default for GP_EMMC_DATA2 {
+    #[inline(always)]
+    fn default() -> GP_EMMC_DATA2 {
+        GP_EMMC_DATA2(0)
+    }
+}
+impl core::fmt::Debug for GP_EMMC_DATA2 {
+    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+        f.debug_struct("GP_EMMC_DATA2")
+            .field("IN", &self.IN())
+            .field("OUT", &self.OUT())
+            .field("DIR", &self.DIR())
+            .finish()
+    }
+}
+#[cfg(feature = "defmt")]
+impl defmt::Format for GP_EMMC_DATA2 {
+    fn format(&self, f: defmt::Formatter) {
+        defmt::write!(
+            f,
+            "GP_EMMC_DATA2 {{ IN: {=bool:?}, OUT: {=bool:?}, DIR: {=bool:?} }}",
+            self.IN(),
+            self.OUT(),
+            self.DIR()
+        )
+    }
+}
+///GPIO APP pin 80 — GPIO / Arduino D21 (JP2).
+#[repr(transparent)]
+#[derive(Copy, Clone, Eq, PartialEq)]
+pub struct GP_EMMC_DATA3(pub u32);
+impl GP_EMMC_DATA3 {
+    ///Sampled pin level (read).
+    #[must_use]
+    #[inline(always)]
+    pub const fn IN(&self) -> bool {
+        let val = (self.0 >> 0usize) & 0x01;
+        val != 0
+    }
+    ///Sampled pin level (read).
+    #[inline(always)]
+    pub const fn set_IN(&mut self, val: bool) {
+        self.0 = (self.0 & !(0x01 << 0usize)) | (((val as u32) & 0x01) << 0usize);
+    }
+    ///Output data.
+    #[must_use]
+    #[inline(always)]
+    pub const fn OUT(&self) -> bool {
+        let val = (self.0 >> 8usize) & 0x01;
+        val != 0
+    }
+    ///Output data.
+    #[inline(always)]
+    pub const fn set_OUT(&mut self, val: bool) {
+        self.0 = (self.0 & !(0x01 << 8usize)) | (((val as u32) & 0x01) << 8usize);
+    }
+    ///Output enable, active-low (0 = drive output, 1 = high-Z input).
+    #[must_use]
+    #[inline(always)]
+    pub const fn DIR(&self) -> bool {
+        let val = (self.0 >> 16usize) & 0x01;
+        val != 0
+    }
+    ///Output enable, active-low (0 = drive output, 1 = high-Z input).
+    #[inline(always)]
+    pub const fn set_DIR(&mut self, val: bool) {
+        self.0 = (self.0 & !(0x01 << 16usize)) | (((val as u32) & 0x01) << 16usize);
+    }
+}
+impl Default for GP_EMMC_DATA3 {
+    #[inline(always)]
+    fn default() -> GP_EMMC_DATA3 {
+        GP_EMMC_DATA3(0)
+    }
+}
+impl core::fmt::Debug for GP_EMMC_DATA3 {
+    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+        f.debug_struct("GP_EMMC_DATA3")
+            .field("IN", &self.IN())
+            .field("OUT", &self.OUT())
+            .field("DIR", &self.DIR())
+            .finish()
+    }
+}
+#[cfg(feature = "defmt")]
+impl defmt::Format for GP_EMMC_DATA3 {
+    fn format(&self, f: defmt::Formatter) {
+        defmt::write!(
+            f,
+            "GP_EMMC_DATA3 {{ IN: {=bool:?}, OUT: {=bool:?}, DIR: {=bool:?} }}",
+            self.IN(),
+            self.OUT(),
+            self.DIR()
+        )
+    }
+}
+///GPIO SYS pin 44 — I2C0_SCL / Arduino D15 (JP2).
+#[repr(transparent)]
+#[derive(Copy, Clone, Eq, PartialEq)]
+pub struct GP_I2C0_BCK(pub u32);
+impl GP_I2C0_BCK {
+    ///Sampled pin level (read).
+    #[must_use]
+    #[inline(always)]
+    pub const fn IN(&self) -> bool {
+        let val = (self.0 >> 0usize) & 0x01;
+        val != 0
+    }
+    ///Sampled pin level (read).
+    #[inline(always)]
+    pub const fn set_IN(&mut self, val: bool) {
+        self.0 = (self.0 & !(0x01 << 0usize)) | (((val as u32) & 0x01) << 0usize);
+    }
+    ///Output data.
+    #[must_use]
+    #[inline(always)]
+    pub const fn OUT(&self) -> bool {
+        let val = (self.0 >> 8usize) & 0x01;
+        val != 0
+    }
+    ///Output data.
+    #[inline(always)]
+    pub const fn set_OUT(&mut self, val: bool) {
+        self.0 = (self.0 & !(0x01 << 8usize)) | (((val as u32) & 0x01) << 8usize);
+    }
+    ///Output enable, active-low (0 = drive output, 1 = high-Z input).
+    #[must_use]
+    #[inline(always)]
+    pub const fn DIR(&self) -> bool {
+        let val = (self.0 >> 16usize) & 0x01;
+        val != 0
+    }
+    ///Output enable, active-low (0 = drive output, 1 = high-Z input).
+    #[inline(always)]
+    pub const fn set_DIR(&mut self, val: bool) {
+        self.0 = (self.0 & !(0x01 << 16usize)) | (((val as u32) & 0x01) << 16usize);
+    }
+}
+impl Default for GP_I2C0_BCK {
+    #[inline(always)]
+    fn default() -> GP_I2C0_BCK {
+        GP_I2C0_BCK(0)
+    }
+}
+impl core::fmt::Debug for GP_I2C0_BCK {
+    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+        f.debug_struct("GP_I2C0_BCK")
+            .field("IN", &self.IN())
+            .field("OUT", &self.OUT())
+            .field("DIR", &self.DIR())
+            .finish()
+    }
+}
+#[cfg(feature = "defmt")]
+impl defmt::Format for GP_I2C0_BCK {
+    fn format(&self, f: defmt::Formatter) {
+        defmt::write!(
+            f,
+            "GP_I2C0_BCK {{ IN: {=bool:?}, OUT: {=bool:?}, DIR: {=bool:?} }}",
+            self.IN(),
+            self.OUT(),
+            self.DIR()
+        )
+    }
+}
+///GPIO SYS pin 45 — I2C0_SDA / Arduino D14 (JP2).
+#[repr(transparent)]
+#[derive(Copy, Clone, Eq, PartialEq)]
+pub struct GP_I2C0_BDT(pub u32);
+impl GP_I2C0_BDT {
+    ///Sampled pin level (read).
+    #[must_use]
+    #[inline(always)]
+    pub const fn IN(&self) -> bool {
+        let val = (self.0 >> 0usize) & 0x01;
+        val != 0
+    }
+    ///Sampled pin level (read).
+    #[inline(always)]
+    pub const fn set_IN(&mut self, val: bool) {
+        self.0 = (self.0 & !(0x01 << 0usize)) | (((val as u32) & 0x01) << 0usize);
+    }
+    ///Output data.
+    #[must_use]
+    #[inline(always)]
+    pub const fn OUT(&self) -> bool {
+        let val = (self.0 >> 8usize) & 0x01;
+        val != 0
+    }
+    ///Output data.
+    #[inline(always)]
+    pub const fn set_OUT(&mut self, val: bool) {
+        self.0 = (self.0 & !(0x01 << 8usize)) | (((val as u32) & 0x01) << 8usize);
+    }
+    ///Output enable, active-low (0 = drive output, 1 = high-Z input).
+    #[must_use]
+    #[inline(always)]
+    pub const fn DIR(&self) -> bool {
+        let val = (self.0 >> 16usize) & 0x01;
+        val != 0
+    }
+    ///Output enable, active-low (0 = drive output, 1 = high-Z input).
+    #[inline(always)]
+    pub const fn set_DIR(&mut self, val: bool) {
+        self.0 = (self.0 & !(0x01 << 16usize)) | (((val as u32) & 0x01) << 16usize);
+    }
+}
+impl Default for GP_I2C0_BDT {
+    #[inline(always)]
+    fn default() -> GP_I2C0_BDT {
+        GP_I2C0_BDT(0)
+    }
+}
+impl core::fmt::Debug for GP_I2C0_BDT {
+    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+        f.debug_struct("GP_I2C0_BDT")
+            .field("IN", &self.IN())
+            .field("OUT", &self.OUT())
+            .field("DIR", &self.DIR())
+            .finish()
+    }
+}
+#[cfg(feature = "defmt")]
+impl defmt::Format for GP_I2C0_BDT {
+    fn format(&self, f: defmt::Formatter) {
+        defmt::write!(
+            f,
+            "GP_I2C0_BDT {{ IN: {=bool:?}, OUT: {=bool:?}, DIR: {=bool:?} }}",
+            self.IN(),
+            self.OUT(),
+            self.DIR()
+        )
+    }
+}
 ///GPIO SYS pin 1 — I2C4 clock / Arduino D14.
 #[repr(transparent)]
 #[derive(Copy, Clone, Eq, PartialEq)]
@@ -1022,6 +1574,282 @@ impl defmt::Format for GP_I2C4_BCK {
         defmt::write!(
             f,
             "GP_I2C4_BCK {{ IN: {=bool:?}, OUT: {=bool:?}, DIR: {=bool:?} }}",
+            self.IN(),
+            self.OUT(),
+            self.DIR()
+        )
+    }
+}
+///GPIO APP pin 93 — I2S0_BCK / Arduino D26 (JP1).
+#[repr(transparent)]
+#[derive(Copy, Clone, Eq, PartialEq)]
+pub struct GP_I2S0_BCK(pub u32);
+impl GP_I2S0_BCK {
+    ///Sampled pin level (read).
+    #[must_use]
+    #[inline(always)]
+    pub const fn IN(&self) -> bool {
+        let val = (self.0 >> 0usize) & 0x01;
+        val != 0
+    }
+    ///Sampled pin level (read).
+    #[inline(always)]
+    pub const fn set_IN(&mut self, val: bool) {
+        self.0 = (self.0 & !(0x01 << 0usize)) | (((val as u32) & 0x01) << 0usize);
+    }
+    ///Output data.
+    #[must_use]
+    #[inline(always)]
+    pub const fn OUT(&self) -> bool {
+        let val = (self.0 >> 8usize) & 0x01;
+        val != 0
+    }
+    ///Output data.
+    #[inline(always)]
+    pub const fn set_OUT(&mut self, val: bool) {
+        self.0 = (self.0 & !(0x01 << 8usize)) | (((val as u32) & 0x01) << 8usize);
+    }
+    ///Output enable, active-low (0 = drive output, 1 = high-Z input).
+    #[must_use]
+    #[inline(always)]
+    pub const fn DIR(&self) -> bool {
+        let val = (self.0 >> 16usize) & 0x01;
+        val != 0
+    }
+    ///Output enable, active-low (0 = drive output, 1 = high-Z input).
+    #[inline(always)]
+    pub const fn set_DIR(&mut self, val: bool) {
+        self.0 = (self.0 & !(0x01 << 16usize)) | (((val as u32) & 0x01) << 16usize);
+    }
+}
+impl Default for GP_I2S0_BCK {
+    #[inline(always)]
+    fn default() -> GP_I2S0_BCK {
+        GP_I2S0_BCK(0)
+    }
+}
+impl core::fmt::Debug for GP_I2S0_BCK {
+    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+        f.debug_struct("GP_I2S0_BCK")
+            .field("IN", &self.IN())
+            .field("OUT", &self.OUT())
+            .field("DIR", &self.DIR())
+            .finish()
+    }
+}
+#[cfg(feature = "defmt")]
+impl defmt::Format for GP_I2S0_BCK {
+    fn format(&self, f: defmt::Formatter) {
+        defmt::write!(
+            f,
+            "GP_I2S0_BCK {{ IN: {=bool:?}, OUT: {=bool:?}, DIR: {=bool:?} }}",
+            self.IN(),
+            self.OUT(),
+            self.DIR()
+        )
+    }
+}
+///GPIO APP pin 95 — I2S0_DATA_IN / Arduino D19 (JP2).
+#[repr(transparent)]
+#[derive(Copy, Clone, Eq, PartialEq)]
+pub struct GP_I2S0_DATA_IN(pub u32);
+impl GP_I2S0_DATA_IN {
+    ///Sampled pin level (read).
+    #[must_use]
+    #[inline(always)]
+    pub const fn IN(&self) -> bool {
+        let val = (self.0 >> 0usize) & 0x01;
+        val != 0
+    }
+    ///Sampled pin level (read).
+    #[inline(always)]
+    pub const fn set_IN(&mut self, val: bool) {
+        self.0 = (self.0 & !(0x01 << 0usize)) | (((val as u32) & 0x01) << 0usize);
+    }
+    ///Output data.
+    #[must_use]
+    #[inline(always)]
+    pub const fn OUT(&self) -> bool {
+        let val = (self.0 >> 8usize) & 0x01;
+        val != 0
+    }
+    ///Output data.
+    #[inline(always)]
+    pub const fn set_OUT(&mut self, val: bool) {
+        self.0 = (self.0 & !(0x01 << 8usize)) | (((val as u32) & 0x01) << 8usize);
+    }
+    ///Output enable, active-low (0 = drive output, 1 = high-Z input).
+    #[must_use]
+    #[inline(always)]
+    pub const fn DIR(&self) -> bool {
+        let val = (self.0 >> 16usize) & 0x01;
+        val != 0
+    }
+    ///Output enable, active-low (0 = drive output, 1 = high-Z input).
+    #[inline(always)]
+    pub const fn set_DIR(&mut self, val: bool) {
+        self.0 = (self.0 & !(0x01 << 16usize)) | (((val as u32) & 0x01) << 16usize);
+    }
+}
+impl Default for GP_I2S0_DATA_IN {
+    #[inline(always)]
+    fn default() -> GP_I2S0_DATA_IN {
+        GP_I2S0_DATA_IN(0)
+    }
+}
+impl core::fmt::Debug for GP_I2S0_DATA_IN {
+    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+        f.debug_struct("GP_I2S0_DATA_IN")
+            .field("IN", &self.IN())
+            .field("OUT", &self.OUT())
+            .field("DIR", &self.DIR())
+            .finish()
+    }
+}
+#[cfg(feature = "defmt")]
+impl defmt::Format for GP_I2S0_DATA_IN {
+    fn format(&self, f: defmt::Formatter) {
+        defmt::write!(
+            f,
+            "GP_I2S0_DATA_IN {{ IN: {=bool:?}, OUT: {=bool:?}, DIR: {=bool:?} }}",
+            self.IN(),
+            self.OUT(),
+            self.DIR()
+        )
+    }
+}
+///GPIO APP pin 96 — I2S0_DATA_OUT / Arduino D18 (JP2).
+#[repr(transparent)]
+#[derive(Copy, Clone, Eq, PartialEq)]
+pub struct GP_I2S0_DATA_OUT(pub u32);
+impl GP_I2S0_DATA_OUT {
+    ///Sampled pin level (read).
+    #[must_use]
+    #[inline(always)]
+    pub const fn IN(&self) -> bool {
+        let val = (self.0 >> 0usize) & 0x01;
+        val != 0
+    }
+    ///Sampled pin level (read).
+    #[inline(always)]
+    pub const fn set_IN(&mut self, val: bool) {
+        self.0 = (self.0 & !(0x01 << 0usize)) | (((val as u32) & 0x01) << 0usize);
+    }
+    ///Output data.
+    #[must_use]
+    #[inline(always)]
+    pub const fn OUT(&self) -> bool {
+        let val = (self.0 >> 8usize) & 0x01;
+        val != 0
+    }
+    ///Output data.
+    #[inline(always)]
+    pub const fn set_OUT(&mut self, val: bool) {
+        self.0 = (self.0 & !(0x01 << 8usize)) | (((val as u32) & 0x01) << 8usize);
+    }
+    ///Output enable, active-low (0 = drive output, 1 = high-Z input).
+    #[must_use]
+    #[inline(always)]
+    pub const fn DIR(&self) -> bool {
+        let val = (self.0 >> 16usize) & 0x01;
+        val != 0
+    }
+    ///Output enable, active-low (0 = drive output, 1 = high-Z input).
+    #[inline(always)]
+    pub const fn set_DIR(&mut self, val: bool) {
+        self.0 = (self.0 & !(0x01 << 16usize)) | (((val as u32) & 0x01) << 16usize);
+    }
+}
+impl Default for GP_I2S0_DATA_OUT {
+    #[inline(always)]
+    fn default() -> GP_I2S0_DATA_OUT {
+        GP_I2S0_DATA_OUT(0)
+    }
+}
+impl core::fmt::Debug for GP_I2S0_DATA_OUT {
+    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+        f.debug_struct("GP_I2S0_DATA_OUT")
+            .field("IN", &self.IN())
+            .field("OUT", &self.OUT())
+            .field("DIR", &self.DIR())
+            .finish()
+    }
+}
+#[cfg(feature = "defmt")]
+impl defmt::Format for GP_I2S0_DATA_OUT {
+    fn format(&self, f: defmt::Formatter) {
+        defmt::write!(
+            f,
+            "GP_I2S0_DATA_OUT {{ IN: {=bool:?}, OUT: {=bool:?}, DIR: {=bool:?} }}",
+            self.IN(),
+            self.OUT(),
+            self.DIR()
+        )
+    }
+}
+///GPIO APP pin 94 — I2S0_LRCK / Arduino D25 (JP1).
+#[repr(transparent)]
+#[derive(Copy, Clone, Eq, PartialEq)]
+pub struct GP_I2S0_LRCK(pub u32);
+impl GP_I2S0_LRCK {
+    ///Sampled pin level (read).
+    #[must_use]
+    #[inline(always)]
+    pub const fn IN(&self) -> bool {
+        let val = (self.0 >> 0usize) & 0x01;
+        val != 0
+    }
+    ///Sampled pin level (read).
+    #[inline(always)]
+    pub const fn set_IN(&mut self, val: bool) {
+        self.0 = (self.0 & !(0x01 << 0usize)) | (((val as u32) & 0x01) << 0usize);
+    }
+    ///Output data.
+    #[must_use]
+    #[inline(always)]
+    pub const fn OUT(&self) -> bool {
+        let val = (self.0 >> 8usize) & 0x01;
+        val != 0
+    }
+    ///Output data.
+    #[inline(always)]
+    pub const fn set_OUT(&mut self, val: bool) {
+        self.0 = (self.0 & !(0x01 << 8usize)) | (((val as u32) & 0x01) << 8usize);
+    }
+    ///Output enable, active-low (0 = drive output, 1 = high-Z input).
+    #[must_use]
+    #[inline(always)]
+    pub const fn DIR(&self) -> bool {
+        let val = (self.0 >> 16usize) & 0x01;
+        val != 0
+    }
+    ///Output enable, active-low (0 = drive output, 1 = high-Z input).
+    #[inline(always)]
+    pub const fn set_DIR(&mut self, val: bool) {
+        self.0 = (self.0 & !(0x01 << 16usize)) | (((val as u32) & 0x01) << 16usize);
+    }
+}
+impl Default for GP_I2S0_LRCK {
+    #[inline(always)]
+    fn default() -> GP_I2S0_LRCK {
+        GP_I2S0_LRCK(0)
+    }
+}
+impl core::fmt::Debug for GP_I2S0_LRCK {
+    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+        f.debug_struct("GP_I2S0_LRCK")
+            .field("IN", &self.IN())
+            .field("OUT", &self.OUT())
+            .field("DIR", &self.DIR())
+            .finish()
+    }
+}
+#[cfg(feature = "defmt")]
+impl defmt::Format for GP_I2S0_LRCK {
+    fn format(&self, f: defmt::Formatter) {
+        defmt::write!(
+            f,
+            "GP_I2S0_LRCK {{ IN: {=bool:?}, OUT: {=bool:?}, DIR: {=bool:?} }}",
             self.IN(),
             self.OUT(),
             self.DIR()
@@ -1304,6 +2132,351 @@ impl defmt::Format for GP_I2S1_LRCK {
         )
     }
 }
+///GPIO SYS pin 37 — SEN_IRQ / Arduino D22 (JP1).
+#[repr(transparent)]
+#[derive(Copy, Clone, Eq, PartialEq)]
+pub struct GP_SEN_IRQ_IN(pub u32);
+impl GP_SEN_IRQ_IN {
+    ///Sampled pin level (read).
+    #[must_use]
+    #[inline(always)]
+    pub const fn IN(&self) -> bool {
+        let val = (self.0 >> 0usize) & 0x01;
+        val != 0
+    }
+    ///Sampled pin level (read).
+    #[inline(always)]
+    pub const fn set_IN(&mut self, val: bool) {
+        self.0 = (self.0 & !(0x01 << 0usize)) | (((val as u32) & 0x01) << 0usize);
+    }
+    ///Output data.
+    #[must_use]
+    #[inline(always)]
+    pub const fn OUT(&self) -> bool {
+        let val = (self.0 >> 8usize) & 0x01;
+        val != 0
+    }
+    ///Output data.
+    #[inline(always)]
+    pub const fn set_OUT(&mut self, val: bool) {
+        self.0 = (self.0 & !(0x01 << 8usize)) | (((val as u32) & 0x01) << 8usize);
+    }
+    ///Output enable, active-low (0 = drive output, 1 = high-Z input).
+    #[must_use]
+    #[inline(always)]
+    pub const fn DIR(&self) -> bool {
+        let val = (self.0 >> 16usize) & 0x01;
+        val != 0
+    }
+    ///Output enable, active-low (0 = drive output, 1 = high-Z input).
+    #[inline(always)]
+    pub const fn set_DIR(&mut self, val: bool) {
+        self.0 = (self.0 & !(0x01 << 16usize)) | (((val as u32) & 0x01) << 16usize);
+    }
+}
+impl Default for GP_SEN_IRQ_IN {
+    #[inline(always)]
+    fn default() -> GP_SEN_IRQ_IN {
+        GP_SEN_IRQ_IN(0)
+    }
+}
+impl core::fmt::Debug for GP_SEN_IRQ_IN {
+    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+        f.debug_struct("GP_SEN_IRQ_IN")
+            .field("IN", &self.IN())
+            .field("OUT", &self.OUT())
+            .field("DIR", &self.DIR())
+            .finish()
+    }
+}
+#[cfg(feature = "defmt")]
+impl defmt::Format for GP_SEN_IRQ_IN {
+    fn format(&self, f: defmt::Formatter) {
+        defmt::write!(
+            f,
+            "GP_SEN_IRQ_IN {{ IN: {=bool:?}, OUT: {=bool:?}, DIR: {=bool:?} }}",
+            self.IN(),
+            self.OUT(),
+            self.DIR()
+        )
+    }
+}
+///GPIO APP pin 69 — UART2_CTS / Arduino D27 (JP1).
+#[repr(transparent)]
+#[derive(Copy, Clone, Eq, PartialEq)]
+pub struct GP_UART2_CTS(pub u32);
+impl GP_UART2_CTS {
+    ///Sampled pin level (read).
+    #[must_use]
+    #[inline(always)]
+    pub const fn IN(&self) -> bool {
+        let val = (self.0 >> 0usize) & 0x01;
+        val != 0
+    }
+    ///Sampled pin level (read).
+    #[inline(always)]
+    pub const fn set_IN(&mut self, val: bool) {
+        self.0 = (self.0 & !(0x01 << 0usize)) | (((val as u32) & 0x01) << 0usize);
+    }
+    ///Output data.
+    #[must_use]
+    #[inline(always)]
+    pub const fn OUT(&self) -> bool {
+        let val = (self.0 >> 8usize) & 0x01;
+        val != 0
+    }
+    ///Output data.
+    #[inline(always)]
+    pub const fn set_OUT(&mut self, val: bool) {
+        self.0 = (self.0 & !(0x01 << 8usize)) | (((val as u32) & 0x01) << 8usize);
+    }
+    ///Output enable, active-low (0 = drive output, 1 = high-Z input).
+    #[must_use]
+    #[inline(always)]
+    pub const fn DIR(&self) -> bool {
+        let val = (self.0 >> 16usize) & 0x01;
+        val != 0
+    }
+    ///Output enable, active-low (0 = drive output, 1 = high-Z input).
+    #[inline(always)]
+    pub const fn set_DIR(&mut self, val: bool) {
+        self.0 = (self.0 & !(0x01 << 16usize)) | (((val as u32) & 0x01) << 16usize);
+    }
+}
+impl Default for GP_UART2_CTS {
+    #[inline(always)]
+    fn default() -> GP_UART2_CTS {
+        GP_UART2_CTS(0)
+    }
+}
+impl core::fmt::Debug for GP_UART2_CTS {
+    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+        f.debug_struct("GP_UART2_CTS")
+            .field("IN", &self.IN())
+            .field("OUT", &self.OUT())
+            .field("DIR", &self.DIR())
+            .finish()
+    }
+}
+#[cfg(feature = "defmt")]
+impl defmt::Format for GP_UART2_CTS {
+    fn format(&self, f: defmt::Formatter) {
+        defmt::write!(
+            f,
+            "GP_UART2_CTS {{ IN: {=bool:?}, OUT: {=bool:?}, DIR: {=bool:?} }}",
+            self.IN(),
+            self.OUT(),
+            self.DIR()
+        )
+    }
+}
+///GPIO APP pin 70 — UART2_RTS / Arduino D28 (JP1).
+#[repr(transparent)]
+#[derive(Copy, Clone, Eq, PartialEq)]
+pub struct GP_UART2_RTS(pub u32);
+impl GP_UART2_RTS {
+    ///Sampled pin level (read).
+    #[must_use]
+    #[inline(always)]
+    pub const fn IN(&self) -> bool {
+        let val = (self.0 >> 0usize) & 0x01;
+        val != 0
+    }
+    ///Sampled pin level (read).
+    #[inline(always)]
+    pub const fn set_IN(&mut self, val: bool) {
+        self.0 = (self.0 & !(0x01 << 0usize)) | (((val as u32) & 0x01) << 0usize);
+    }
+    ///Output data.
+    #[must_use]
+    #[inline(always)]
+    pub const fn OUT(&self) -> bool {
+        let val = (self.0 >> 8usize) & 0x01;
+        val != 0
+    }
+    ///Output data.
+    #[inline(always)]
+    pub const fn set_OUT(&mut self, val: bool) {
+        self.0 = (self.0 & !(0x01 << 8usize)) | (((val as u32) & 0x01) << 8usize);
+    }
+    ///Output enable, active-low (0 = drive output, 1 = high-Z input).
+    #[must_use]
+    #[inline(always)]
+    pub const fn DIR(&self) -> bool {
+        let val = (self.0 >> 16usize) & 0x01;
+        val != 0
+    }
+    ///Output enable, active-low (0 = drive output, 1 = high-Z input).
+    #[inline(always)]
+    pub const fn set_DIR(&mut self, val: bool) {
+        self.0 = (self.0 & !(0x01 << 16usize)) | (((val as u32) & 0x01) << 16usize);
+    }
+}
+impl Default for GP_UART2_RTS {
+    #[inline(always)]
+    fn default() -> GP_UART2_RTS {
+        GP_UART2_RTS(0)
+    }
+}
+impl core::fmt::Debug for GP_UART2_RTS {
+    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+        f.debug_struct("GP_UART2_RTS")
+            .field("IN", &self.IN())
+            .field("OUT", &self.OUT())
+            .field("DIR", &self.DIR())
+            .finish()
+    }
+}
+#[cfg(feature = "defmt")]
+impl defmt::Format for GP_UART2_RTS {
+    fn format(&self, f: defmt::Formatter) {
+        defmt::write!(
+            f,
+            "GP_UART2_RTS {{ IN: {=bool:?}, OUT: {=bool:?}, DIR: {=bool:?} }}",
+            self.IN(),
+            self.OUT(),
+            self.DIR()
+        )
+    }
+}
+///GPIO APP pin 68 — UART2_RX / Arduino D00 (JP1).
+#[repr(transparent)]
+#[derive(Copy, Clone, Eq, PartialEq)]
+pub struct GP_UART2_RXD(pub u32);
+impl GP_UART2_RXD {
+    ///Sampled pin level (read).
+    #[must_use]
+    #[inline(always)]
+    pub const fn IN(&self) -> bool {
+        let val = (self.0 >> 0usize) & 0x01;
+        val != 0
+    }
+    ///Sampled pin level (read).
+    #[inline(always)]
+    pub const fn set_IN(&mut self, val: bool) {
+        self.0 = (self.0 & !(0x01 << 0usize)) | (((val as u32) & 0x01) << 0usize);
+    }
+    ///Output data.
+    #[must_use]
+    #[inline(always)]
+    pub const fn OUT(&self) -> bool {
+        let val = (self.0 >> 8usize) & 0x01;
+        val != 0
+    }
+    ///Output data.
+    #[inline(always)]
+    pub const fn set_OUT(&mut self, val: bool) {
+        self.0 = (self.0 & !(0x01 << 8usize)) | (((val as u32) & 0x01) << 8usize);
+    }
+    ///Output enable, active-low (0 = drive output, 1 = high-Z input).
+    #[must_use]
+    #[inline(always)]
+    pub const fn DIR(&self) -> bool {
+        let val = (self.0 >> 16usize) & 0x01;
+        val != 0
+    }
+    ///Output enable, active-low (0 = drive output, 1 = high-Z input).
+    #[inline(always)]
+    pub const fn set_DIR(&mut self, val: bool) {
+        self.0 = (self.0 & !(0x01 << 16usize)) | (((val as u32) & 0x01) << 16usize);
+    }
+}
+impl Default for GP_UART2_RXD {
+    #[inline(always)]
+    fn default() -> GP_UART2_RXD {
+        GP_UART2_RXD(0)
+    }
+}
+impl core::fmt::Debug for GP_UART2_RXD {
+    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+        f.debug_struct("GP_UART2_RXD")
+            .field("IN", &self.IN())
+            .field("OUT", &self.OUT())
+            .field("DIR", &self.DIR())
+            .finish()
+    }
+}
+#[cfg(feature = "defmt")]
+impl defmt::Format for GP_UART2_RXD {
+    fn format(&self, f: defmt::Formatter) {
+        defmt::write!(
+            f,
+            "GP_UART2_RXD {{ IN: {=bool:?}, OUT: {=bool:?}, DIR: {=bool:?} }}",
+            self.IN(),
+            self.OUT(),
+            self.DIR()
+        )
+    }
+}
+///GPIO APP pin 67 — UART2_TX / Arduino D01 (JP1).
+#[repr(transparent)]
+#[derive(Copy, Clone, Eq, PartialEq)]
+pub struct GP_UART2_TXD(pub u32);
+impl GP_UART2_TXD {
+    ///Sampled pin level (read).
+    #[must_use]
+    #[inline(always)]
+    pub const fn IN(&self) -> bool {
+        let val = (self.0 >> 0usize) & 0x01;
+        val != 0
+    }
+    ///Sampled pin level (read).
+    #[inline(always)]
+    pub const fn set_IN(&mut self, val: bool) {
+        self.0 = (self.0 & !(0x01 << 0usize)) | (((val as u32) & 0x01) << 0usize);
+    }
+    ///Output data.
+    #[must_use]
+    #[inline(always)]
+    pub const fn OUT(&self) -> bool {
+        let val = (self.0 >> 8usize) & 0x01;
+        val != 0
+    }
+    ///Output data.
+    #[inline(always)]
+    pub const fn set_OUT(&mut self, val: bool) {
+        self.0 = (self.0 & !(0x01 << 8usize)) | (((val as u32) & 0x01) << 8usize);
+    }
+    ///Output enable, active-low (0 = drive output, 1 = high-Z input).
+    #[must_use]
+    #[inline(always)]
+    pub const fn DIR(&self) -> bool {
+        let val = (self.0 >> 16usize) & 0x01;
+        val != 0
+    }
+    ///Output enable, active-low (0 = drive output, 1 = high-Z input).
+    #[inline(always)]
+    pub const fn set_DIR(&mut self, val: bool) {
+        self.0 = (self.0 & !(0x01 << 16usize)) | (((val as u32) & 0x01) << 16usize);
+    }
+}
+impl Default for GP_UART2_TXD {
+    #[inline(always)]
+    fn default() -> GP_UART2_TXD {
+        GP_UART2_TXD(0)
+    }
+}
+impl core::fmt::Debug for GP_UART2_TXD {
+    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+        f.debug_struct("GP_UART2_TXD")
+            .field("IN", &self.IN())
+            .field("OUT", &self.OUT())
+            .field("DIR", &self.DIR())
+            .finish()
+    }
+}
+#[cfg(feature = "defmt")]
+impl defmt::Format for GP_UART2_TXD {
+    fn format(&self, f: defmt::Formatter) {
+        defmt::write!(
+            f,
+            "GP_UART2_TXD {{ IN: {=bool:?}, OUT: {=bool:?}, DIR: {=bool:?} }}",
+            self.IN(),
+            self.OUT(),
+            self.DIR()
+        )
+    }
+}
 ///APP-domain GPIO interrupt slot mux, slots 6–9 (1 byte per slot, pin index 0–63).
 #[repr(transparent)]
 #[derive(Copy, Clone, Eq, PartialEq)]
@@ -1459,6 +2632,42 @@ impl IOCAPP_IOMD {
     pub const fn set_UART2(&mut self, val: u8) {
         self.0 = (self.0 & !(0x03 << 2usize)) | (((val as u32) & 0x03) << 2usize);
     }
+    ///Mode select for EMMC_CLK/CMD/DATA0/DATA1 pins (Func1=eMMC, Func2=SPI5).
+    #[must_use]
+    #[inline(always)]
+    pub const fn EMMCA(&self) -> u8 {
+        let val = (self.0 >> 6usize) & 0x03;
+        val as u8
+    }
+    ///Mode select for EMMC_CLK/CMD/DATA0/DATA1 pins (Func1=eMMC, Func2=SPI5).
+    #[inline(always)]
+    pub const fn set_EMMCA(&mut self, val: u8) {
+        self.0 = (self.0 & !(0x03 << 6usize)) | (((val as u32) & 0x03) << 6usize);
+    }
+    ///Mode select for EMMC_DATA2/DATA3 pins (Func1=eMMC).
+    #[must_use]
+    #[inline(always)]
+    pub const fn EMMCB(&self) -> u8 {
+        let val = (self.0 >> 8usize) & 0x03;
+        val as u8
+    }
+    ///Mode select for EMMC_DATA2/DATA3 pins (Func1=eMMC).
+    #[inline(always)]
+    pub const fn set_EMMCB(&mut self, val: u8) {
+        self.0 = (self.0 & !(0x03 << 8usize)) | (((val as u32) & 0x03) << 8usize);
+    }
+    ///Mode select for I2S0 BCK/LRCK/DATA_IN/DATA_OUT pins (I2S0 = Func1).
+    #[must_use]
+    #[inline(always)]
+    pub const fn I2S0(&self) -> u8 {
+        let val = (self.0 >> 18usize) & 0x03;
+        val as u8
+    }
+    ///Mode select for I2S0 BCK/LRCK/DATA_IN/DATA_OUT pins (I2S0 = Func1).
+    #[inline(always)]
+    pub const fn set_I2S0(&mut self, val: u8) {
+        self.0 = (self.0 & !(0x03 << 18usize)) | (((val as u32) & 0x03) << 18usize);
+    }
 }
 impl Default for IOCAPP_IOMD {
     #[inline(always)]
@@ -1470,13 +2679,23 @@ impl core::fmt::Debug for IOCAPP_IOMD {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
         f.debug_struct("IOCAPP_IOMD")
             .field("UART2", &self.UART2())
+            .field("EMMCA", &self.EMMCA())
+            .field("EMMCB", &self.EMMCB())
+            .field("I2S0", &self.I2S0())
             .finish()
     }
 }
 #[cfg(feature = "defmt")]
 impl defmt::Format for IOCAPP_IOMD {
     fn format(&self, f: defmt::Formatter) {
-        defmt::write!(f, "IOCAPP_IOMD {{ UART2: {=u8:?} }}", self.UART2())
+        defmt::write!(
+            f,
+            "IOCAPP_IOMD {{ UART2: {=u8:?}, EMMCA: {=u8:?}, EMMCB: {=u8:?}, I2S0: {=u8:?} }}",
+            self.UART2(),
+            self.EMMCA(),
+            self.EMMCB(),
+            self.I2S0()
+        )
     }
 }
 ///SYS-domain GPIO interrupt slot mux, slots 0–3 (1 byte per slot, pin index 0–63).
@@ -1659,6 +2878,18 @@ impl defmt::Format for IOCSYS_IOMD0 {
 #[derive(Copy, Clone, Eq, PartialEq)]
 pub struct IOCSYS_IOMD1(pub u32);
 impl IOCSYS_IOMD1 {
+    ///Mode select for SEN_IRQ_IN pin (SEN_IRQ_IN = Func1).
+    #[must_use]
+    #[inline(always)]
+    pub const fn SEN_IRQ_IN(&self) -> u8 {
+        let val = (self.0 >> 8usize) & 0x03;
+        val as u8
+    }
+    ///Mode select for SEN_IRQ_IN pin (SEN_IRQ_IN = Func1).
+    #[inline(always)]
+    pub const fn set_SEN_IRQ_IN(&mut self, val: u8) {
+        self.0 = (self.0 & !(0x03 << 8usize)) | (((val as u32) & 0x03) << 8usize);
+    }
     ///Mode select for I2C0_BCK / I2C0_BDT (I2C0 = Func1).
     #[must_use]
     #[inline(always)]
@@ -1681,6 +2912,7 @@ impl Default for IOCSYS_IOMD1 {
 impl core::fmt::Debug for IOCSYS_IOMD1 {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
         f.debug_struct("IOCSYS_IOMD1")
+            .field("SEN_IRQ_IN", &self.SEN_IRQ_IN())
             .field("I2C0", &self.I2C0())
             .finish()
     }
@@ -1688,7 +2920,510 @@ impl core::fmt::Debug for IOCSYS_IOMD1 {
 #[cfg(feature = "defmt")]
 impl defmt::Format for IOCSYS_IOMD1 {
     fn format(&self, f: defmt::Formatter) {
-        defmt::write!(f, "IOCSYS_IOMD1 {{ I2C0: {=u8:?} }}", self.I2C0())
+        defmt::write!(
+            f,
+            "IOCSYS_IOMD1 {{ SEN_IRQ_IN: {=u8:?}, I2C0: {=u8:?} }}",
+            self.SEN_IRQ_IN(),
+            self.I2C0()
+        )
+    }
+}
+///IOCELL control for EMMC_CLK / SPI5_SCK pin.
+#[repr(transparent)]
+#[derive(Copy, Clone, Eq, PartialEq)]
+pub struct IO_EMMC_CLK(pub u32);
+impl IO_EMMC_CLK {
+    ///Input enable: 0=disabled, 1=enabled.
+    #[must_use]
+    #[inline(always)]
+    pub const fn ENZI(&self) -> bool {
+        let val = (self.0 >> 0usize) & 0x01;
+        val != 0
+    }
+    ///Input enable: 0=disabled, 1=enabled.
+    #[inline(always)]
+    pub const fn set_ENZI(&mut self, val: bool) {
+        self.0 = (self.0 & !(0x01 << 0usize)) | (((val as u32) & 0x01) << 0usize);
+    }
+    ///Pullup: 0=pullup enabled, 1=normal (off).
+    #[must_use]
+    #[inline(always)]
+    pub const fn PUN(&self) -> bool {
+        let val = (self.0 >> 8usize) & 0x01;
+        val != 0
+    }
+    ///Pullup: 0=pullup enabled, 1=normal (off).
+    #[inline(always)]
+    pub const fn set_PUN(&mut self, val: bool) {
+        self.0 = (self.0 & !(0x01 << 8usize)) | (((val as u32) & 0x01) << 8usize);
+    }
+    ///Pulldown: 0=pulldown enabled, 1=normal (off).
+    #[must_use]
+    #[inline(always)]
+    pub const fn PDN(&self) -> bool {
+        let val = (self.0 >> 16usize) & 0x01;
+        val != 0
+    }
+    ///Pulldown: 0=pulldown enabled, 1=normal (off).
+    #[inline(always)]
+    pub const fn set_PDN(&mut self, val: bool) {
+        self.0 = (self.0 & !(0x01 << 16usize)) | (((val as u32) & 0x01) << 16usize);
+    }
+    ///Output current: 0=4mA(max 64MHz), 1=2mA(max 32MHz).
+    #[must_use]
+    #[inline(always)]
+    pub const fn LOWEMI(&self) -> bool {
+        let val = (self.0 >> 24usize) & 0x01;
+        val != 0
+    }
+    ///Output current: 0=4mA(max 64MHz), 1=2mA(max 32MHz).
+    #[inline(always)]
+    pub const fn set_LOWEMI(&mut self, val: bool) {
+        self.0 = (self.0 & !(0x01 << 24usize)) | (((val as u32) & 0x01) << 24usize);
+    }
+}
+impl Default for IO_EMMC_CLK {
+    #[inline(always)]
+    fn default() -> IO_EMMC_CLK {
+        IO_EMMC_CLK(0)
+    }
+}
+impl core::fmt::Debug for IO_EMMC_CLK {
+    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+        f.debug_struct("IO_EMMC_CLK")
+            .field("ENZI", &self.ENZI())
+            .field("PUN", &self.PUN())
+            .field("PDN", &self.PDN())
+            .field("LOWEMI", &self.LOWEMI())
+            .finish()
+    }
+}
+#[cfg(feature = "defmt")]
+impl defmt::Format for IO_EMMC_CLK {
+    fn format(&self, f: defmt::Formatter) {
+        defmt::write!(
+            f,
+            "IO_EMMC_CLK {{ ENZI: {=bool:?}, PUN: {=bool:?}, PDN: {=bool:?}, LOWEMI: {=bool:?} }}",
+            self.ENZI(),
+            self.PUN(),
+            self.PDN(),
+            self.LOWEMI()
+        )
+    }
+}
+///IOCELL control for EMMC_CMD / SPI5_CS_X pin.
+#[repr(transparent)]
+#[derive(Copy, Clone, Eq, PartialEq)]
+pub struct IO_EMMC_CMD(pub u32);
+impl IO_EMMC_CMD {
+    ///Input enable: 0=disabled, 1=enabled.
+    #[must_use]
+    #[inline(always)]
+    pub const fn ENZI(&self) -> bool {
+        let val = (self.0 >> 0usize) & 0x01;
+        val != 0
+    }
+    ///Input enable: 0=disabled, 1=enabled.
+    #[inline(always)]
+    pub const fn set_ENZI(&mut self, val: bool) {
+        self.0 = (self.0 & !(0x01 << 0usize)) | (((val as u32) & 0x01) << 0usize);
+    }
+    ///Pullup: 0=pullup enabled, 1=normal (off).
+    #[must_use]
+    #[inline(always)]
+    pub const fn PUN(&self) -> bool {
+        let val = (self.0 >> 8usize) & 0x01;
+        val != 0
+    }
+    ///Pullup: 0=pullup enabled, 1=normal (off).
+    #[inline(always)]
+    pub const fn set_PUN(&mut self, val: bool) {
+        self.0 = (self.0 & !(0x01 << 8usize)) | (((val as u32) & 0x01) << 8usize);
+    }
+    ///Pulldown: 0=pulldown enabled, 1=normal (off).
+    #[must_use]
+    #[inline(always)]
+    pub const fn PDN(&self) -> bool {
+        let val = (self.0 >> 16usize) & 0x01;
+        val != 0
+    }
+    ///Pulldown: 0=pulldown enabled, 1=normal (off).
+    #[inline(always)]
+    pub const fn set_PDN(&mut self, val: bool) {
+        self.0 = (self.0 & !(0x01 << 16usize)) | (((val as u32) & 0x01) << 16usize);
+    }
+    ///Output current: 0=4mA(max 64MHz), 1=2mA(max 32MHz).
+    #[must_use]
+    #[inline(always)]
+    pub const fn LOWEMI(&self) -> bool {
+        let val = (self.0 >> 24usize) & 0x01;
+        val != 0
+    }
+    ///Output current: 0=4mA(max 64MHz), 1=2mA(max 32MHz).
+    #[inline(always)]
+    pub const fn set_LOWEMI(&mut self, val: bool) {
+        self.0 = (self.0 & !(0x01 << 24usize)) | (((val as u32) & 0x01) << 24usize);
+    }
+}
+impl Default for IO_EMMC_CMD {
+    #[inline(always)]
+    fn default() -> IO_EMMC_CMD {
+        IO_EMMC_CMD(0)
+    }
+}
+impl core::fmt::Debug for IO_EMMC_CMD {
+    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+        f.debug_struct("IO_EMMC_CMD")
+            .field("ENZI", &self.ENZI())
+            .field("PUN", &self.PUN())
+            .field("PDN", &self.PDN())
+            .field("LOWEMI", &self.LOWEMI())
+            .finish()
+    }
+}
+#[cfg(feature = "defmt")]
+impl defmt::Format for IO_EMMC_CMD {
+    fn format(&self, f: defmt::Formatter) {
+        defmt::write!(
+            f,
+            "IO_EMMC_CMD {{ ENZI: {=bool:?}, PUN: {=bool:?}, PDN: {=bool:?}, LOWEMI: {=bool:?} }}",
+            self.ENZI(),
+            self.PUN(),
+            self.PDN(),
+            self.LOWEMI()
+        )
+    }
+}
+///IOCELL control for EMMC_DATA0 / SPI5_MOSI pin.
+#[repr(transparent)]
+#[derive(Copy, Clone, Eq, PartialEq)]
+pub struct IO_EMMC_DATA0(pub u32);
+impl IO_EMMC_DATA0 {
+    ///Input enable: 0=disabled, 1=enabled.
+    #[must_use]
+    #[inline(always)]
+    pub const fn ENZI(&self) -> bool {
+        let val = (self.0 >> 0usize) & 0x01;
+        val != 0
+    }
+    ///Input enable: 0=disabled, 1=enabled.
+    #[inline(always)]
+    pub const fn set_ENZI(&mut self, val: bool) {
+        self.0 = (self.0 & !(0x01 << 0usize)) | (((val as u32) & 0x01) << 0usize);
+    }
+    ///Pullup: 0=pullup enabled, 1=normal (off).
+    #[must_use]
+    #[inline(always)]
+    pub const fn PUN(&self) -> bool {
+        let val = (self.0 >> 8usize) & 0x01;
+        val != 0
+    }
+    ///Pullup: 0=pullup enabled, 1=normal (off).
+    #[inline(always)]
+    pub const fn set_PUN(&mut self, val: bool) {
+        self.0 = (self.0 & !(0x01 << 8usize)) | (((val as u32) & 0x01) << 8usize);
+    }
+    ///Pulldown: 0=pulldown enabled, 1=normal (off).
+    #[must_use]
+    #[inline(always)]
+    pub const fn PDN(&self) -> bool {
+        let val = (self.0 >> 16usize) & 0x01;
+        val != 0
+    }
+    ///Pulldown: 0=pulldown enabled, 1=normal (off).
+    #[inline(always)]
+    pub const fn set_PDN(&mut self, val: bool) {
+        self.0 = (self.0 & !(0x01 << 16usize)) | (((val as u32) & 0x01) << 16usize);
+    }
+    ///Output current: 0=4mA(max 64MHz), 1=2mA(max 32MHz).
+    #[must_use]
+    #[inline(always)]
+    pub const fn LOWEMI(&self) -> bool {
+        let val = (self.0 >> 24usize) & 0x01;
+        val != 0
+    }
+    ///Output current: 0=4mA(max 64MHz), 1=2mA(max 32MHz).
+    #[inline(always)]
+    pub const fn set_LOWEMI(&mut self, val: bool) {
+        self.0 = (self.0 & !(0x01 << 24usize)) | (((val as u32) & 0x01) << 24usize);
+    }
+}
+impl Default for IO_EMMC_DATA0 {
+    #[inline(always)]
+    fn default() -> IO_EMMC_DATA0 {
+        IO_EMMC_DATA0(0)
+    }
+}
+impl core::fmt::Debug for IO_EMMC_DATA0 {
+    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+        f.debug_struct("IO_EMMC_DATA0")
+            .field("ENZI", &self.ENZI())
+            .field("PUN", &self.PUN())
+            .field("PDN", &self.PDN())
+            .field("LOWEMI", &self.LOWEMI())
+            .finish()
+    }
+}
+#[cfg(feature = "defmt")]
+impl defmt::Format for IO_EMMC_DATA0 {
+    fn format(&self, f: defmt::Formatter) {
+        defmt::write!(
+            f,
+            "IO_EMMC_DATA0 {{ ENZI: {=bool:?}, PUN: {=bool:?}, PDN: {=bool:?}, LOWEMI: {=bool:?} }}",
+            self.ENZI(),
+            self.PUN(),
+            self.PDN(),
+            self.LOWEMI()
+        )
+    }
+}
+///IOCELL control for EMMC_DATA1 / SPI5_MISO pin.
+#[repr(transparent)]
+#[derive(Copy, Clone, Eq, PartialEq)]
+pub struct IO_EMMC_DATA1(pub u32);
+impl IO_EMMC_DATA1 {
+    ///Input enable: 0=disabled, 1=enabled.
+    #[must_use]
+    #[inline(always)]
+    pub const fn ENZI(&self) -> bool {
+        let val = (self.0 >> 0usize) & 0x01;
+        val != 0
+    }
+    ///Input enable: 0=disabled, 1=enabled.
+    #[inline(always)]
+    pub const fn set_ENZI(&mut self, val: bool) {
+        self.0 = (self.0 & !(0x01 << 0usize)) | (((val as u32) & 0x01) << 0usize);
+    }
+    ///Pullup: 0=pullup enabled, 1=normal (off).
+    #[must_use]
+    #[inline(always)]
+    pub const fn PUN(&self) -> bool {
+        let val = (self.0 >> 8usize) & 0x01;
+        val != 0
+    }
+    ///Pullup: 0=pullup enabled, 1=normal (off).
+    #[inline(always)]
+    pub const fn set_PUN(&mut self, val: bool) {
+        self.0 = (self.0 & !(0x01 << 8usize)) | (((val as u32) & 0x01) << 8usize);
+    }
+    ///Pulldown: 0=pulldown enabled, 1=normal (off).
+    #[must_use]
+    #[inline(always)]
+    pub const fn PDN(&self) -> bool {
+        let val = (self.0 >> 16usize) & 0x01;
+        val != 0
+    }
+    ///Pulldown: 0=pulldown enabled, 1=normal (off).
+    #[inline(always)]
+    pub const fn set_PDN(&mut self, val: bool) {
+        self.0 = (self.0 & !(0x01 << 16usize)) | (((val as u32) & 0x01) << 16usize);
+    }
+    ///Output current: 0=4mA(max 64MHz), 1=2mA(max 32MHz).
+    #[must_use]
+    #[inline(always)]
+    pub const fn LOWEMI(&self) -> bool {
+        let val = (self.0 >> 24usize) & 0x01;
+        val != 0
+    }
+    ///Output current: 0=4mA(max 64MHz), 1=2mA(max 32MHz).
+    #[inline(always)]
+    pub const fn set_LOWEMI(&mut self, val: bool) {
+        self.0 = (self.0 & !(0x01 << 24usize)) | (((val as u32) & 0x01) << 24usize);
+    }
+}
+impl Default for IO_EMMC_DATA1 {
+    #[inline(always)]
+    fn default() -> IO_EMMC_DATA1 {
+        IO_EMMC_DATA1(0)
+    }
+}
+impl core::fmt::Debug for IO_EMMC_DATA1 {
+    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+        f.debug_struct("IO_EMMC_DATA1")
+            .field("ENZI", &self.ENZI())
+            .field("PUN", &self.PUN())
+            .field("PDN", &self.PDN())
+            .field("LOWEMI", &self.LOWEMI())
+            .finish()
+    }
+}
+#[cfg(feature = "defmt")]
+impl defmt::Format for IO_EMMC_DATA1 {
+    fn format(&self, f: defmt::Formatter) {
+        defmt::write!(
+            f,
+            "IO_EMMC_DATA1 {{ ENZI: {=bool:?}, PUN: {=bool:?}, PDN: {=bool:?}, LOWEMI: {=bool:?} }}",
+            self.ENZI(),
+            self.PUN(),
+            self.PDN(),
+            self.LOWEMI()
+        )
+    }
+}
+///IOCELL control for EMMC_DATA2 pin.
+#[repr(transparent)]
+#[derive(Copy, Clone, Eq, PartialEq)]
+pub struct IO_EMMC_DATA2(pub u32);
+impl IO_EMMC_DATA2 {
+    ///Input enable: 0=disabled, 1=enabled.
+    #[must_use]
+    #[inline(always)]
+    pub const fn ENZI(&self) -> bool {
+        let val = (self.0 >> 0usize) & 0x01;
+        val != 0
+    }
+    ///Input enable: 0=disabled, 1=enabled.
+    #[inline(always)]
+    pub const fn set_ENZI(&mut self, val: bool) {
+        self.0 = (self.0 & !(0x01 << 0usize)) | (((val as u32) & 0x01) << 0usize);
+    }
+    ///Pullup: 0=pullup enabled, 1=normal (off).
+    #[must_use]
+    #[inline(always)]
+    pub const fn PUN(&self) -> bool {
+        let val = (self.0 >> 8usize) & 0x01;
+        val != 0
+    }
+    ///Pullup: 0=pullup enabled, 1=normal (off).
+    #[inline(always)]
+    pub const fn set_PUN(&mut self, val: bool) {
+        self.0 = (self.0 & !(0x01 << 8usize)) | (((val as u32) & 0x01) << 8usize);
+    }
+    ///Pulldown: 0=pulldown enabled, 1=normal (off).
+    #[must_use]
+    #[inline(always)]
+    pub const fn PDN(&self) -> bool {
+        let val = (self.0 >> 16usize) & 0x01;
+        val != 0
+    }
+    ///Pulldown: 0=pulldown enabled, 1=normal (off).
+    #[inline(always)]
+    pub const fn set_PDN(&mut self, val: bool) {
+        self.0 = (self.0 & !(0x01 << 16usize)) | (((val as u32) & 0x01) << 16usize);
+    }
+    ///Output current: 0=4mA(max 64MHz), 1=2mA(max 32MHz).
+    #[must_use]
+    #[inline(always)]
+    pub const fn LOWEMI(&self) -> bool {
+        let val = (self.0 >> 24usize) & 0x01;
+        val != 0
+    }
+    ///Output current: 0=4mA(max 64MHz), 1=2mA(max 32MHz).
+    #[inline(always)]
+    pub const fn set_LOWEMI(&mut self, val: bool) {
+        self.0 = (self.0 & !(0x01 << 24usize)) | (((val as u32) & 0x01) << 24usize);
+    }
+}
+impl Default for IO_EMMC_DATA2 {
+    #[inline(always)]
+    fn default() -> IO_EMMC_DATA2 {
+        IO_EMMC_DATA2(0)
+    }
+}
+impl core::fmt::Debug for IO_EMMC_DATA2 {
+    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+        f.debug_struct("IO_EMMC_DATA2")
+            .field("ENZI", &self.ENZI())
+            .field("PUN", &self.PUN())
+            .field("PDN", &self.PDN())
+            .field("LOWEMI", &self.LOWEMI())
+            .finish()
+    }
+}
+#[cfg(feature = "defmt")]
+impl defmt::Format for IO_EMMC_DATA2 {
+    fn format(&self, f: defmt::Formatter) {
+        defmt::write!(
+            f,
+            "IO_EMMC_DATA2 {{ ENZI: {=bool:?}, PUN: {=bool:?}, PDN: {=bool:?}, LOWEMI: {=bool:?} }}",
+            self.ENZI(),
+            self.PUN(),
+            self.PDN(),
+            self.LOWEMI()
+        )
+    }
+}
+///IOCELL control for EMMC_DATA3 pin.
+#[repr(transparent)]
+#[derive(Copy, Clone, Eq, PartialEq)]
+pub struct IO_EMMC_DATA3(pub u32);
+impl IO_EMMC_DATA3 {
+    ///Input enable: 0=disabled, 1=enabled.
+    #[must_use]
+    #[inline(always)]
+    pub const fn ENZI(&self) -> bool {
+        let val = (self.0 >> 0usize) & 0x01;
+        val != 0
+    }
+    ///Input enable: 0=disabled, 1=enabled.
+    #[inline(always)]
+    pub const fn set_ENZI(&mut self, val: bool) {
+        self.0 = (self.0 & !(0x01 << 0usize)) | (((val as u32) & 0x01) << 0usize);
+    }
+    ///Pullup: 0=pullup enabled, 1=normal (off).
+    #[must_use]
+    #[inline(always)]
+    pub const fn PUN(&self) -> bool {
+        let val = (self.0 >> 8usize) & 0x01;
+        val != 0
+    }
+    ///Pullup: 0=pullup enabled, 1=normal (off).
+    #[inline(always)]
+    pub const fn set_PUN(&mut self, val: bool) {
+        self.0 = (self.0 & !(0x01 << 8usize)) | (((val as u32) & 0x01) << 8usize);
+    }
+    ///Pulldown: 0=pulldown enabled, 1=normal (off).
+    #[must_use]
+    #[inline(always)]
+    pub const fn PDN(&self) -> bool {
+        let val = (self.0 >> 16usize) & 0x01;
+        val != 0
+    }
+    ///Pulldown: 0=pulldown enabled, 1=normal (off).
+    #[inline(always)]
+    pub const fn set_PDN(&mut self, val: bool) {
+        self.0 = (self.0 & !(0x01 << 16usize)) | (((val as u32) & 0x01) << 16usize);
+    }
+    ///Output current: 0=4mA(max 64MHz), 1=2mA(max 32MHz).
+    #[must_use]
+    #[inline(always)]
+    pub const fn LOWEMI(&self) -> bool {
+        let val = (self.0 >> 24usize) & 0x01;
+        val != 0
+    }
+    ///Output current: 0=4mA(max 64MHz), 1=2mA(max 32MHz).
+    #[inline(always)]
+    pub const fn set_LOWEMI(&mut self, val: bool) {
+        self.0 = (self.0 & !(0x01 << 24usize)) | (((val as u32) & 0x01) << 24usize);
+    }
+}
+impl Default for IO_EMMC_DATA3 {
+    #[inline(always)]
+    fn default() -> IO_EMMC_DATA3 {
+        IO_EMMC_DATA3(0)
+    }
+}
+impl core::fmt::Debug for IO_EMMC_DATA3 {
+    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+        f.debug_struct("IO_EMMC_DATA3")
+            .field("ENZI", &self.ENZI())
+            .field("PUN", &self.PUN())
+            .field("PDN", &self.PDN())
+            .field("LOWEMI", &self.LOWEMI())
+            .finish()
+    }
+}
+#[cfg(feature = "defmt")]
+impl defmt::Format for IO_EMMC_DATA3 {
+    fn format(&self, f: defmt::Formatter) {
+        defmt::write!(
+            f,
+            "IO_EMMC_DATA3 {{ ENZI: {=bool:?}, PUN: {=bool:?}, PDN: {=bool:?}, LOWEMI: {=bool:?} }}",
+            self.ENZI(),
+            self.PUN(),
+            self.PDN(),
+            self.LOWEMI()
+        )
     }
 }
 ///IOCELL control for I2C0_BCK pad.
@@ -1857,6 +3592,421 @@ impl defmt::Format for IO_I2C0_BDT {
         )
     }
 }
+///IOCELL control for I2S0_BCK pin.
+#[repr(transparent)]
+#[derive(Copy, Clone, Eq, PartialEq)]
+pub struct IO_I2S0_BCK(pub u32);
+impl IO_I2S0_BCK {
+    ///Input enable: 0=disabled, 1=enabled.
+    #[must_use]
+    #[inline(always)]
+    pub const fn ENZI(&self) -> bool {
+        let val = (self.0 >> 0usize) & 0x01;
+        val != 0
+    }
+    ///Input enable: 0=disabled, 1=enabled.
+    #[inline(always)]
+    pub const fn set_ENZI(&mut self, val: bool) {
+        self.0 = (self.0 & !(0x01 << 0usize)) | (((val as u32) & 0x01) << 0usize);
+    }
+    ///Pullup: 0=pullup enabled, 1=normal (off).
+    #[must_use]
+    #[inline(always)]
+    pub const fn PUN(&self) -> bool {
+        let val = (self.0 >> 8usize) & 0x01;
+        val != 0
+    }
+    ///Pullup: 0=pullup enabled, 1=normal (off).
+    #[inline(always)]
+    pub const fn set_PUN(&mut self, val: bool) {
+        self.0 = (self.0 & !(0x01 << 8usize)) | (((val as u32) & 0x01) << 8usize);
+    }
+    ///Pulldown: 0=pulldown enabled, 1=normal (off).
+    #[must_use]
+    #[inline(always)]
+    pub const fn PDN(&self) -> bool {
+        let val = (self.0 >> 16usize) & 0x01;
+        val != 0
+    }
+    ///Pulldown: 0=pulldown enabled, 1=normal (off).
+    #[inline(always)]
+    pub const fn set_PDN(&mut self, val: bool) {
+        self.0 = (self.0 & !(0x01 << 16usize)) | (((val as u32) & 0x01) << 16usize);
+    }
+    ///Output current: 0=4mA(max 64MHz), 1=2mA(max 32MHz).
+    #[must_use]
+    #[inline(always)]
+    pub const fn LOWEMI(&self) -> bool {
+        let val = (self.0 >> 24usize) & 0x01;
+        val != 0
+    }
+    ///Output current: 0=4mA(max 64MHz), 1=2mA(max 32MHz).
+    #[inline(always)]
+    pub const fn set_LOWEMI(&mut self, val: bool) {
+        self.0 = (self.0 & !(0x01 << 24usize)) | (((val as u32) & 0x01) << 24usize);
+    }
+}
+impl Default for IO_I2S0_BCK {
+    #[inline(always)]
+    fn default() -> IO_I2S0_BCK {
+        IO_I2S0_BCK(0)
+    }
+}
+impl core::fmt::Debug for IO_I2S0_BCK {
+    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+        f.debug_struct("IO_I2S0_BCK")
+            .field("ENZI", &self.ENZI())
+            .field("PUN", &self.PUN())
+            .field("PDN", &self.PDN())
+            .field("LOWEMI", &self.LOWEMI())
+            .finish()
+    }
+}
+#[cfg(feature = "defmt")]
+impl defmt::Format for IO_I2S0_BCK {
+    fn format(&self, f: defmt::Formatter) {
+        defmt::write!(
+            f,
+            "IO_I2S0_BCK {{ ENZI: {=bool:?}, PUN: {=bool:?}, PDN: {=bool:?}, LOWEMI: {=bool:?} }}",
+            self.ENZI(),
+            self.PUN(),
+            self.PDN(),
+            self.LOWEMI()
+        )
+    }
+}
+///IOCELL control for I2S0_DATA_IN pin.
+#[repr(transparent)]
+#[derive(Copy, Clone, Eq, PartialEq)]
+pub struct IO_I2S0_DATA_IN(pub u32);
+impl IO_I2S0_DATA_IN {
+    ///Input enable: 0=disabled, 1=enabled.
+    #[must_use]
+    #[inline(always)]
+    pub const fn ENZI(&self) -> bool {
+        let val = (self.0 >> 0usize) & 0x01;
+        val != 0
+    }
+    ///Input enable: 0=disabled, 1=enabled.
+    #[inline(always)]
+    pub const fn set_ENZI(&mut self, val: bool) {
+        self.0 = (self.0 & !(0x01 << 0usize)) | (((val as u32) & 0x01) << 0usize);
+    }
+    ///Pullup: 0=pullup enabled, 1=normal (off).
+    #[must_use]
+    #[inline(always)]
+    pub const fn PUN(&self) -> bool {
+        let val = (self.0 >> 8usize) & 0x01;
+        val != 0
+    }
+    ///Pullup: 0=pullup enabled, 1=normal (off).
+    #[inline(always)]
+    pub const fn set_PUN(&mut self, val: bool) {
+        self.0 = (self.0 & !(0x01 << 8usize)) | (((val as u32) & 0x01) << 8usize);
+    }
+    ///Pulldown: 0=pulldown enabled, 1=normal (off).
+    #[must_use]
+    #[inline(always)]
+    pub const fn PDN(&self) -> bool {
+        let val = (self.0 >> 16usize) & 0x01;
+        val != 0
+    }
+    ///Pulldown: 0=pulldown enabled, 1=normal (off).
+    #[inline(always)]
+    pub const fn set_PDN(&mut self, val: bool) {
+        self.0 = (self.0 & !(0x01 << 16usize)) | (((val as u32) & 0x01) << 16usize);
+    }
+    ///Output current: 0=4mA(max 64MHz), 1=2mA(max 32MHz).
+    #[must_use]
+    #[inline(always)]
+    pub const fn LOWEMI(&self) -> bool {
+        let val = (self.0 >> 24usize) & 0x01;
+        val != 0
+    }
+    ///Output current: 0=4mA(max 64MHz), 1=2mA(max 32MHz).
+    #[inline(always)]
+    pub const fn set_LOWEMI(&mut self, val: bool) {
+        self.0 = (self.0 & !(0x01 << 24usize)) | (((val as u32) & 0x01) << 24usize);
+    }
+}
+impl Default for IO_I2S0_DATA_IN {
+    #[inline(always)]
+    fn default() -> IO_I2S0_DATA_IN {
+        IO_I2S0_DATA_IN(0)
+    }
+}
+impl core::fmt::Debug for IO_I2S0_DATA_IN {
+    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+        f.debug_struct("IO_I2S0_DATA_IN")
+            .field("ENZI", &self.ENZI())
+            .field("PUN", &self.PUN())
+            .field("PDN", &self.PDN())
+            .field("LOWEMI", &self.LOWEMI())
+            .finish()
+    }
+}
+#[cfg(feature = "defmt")]
+impl defmt::Format for IO_I2S0_DATA_IN {
+    fn format(&self, f: defmt::Formatter) {
+        defmt::write!(
+            f,
+            "IO_I2S0_DATA_IN {{ ENZI: {=bool:?}, PUN: {=bool:?}, PDN: {=bool:?}, LOWEMI: {=bool:?} }}",
+            self.ENZI(),
+            self.PUN(),
+            self.PDN(),
+            self.LOWEMI()
+        )
+    }
+}
+///IOCELL control for I2S0_DATA_OUT pin.
+#[repr(transparent)]
+#[derive(Copy, Clone, Eq, PartialEq)]
+pub struct IO_I2S0_DATA_OUT(pub u32);
+impl IO_I2S0_DATA_OUT {
+    ///Input enable: 0=disabled, 1=enabled.
+    #[must_use]
+    #[inline(always)]
+    pub const fn ENZI(&self) -> bool {
+        let val = (self.0 >> 0usize) & 0x01;
+        val != 0
+    }
+    ///Input enable: 0=disabled, 1=enabled.
+    #[inline(always)]
+    pub const fn set_ENZI(&mut self, val: bool) {
+        self.0 = (self.0 & !(0x01 << 0usize)) | (((val as u32) & 0x01) << 0usize);
+    }
+    ///Pullup: 0=pullup enabled, 1=normal (off).
+    #[must_use]
+    #[inline(always)]
+    pub const fn PUN(&self) -> bool {
+        let val = (self.0 >> 8usize) & 0x01;
+        val != 0
+    }
+    ///Pullup: 0=pullup enabled, 1=normal (off).
+    #[inline(always)]
+    pub const fn set_PUN(&mut self, val: bool) {
+        self.0 = (self.0 & !(0x01 << 8usize)) | (((val as u32) & 0x01) << 8usize);
+    }
+    ///Pulldown: 0=pulldown enabled, 1=normal (off).
+    #[must_use]
+    #[inline(always)]
+    pub const fn PDN(&self) -> bool {
+        let val = (self.0 >> 16usize) & 0x01;
+        val != 0
+    }
+    ///Pulldown: 0=pulldown enabled, 1=normal (off).
+    #[inline(always)]
+    pub const fn set_PDN(&mut self, val: bool) {
+        self.0 = (self.0 & !(0x01 << 16usize)) | (((val as u32) & 0x01) << 16usize);
+    }
+    ///Output current: 0=4mA(max 64MHz), 1=2mA(max 32MHz).
+    #[must_use]
+    #[inline(always)]
+    pub const fn LOWEMI(&self) -> bool {
+        let val = (self.0 >> 24usize) & 0x01;
+        val != 0
+    }
+    ///Output current: 0=4mA(max 64MHz), 1=2mA(max 32MHz).
+    #[inline(always)]
+    pub const fn set_LOWEMI(&mut self, val: bool) {
+        self.0 = (self.0 & !(0x01 << 24usize)) | (((val as u32) & 0x01) << 24usize);
+    }
+}
+impl Default for IO_I2S0_DATA_OUT {
+    #[inline(always)]
+    fn default() -> IO_I2S0_DATA_OUT {
+        IO_I2S0_DATA_OUT(0)
+    }
+}
+impl core::fmt::Debug for IO_I2S0_DATA_OUT {
+    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+        f.debug_struct("IO_I2S0_DATA_OUT")
+            .field("ENZI", &self.ENZI())
+            .field("PUN", &self.PUN())
+            .field("PDN", &self.PDN())
+            .field("LOWEMI", &self.LOWEMI())
+            .finish()
+    }
+}
+#[cfg(feature = "defmt")]
+impl defmt::Format for IO_I2S0_DATA_OUT {
+    fn format(&self, f: defmt::Formatter) {
+        defmt::write!(
+            f,
+            "IO_I2S0_DATA_OUT {{ ENZI: {=bool:?}, PUN: {=bool:?}, PDN: {=bool:?}, LOWEMI: {=bool:?} }}",
+            self.ENZI(),
+            self.PUN(),
+            self.PDN(),
+            self.LOWEMI()
+        )
+    }
+}
+///IOCELL control for I2S0_LRCK pin.
+#[repr(transparent)]
+#[derive(Copy, Clone, Eq, PartialEq)]
+pub struct IO_I2S0_LRCK(pub u32);
+impl IO_I2S0_LRCK {
+    ///Input enable: 0=disabled, 1=enabled.
+    #[must_use]
+    #[inline(always)]
+    pub const fn ENZI(&self) -> bool {
+        let val = (self.0 >> 0usize) & 0x01;
+        val != 0
+    }
+    ///Input enable: 0=disabled, 1=enabled.
+    #[inline(always)]
+    pub const fn set_ENZI(&mut self, val: bool) {
+        self.0 = (self.0 & !(0x01 << 0usize)) | (((val as u32) & 0x01) << 0usize);
+    }
+    ///Pullup: 0=pullup enabled, 1=normal (off).
+    #[must_use]
+    #[inline(always)]
+    pub const fn PUN(&self) -> bool {
+        let val = (self.0 >> 8usize) & 0x01;
+        val != 0
+    }
+    ///Pullup: 0=pullup enabled, 1=normal (off).
+    #[inline(always)]
+    pub const fn set_PUN(&mut self, val: bool) {
+        self.0 = (self.0 & !(0x01 << 8usize)) | (((val as u32) & 0x01) << 8usize);
+    }
+    ///Pulldown: 0=pulldown enabled, 1=normal (off).
+    #[must_use]
+    #[inline(always)]
+    pub const fn PDN(&self) -> bool {
+        let val = (self.0 >> 16usize) & 0x01;
+        val != 0
+    }
+    ///Pulldown: 0=pulldown enabled, 1=normal (off).
+    #[inline(always)]
+    pub const fn set_PDN(&mut self, val: bool) {
+        self.0 = (self.0 & !(0x01 << 16usize)) | (((val as u32) & 0x01) << 16usize);
+    }
+    ///Output current: 0=4mA(max 64MHz), 1=2mA(max 32MHz).
+    #[must_use]
+    #[inline(always)]
+    pub const fn LOWEMI(&self) -> bool {
+        let val = (self.0 >> 24usize) & 0x01;
+        val != 0
+    }
+    ///Output current: 0=4mA(max 64MHz), 1=2mA(max 32MHz).
+    #[inline(always)]
+    pub const fn set_LOWEMI(&mut self, val: bool) {
+        self.0 = (self.0 & !(0x01 << 24usize)) | (((val as u32) & 0x01) << 24usize);
+    }
+}
+impl Default for IO_I2S0_LRCK {
+    #[inline(always)]
+    fn default() -> IO_I2S0_LRCK {
+        IO_I2S0_LRCK(0)
+    }
+}
+impl core::fmt::Debug for IO_I2S0_LRCK {
+    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+        f.debug_struct("IO_I2S0_LRCK")
+            .field("ENZI", &self.ENZI())
+            .field("PUN", &self.PUN())
+            .field("PDN", &self.PDN())
+            .field("LOWEMI", &self.LOWEMI())
+            .finish()
+    }
+}
+#[cfg(feature = "defmt")]
+impl defmt::Format for IO_I2S0_LRCK {
+    fn format(&self, f: defmt::Formatter) {
+        defmt::write!(
+            f,
+            "IO_I2S0_LRCK {{ ENZI: {=bool:?}, PUN: {=bool:?}, PDN: {=bool:?}, LOWEMI: {=bool:?} }}",
+            self.ENZI(),
+            self.PUN(),
+            self.PDN(),
+            self.LOWEMI()
+        )
+    }
+}
+///IOCELL control for SEN_IRQ_IN pin.
+#[repr(transparent)]
+#[derive(Copy, Clone, Eq, PartialEq)]
+pub struct IO_SEN_IRQ_IN(pub u32);
+impl IO_SEN_IRQ_IN {
+    ///Input enable: 0=disabled, 1=enabled.
+    #[must_use]
+    #[inline(always)]
+    pub const fn ENZI(&self) -> bool {
+        let val = (self.0 >> 0usize) & 0x01;
+        val != 0
+    }
+    ///Input enable: 0=disabled, 1=enabled.
+    #[inline(always)]
+    pub const fn set_ENZI(&mut self, val: bool) {
+        self.0 = (self.0 & !(0x01 << 0usize)) | (((val as u32) & 0x01) << 0usize);
+    }
+    ///Pullup: 0=pullup enabled, 1=normal (off).
+    #[must_use]
+    #[inline(always)]
+    pub const fn PUN(&self) -> bool {
+        let val = (self.0 >> 8usize) & 0x01;
+        val != 0
+    }
+    ///Pullup: 0=pullup enabled, 1=normal (off).
+    #[inline(always)]
+    pub const fn set_PUN(&mut self, val: bool) {
+        self.0 = (self.0 & !(0x01 << 8usize)) | (((val as u32) & 0x01) << 8usize);
+    }
+    ///Pulldown: 0=pulldown enabled, 1=normal (off).
+    #[must_use]
+    #[inline(always)]
+    pub const fn PDN(&self) -> bool {
+        let val = (self.0 >> 16usize) & 0x01;
+        val != 0
+    }
+    ///Pulldown: 0=pulldown enabled, 1=normal (off).
+    #[inline(always)]
+    pub const fn set_PDN(&mut self, val: bool) {
+        self.0 = (self.0 & !(0x01 << 16usize)) | (((val as u32) & 0x01) << 16usize);
+    }
+    ///Output current: 0=4mA(max 64MHz), 1=2mA(max 32MHz).
+    #[must_use]
+    #[inline(always)]
+    pub const fn LOWEMI(&self) -> bool {
+        let val = (self.0 >> 24usize) & 0x01;
+        val != 0
+    }
+    ///Output current: 0=4mA(max 64MHz), 1=2mA(max 32MHz).
+    #[inline(always)]
+    pub const fn set_LOWEMI(&mut self, val: bool) {
+        self.0 = (self.0 & !(0x01 << 24usize)) | (((val as u32) & 0x01) << 24usize);
+    }
+}
+impl Default for IO_SEN_IRQ_IN {
+    #[inline(always)]
+    fn default() -> IO_SEN_IRQ_IN {
+        IO_SEN_IRQ_IN(0)
+    }
+}
+impl core::fmt::Debug for IO_SEN_IRQ_IN {
+    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+        f.debug_struct("IO_SEN_IRQ_IN")
+            .field("ENZI", &self.ENZI())
+            .field("PUN", &self.PUN())
+            .field("PDN", &self.PDN())
+            .field("LOWEMI", &self.LOWEMI())
+            .finish()
+    }
+}
+#[cfg(feature = "defmt")]
+impl defmt::Format for IO_SEN_IRQ_IN {
+    fn format(&self, f: defmt::Formatter) {
+        defmt::write!(
+            f,
+            "IO_SEN_IRQ_IN {{ ENZI: {=bool:?}, PUN: {=bool:?}, PDN: {=bool:?}, LOWEMI: {=bool:?} }}",
+            self.ENZI(),
+            self.PUN(),
+            self.PDN(),
+            self.LOWEMI()
+        )
+    }
+}
 ///IOCELL control for SPI0_CS_X / UART1-TXD.
 #[repr(transparent)]
 #[derive(Copy, Clone, Eq, PartialEq)]
@@ -2016,6 +4166,172 @@ impl defmt::Format for IO_SPI0_SCK {
         defmt::write!(
             f,
             "IO_SPI0_SCK {{ ENZI: {=bool:?}, PUN: {=bool:?}, PDN: {=bool:?}, LOWEMI: {=bool:?} }}",
+            self.ENZI(),
+            self.PUN(),
+            self.PDN(),
+            self.LOWEMI()
+        )
+    }
+}
+///IOCELL control for UART2 CTS pin.
+#[repr(transparent)]
+#[derive(Copy, Clone, Eq, PartialEq)]
+pub struct IO_UART2_CTS(pub u32);
+impl IO_UART2_CTS {
+    ///Input enable: 0=disabled, 1=enabled.
+    #[must_use]
+    #[inline(always)]
+    pub const fn ENZI(&self) -> bool {
+        let val = (self.0 >> 0usize) & 0x01;
+        val != 0
+    }
+    ///Input enable: 0=disabled, 1=enabled.
+    #[inline(always)]
+    pub const fn set_ENZI(&mut self, val: bool) {
+        self.0 = (self.0 & !(0x01 << 0usize)) | (((val as u32) & 0x01) << 0usize);
+    }
+    ///Pullup: 0=pullup enabled, 1=normal (off).
+    #[must_use]
+    #[inline(always)]
+    pub const fn PUN(&self) -> bool {
+        let val = (self.0 >> 8usize) & 0x01;
+        val != 0
+    }
+    ///Pullup: 0=pullup enabled, 1=normal (off).
+    #[inline(always)]
+    pub const fn set_PUN(&mut self, val: bool) {
+        self.0 = (self.0 & !(0x01 << 8usize)) | (((val as u32) & 0x01) << 8usize);
+    }
+    ///Pulldown: 0=pulldown enabled, 1=normal (off).
+    #[must_use]
+    #[inline(always)]
+    pub const fn PDN(&self) -> bool {
+        let val = (self.0 >> 16usize) & 0x01;
+        val != 0
+    }
+    ///Pulldown: 0=pulldown enabled, 1=normal (off).
+    #[inline(always)]
+    pub const fn set_PDN(&mut self, val: bool) {
+        self.0 = (self.0 & !(0x01 << 16usize)) | (((val as u32) & 0x01) << 16usize);
+    }
+    ///Output current: 0=4mA(max 64MHz), 1=2mA(max 32MHz).
+    #[must_use]
+    #[inline(always)]
+    pub const fn LOWEMI(&self) -> bool {
+        let val = (self.0 >> 24usize) & 0x01;
+        val != 0
+    }
+    ///Output current: 0=4mA(max 64MHz), 1=2mA(max 32MHz).
+    #[inline(always)]
+    pub const fn set_LOWEMI(&mut self, val: bool) {
+        self.0 = (self.0 & !(0x01 << 24usize)) | (((val as u32) & 0x01) << 24usize);
+    }
+}
+impl Default for IO_UART2_CTS {
+    #[inline(always)]
+    fn default() -> IO_UART2_CTS {
+        IO_UART2_CTS(0)
+    }
+}
+impl core::fmt::Debug for IO_UART2_CTS {
+    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+        f.debug_struct("IO_UART2_CTS")
+            .field("ENZI", &self.ENZI())
+            .field("PUN", &self.PUN())
+            .field("PDN", &self.PDN())
+            .field("LOWEMI", &self.LOWEMI())
+            .finish()
+    }
+}
+#[cfg(feature = "defmt")]
+impl defmt::Format for IO_UART2_CTS {
+    fn format(&self, f: defmt::Formatter) {
+        defmt::write!(
+            f,
+            "IO_UART2_CTS {{ ENZI: {=bool:?}, PUN: {=bool:?}, PDN: {=bool:?}, LOWEMI: {=bool:?} }}",
+            self.ENZI(),
+            self.PUN(),
+            self.PDN(),
+            self.LOWEMI()
+        )
+    }
+}
+///IOCELL control for UART2 RTS pin.
+#[repr(transparent)]
+#[derive(Copy, Clone, Eq, PartialEq)]
+pub struct IO_UART2_RTS(pub u32);
+impl IO_UART2_RTS {
+    ///Input enable: 0=disabled, 1=enabled.
+    #[must_use]
+    #[inline(always)]
+    pub const fn ENZI(&self) -> bool {
+        let val = (self.0 >> 0usize) & 0x01;
+        val != 0
+    }
+    ///Input enable: 0=disabled, 1=enabled.
+    #[inline(always)]
+    pub const fn set_ENZI(&mut self, val: bool) {
+        self.0 = (self.0 & !(0x01 << 0usize)) | (((val as u32) & 0x01) << 0usize);
+    }
+    ///Pullup: 0=pullup enabled, 1=normal (off).
+    #[must_use]
+    #[inline(always)]
+    pub const fn PUN(&self) -> bool {
+        let val = (self.0 >> 8usize) & 0x01;
+        val != 0
+    }
+    ///Pullup: 0=pullup enabled, 1=normal (off).
+    #[inline(always)]
+    pub const fn set_PUN(&mut self, val: bool) {
+        self.0 = (self.0 & !(0x01 << 8usize)) | (((val as u32) & 0x01) << 8usize);
+    }
+    ///Pulldown: 0=pulldown enabled, 1=normal (off).
+    #[must_use]
+    #[inline(always)]
+    pub const fn PDN(&self) -> bool {
+        let val = (self.0 >> 16usize) & 0x01;
+        val != 0
+    }
+    ///Pulldown: 0=pulldown enabled, 1=normal (off).
+    #[inline(always)]
+    pub const fn set_PDN(&mut self, val: bool) {
+        self.0 = (self.0 & !(0x01 << 16usize)) | (((val as u32) & 0x01) << 16usize);
+    }
+    ///Output current: 0=4mA(max 64MHz), 1=2mA(max 32MHz).
+    #[must_use]
+    #[inline(always)]
+    pub const fn LOWEMI(&self) -> bool {
+        let val = (self.0 >> 24usize) & 0x01;
+        val != 0
+    }
+    ///Output current: 0=4mA(max 64MHz), 1=2mA(max 32MHz).
+    #[inline(always)]
+    pub const fn set_LOWEMI(&mut self, val: bool) {
+        self.0 = (self.0 & !(0x01 << 24usize)) | (((val as u32) & 0x01) << 24usize);
+    }
+}
+impl Default for IO_UART2_RTS {
+    #[inline(always)]
+    fn default() -> IO_UART2_RTS {
+        IO_UART2_RTS(0)
+    }
+}
+impl core::fmt::Debug for IO_UART2_RTS {
+    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+        f.debug_struct("IO_UART2_RTS")
+            .field("ENZI", &self.ENZI())
+            .field("PUN", &self.PUN())
+            .field("PDN", &self.PDN())
+            .field("LOWEMI", &self.LOWEMI())
+            .finish()
+    }
+}
+#[cfg(feature = "defmt")]
+impl defmt::Format for IO_UART2_RTS {
+    fn format(&self, f: defmt::Formatter) {
+        defmt::write!(
+            f,
+            "IO_UART2_RTS {{ ENZI: {=bool:?}, PUN: {=bool:?}, PDN: {=bool:?}, LOWEMI: {=bool:?} }}",
             self.ENZI(),
             self.PUN(),
             self.PDN(),

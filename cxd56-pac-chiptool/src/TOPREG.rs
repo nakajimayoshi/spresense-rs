@@ -357,6 +357,11 @@ impl TOPREG {
     pub const fn IO_SPI0_SCK(self) -> crate::common::Reg<regs::IO_SPI0_SCK, crate::common::RW> {
         unsafe { crate::common::Reg::from_ptr(self.ptr.wrapping_add(0x0848usize) as _) }
     }
+    ///IOCELL control for SEN_IRQ_IN pin.
+    #[inline(always)]
+    pub const fn IO_SEN_IRQ_IN(self) -> crate::common::Reg<regs::IO_SEN_IRQ_IN, crate::common::RW> {
+        unsafe { crate::common::Reg::from_ptr(self.ptr.wrapping_add(0x0894usize) as _) }
+    }
     ///IOCELL control for I2C0_BCK pad.
     #[inline(always)]
     pub const fn IO_I2C0_BCK(self) -> crate::common::Reg<regs::IO_I2C0_BCK, crate::common::RW> {
@@ -376,6 +381,70 @@ impl TOPREG {
     #[inline(always)]
     pub const fn IO_UART2_RXD(self) -> crate::common::Reg<regs::IO_UART2_RXD, crate::common::RW> {
         unsafe { crate::common::Reg::from_ptr(self.ptr.wrapping_add(0x0910usize) as _) }
+    }
+    ///IOCELL control for UART2 CTS pin.
+    #[inline(always)]
+    pub const fn IO_UART2_CTS(self) -> crate::common::Reg<regs::IO_UART2_CTS, crate::common::RW> {
+        unsafe { crate::common::Reg::from_ptr(self.ptr.wrapping_add(0x0914usize) as _) }
+    }
+    ///IOCELL control for UART2 RTS pin.
+    #[inline(always)]
+    pub const fn IO_UART2_RTS(self) -> crate::common::Reg<regs::IO_UART2_RTS, crate::common::RW> {
+        unsafe { crate::common::Reg::from_ptr(self.ptr.wrapping_add(0x0918usize) as _) }
+    }
+    ///IOCELL control for EMMC_CLK / SPI5_SCK pin.
+    #[inline(always)]
+    pub const fn IO_EMMC_CLK(self) -> crate::common::Reg<regs::IO_EMMC_CLK, crate::common::RW> {
+        unsafe { crate::common::Reg::from_ptr(self.ptr.wrapping_add(0x092cusize) as _) }
+    }
+    ///IOCELL control for EMMC_CMD / SPI5_CS_X pin.
+    #[inline(always)]
+    pub const fn IO_EMMC_CMD(self) -> crate::common::Reg<regs::IO_EMMC_CMD, crate::common::RW> {
+        unsafe { crate::common::Reg::from_ptr(self.ptr.wrapping_add(0x0930usize) as _) }
+    }
+    ///IOCELL control for EMMC_DATA0 / SPI5_MOSI pin.
+    #[inline(always)]
+    pub const fn IO_EMMC_DATA0(self) -> crate::common::Reg<regs::IO_EMMC_DATA0, crate::common::RW> {
+        unsafe { crate::common::Reg::from_ptr(self.ptr.wrapping_add(0x0934usize) as _) }
+    }
+    ///IOCELL control for EMMC_DATA1 / SPI5_MISO pin.
+    #[inline(always)]
+    pub const fn IO_EMMC_DATA1(self) -> crate::common::Reg<regs::IO_EMMC_DATA1, crate::common::RW> {
+        unsafe { crate::common::Reg::from_ptr(self.ptr.wrapping_add(0x0938usize) as _) }
+    }
+    ///IOCELL control for EMMC_DATA2 pin.
+    #[inline(always)]
+    pub const fn IO_EMMC_DATA2(self) -> crate::common::Reg<regs::IO_EMMC_DATA2, crate::common::RW> {
+        unsafe { crate::common::Reg::from_ptr(self.ptr.wrapping_add(0x093cusize) as _) }
+    }
+    ///IOCELL control for EMMC_DATA3 pin.
+    #[inline(always)]
+    pub const fn IO_EMMC_DATA3(self) -> crate::common::Reg<regs::IO_EMMC_DATA3, crate::common::RW> {
+        unsafe { crate::common::Reg::from_ptr(self.ptr.wrapping_add(0x0940usize) as _) }
+    }
+    ///IOCELL control for I2S0_BCK pin.
+    #[inline(always)]
+    pub const fn IO_I2S0_BCK(self) -> crate::common::Reg<regs::IO_I2S0_BCK, crate::common::RW> {
+        unsafe { crate::common::Reg::from_ptr(self.ptr.wrapping_add(0x0974usize) as _) }
+    }
+    ///IOCELL control for I2S0_LRCK pin.
+    #[inline(always)]
+    pub const fn IO_I2S0_LRCK(self) -> crate::common::Reg<regs::IO_I2S0_LRCK, crate::common::RW> {
+        unsafe { crate::common::Reg::from_ptr(self.ptr.wrapping_add(0x0978usize) as _) }
+    }
+    ///IOCELL control for I2S0_DATA_IN pin.
+    #[inline(always)]
+    pub const fn IO_I2S0_DATA_IN(
+        self,
+    ) -> crate::common::Reg<regs::IO_I2S0_DATA_IN, crate::common::RW> {
+        unsafe { crate::common::Reg::from_ptr(self.ptr.wrapping_add(0x097cusize) as _) }
+    }
+    ///IOCELL control for I2S0_DATA_OUT pin.
+    #[inline(always)]
+    pub const fn IO_I2S0_DATA_OUT(
+        self,
+    ) -> crate::common::Reg<regs::IO_I2S0_DATA_OUT, crate::common::RW> {
+        unsafe { crate::common::Reg::from_ptr(self.ptr.wrapping_add(0x0980usize) as _) }
     }
     ///APP-domain GPIO interrupt slot mux, slots 6–9 (1 byte per slot, pin index 0–63).
     #[inline(always)]
@@ -400,6 +469,95 @@ impl TOPREG {
     #[inline(always)]
     pub const fn GP_I2C4_BCK(self) -> crate::common::Reg<regs::GP_I2C4_BCK, crate::common::RW> {
         unsafe { crate::common::Reg::from_ptr(self.ptr.wrapping_add(0x2000usize) as _) }
+    }
+    ///GPIO SYS pin 37 — SEN_IRQ / Arduino D22 (JP1).
+    #[inline(always)]
+    pub const fn GP_SEN_IRQ_IN(self) -> crate::common::Reg<regs::GP_SEN_IRQ_IN, crate::common::RW> {
+        unsafe { crate::common::Reg::from_ptr(self.ptr.wrapping_add(0x2090usize) as _) }
+    }
+    ///GPIO SYS pin 44 — I2C0_SCL / Arduino D15 (JP2).
+    #[inline(always)]
+    pub const fn GP_I2C0_BCK(self) -> crate::common::Reg<regs::GP_I2C0_BCK, crate::common::RW> {
+        unsafe { crate::common::Reg::from_ptr(self.ptr.wrapping_add(0x20acusize) as _) }
+    }
+    ///GPIO SYS pin 45 — I2C0_SDA / Arduino D14 (JP2).
+    #[inline(always)]
+    pub const fn GP_I2C0_BDT(self) -> crate::common::Reg<regs::GP_I2C0_BDT, crate::common::RW> {
+        unsafe { crate::common::Reg::from_ptr(self.ptr.wrapping_add(0x20b0usize) as _) }
+    }
+    ///GPIO APP pin 67 — UART2_TX / Arduino D01 (JP1).
+    #[inline(always)]
+    pub const fn GP_UART2_TXD(self) -> crate::common::Reg<regs::GP_UART2_TXD, crate::common::RW> {
+        unsafe { crate::common::Reg::from_ptr(self.ptr.wrapping_add(0x20f0usize) as _) }
+    }
+    ///GPIO APP pin 68 — UART2_RX / Arduino D00 (JP1).
+    #[inline(always)]
+    pub const fn GP_UART2_RXD(self) -> crate::common::Reg<regs::GP_UART2_RXD, crate::common::RW> {
+        unsafe { crate::common::Reg::from_ptr(self.ptr.wrapping_add(0x20f4usize) as _) }
+    }
+    ///GPIO APP pin 69 — UART2_CTS / Arduino D27 (JP1).
+    #[inline(always)]
+    pub const fn GP_UART2_CTS(self) -> crate::common::Reg<regs::GP_UART2_CTS, crate::common::RW> {
+        unsafe { crate::common::Reg::from_ptr(self.ptr.wrapping_add(0x20f8usize) as _) }
+    }
+    ///GPIO APP pin 70 — UART2_RTS / Arduino D28 (JP1).
+    #[inline(always)]
+    pub const fn GP_UART2_RTS(self) -> crate::common::Reg<regs::GP_UART2_RTS, crate::common::RW> {
+        unsafe { crate::common::Reg::from_ptr(self.ptr.wrapping_add(0x20fcusize) as _) }
+    }
+    ///GPIO APP pin 75 — SPI5_SCK / Arduino D23 (JP1).
+    #[inline(always)]
+    pub const fn GP_EMMC_CLK(self) -> crate::common::Reg<regs::GP_EMMC_CLK, crate::common::RW> {
+        unsafe { crate::common::Reg::from_ptr(self.ptr.wrapping_add(0x2110usize) as _) }
+    }
+    ///GPIO APP pin 76 — SPI5_CS_X / Arduino D24 (JP1).
+    #[inline(always)]
+    pub const fn GP_EMMC_CMD(self) -> crate::common::Reg<regs::GP_EMMC_CMD, crate::common::RW> {
+        unsafe { crate::common::Reg::from_ptr(self.ptr.wrapping_add(0x2114usize) as _) }
+    }
+    ///GPIO APP pin 77 — SPI5_MOSI / Arduino D16 (JP2).
+    #[inline(always)]
+    pub const fn GP_EMMC_DATA0(self) -> crate::common::Reg<regs::GP_EMMC_DATA0, crate::common::RW> {
+        unsafe { crate::common::Reg::from_ptr(self.ptr.wrapping_add(0x2118usize) as _) }
+    }
+    ///GPIO APP pin 78 — SPI5_MISO / Arduino D17 (JP2).
+    #[inline(always)]
+    pub const fn GP_EMMC_DATA1(self) -> crate::common::Reg<regs::GP_EMMC_DATA1, crate::common::RW> {
+        unsafe { crate::common::Reg::from_ptr(self.ptr.wrapping_add(0x211cusize) as _) }
+    }
+    ///GPIO APP pin 79 — GPIO / Arduino D20 (JP2).
+    #[inline(always)]
+    pub const fn GP_EMMC_DATA2(self) -> crate::common::Reg<regs::GP_EMMC_DATA2, crate::common::RW> {
+        unsafe { crate::common::Reg::from_ptr(self.ptr.wrapping_add(0x2120usize) as _) }
+    }
+    ///GPIO APP pin 80 — GPIO / Arduino D21 (JP2).
+    #[inline(always)]
+    pub const fn GP_EMMC_DATA3(self) -> crate::common::Reg<regs::GP_EMMC_DATA3, crate::common::RW> {
+        unsafe { crate::common::Reg::from_ptr(self.ptr.wrapping_add(0x2124usize) as _) }
+    }
+    ///GPIO APP pin 93 — I2S0_BCK / Arduino D26 (JP1).
+    #[inline(always)]
+    pub const fn GP_I2S0_BCK(self) -> crate::common::Reg<regs::GP_I2S0_BCK, crate::common::RW> {
+        unsafe { crate::common::Reg::from_ptr(self.ptr.wrapping_add(0x2158usize) as _) }
+    }
+    ///GPIO APP pin 94 — I2S0_LRCK / Arduino D25 (JP1).
+    #[inline(always)]
+    pub const fn GP_I2S0_LRCK(self) -> crate::common::Reg<regs::GP_I2S0_LRCK, crate::common::RW> {
+        unsafe { crate::common::Reg::from_ptr(self.ptr.wrapping_add(0x215cusize) as _) }
+    }
+    ///GPIO APP pin 95 — I2S0_DATA_IN / Arduino D19 (JP2).
+    #[inline(always)]
+    pub const fn GP_I2S0_DATA_IN(
+        self,
+    ) -> crate::common::Reg<regs::GP_I2S0_DATA_IN, crate::common::RW> {
+        unsafe { crate::common::Reg::from_ptr(self.ptr.wrapping_add(0x2160usize) as _) }
+    }
+    ///GPIO APP pin 96 — I2S0_DATA_OUT / Arduino D18 (JP2).
+    #[inline(always)]
+    pub const fn GP_I2S0_DATA_OUT(
+        self,
+    ) -> crate::common::Reg<regs::GP_I2S0_DATA_OUT, crate::common::RW> {
+        unsafe { crate::common::Reg::from_ptr(self.ptr.wrapping_add(0x2164usize) as _) }
     }
     ///GPIO APP pin 97 — I2S1_BCK / LED0 on Spresense main board.
     #[inline(always)]
