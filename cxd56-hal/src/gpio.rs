@@ -22,55 +22,49 @@ mod sealed {
 /// IN[0] / OUT[8] / DIR[16] (active-low) field layout.
 pub trait PinReg: sealed::Sealed + 'static {}
 
-impl sealed::Sealed for pac::topreg::GpI2s1Bck {
-    fn read_bits(&self) -> u32 {
-        self.read().bits()
-    }
-    fn write_bits(&self, val: u32) {
-        self.modify(|_, w| unsafe { w.bits(val) });
-    }
+macro_rules! impl_pinreg {
+    ($($reg:ident),+ $(,)?) => {$(
+        impl sealed::Sealed for pac::topreg::$reg {
+            fn read_bits(&self) -> u32 {
+                self.read().bits()
+            }
+            fn write_bits(&self, val: u32) {
+                self.modify(|_, w| unsafe { w.bits(val) });
+            }
+        }
+        impl PinReg for pac::topreg::$reg {}
+    )+};
 }
-impl PinReg for pac::topreg::GpI2s1Bck {}
 
-impl sealed::Sealed for pac::topreg::GpI2c4Bck {
-    fn read_bits(&self) -> u32 {
-        self.read().bits()
-    }
-    fn write_bits(&self, val: u32) {
-        self.modify(|_, w| unsafe { w.bits(val) });
-    }
-}
-impl PinReg for pac::topreg::GpI2c4Bck {}
-
-impl sealed::Sealed for pac::topreg::GpI2s1Lrck {
-    fn read_bits(&self) -> u32 {
-        self.read().bits()
-    }
-    fn write_bits(&self, val: u32) {
-        self.modify(|_, w| unsafe { w.bits(val) });
-    }
-}
-impl PinReg for pac::topreg::GpI2s1Lrck {}
-
-impl sealed::Sealed for pac::topreg::GpI2s1DataIn {
-    fn read_bits(&self) -> u32 {
-        self.read().bits()
-    }
-    fn write_bits(&self, val: u32) {
-        self.modify(|_, w| unsafe { w.bits(val) });
-    }
-}
-impl PinReg for pac::topreg::GpI2s1DataIn {}
-
-impl sealed::Sealed for pac::topreg::GpI2s1DataOut {
-    fn read_bits(&self) -> u32 {
-        self.read().bits()
-    }
-    fn write_bits(&self, val: u32) {
-        self.modify(|_, w| unsafe { w.bits(val) });
-    }
-}
-impl PinReg for pac::topreg::GpI2s1DataOut {}
+// Every TOPREG GP_* register shares the IN[0] / OUT[8] / DIR[16] layout, so a
+// single macro covers them all.
+impl_pinreg!(
+    // Main-board LEDs + Arduino D14 (pre-existing)
+    GpI2s1Bck,
+    GpI2s1Lrck,
+    GpI2s1DataIn,
+    GpI2s1DataOut,
+    GpI2c4Bck,
+    // JP1 header
+    GpUart2Txd,
+    GpUart2Rxd,
+    GpUart2Rts,
+    GpUart2Cts,
+    GpI2s0Bck,
+    GpI2s0Lrck,
+    GpEmmcCmd,
+    GpEmmcClk,
+    GpSenIrqIn,
+    // JP2 header
+    GpEmmcData3,
+    GpEmmcData2,
+    GpI2s0DataIn,
+    GpI2s0DataOut,
+    GpEmmcData1,
+    GpEmmcData0,
+    GpI2c0Bck,
+    GpI2c0Bdt,
+);
 
 /// Unconfigured GPIO pin. Call [`into_output`](GpioPin::into_output) or
 /// [`into_input`](GpioPin::into_input) to configure the direction.
@@ -206,13 +200,56 @@ pub mod pins {
     ///
     /// The four `gp_i2s1_*` pins drive the Spresense main-board LEDs
     /// (`gp_i2s1_bck` = LED0, `gp_i2s1_lrck` = LED1, `gp_i2s1_data_in` = LED2,
-    /// `gp_i2s1_data_out` = LED3); `gp_i2c4_bck` is the Arduino D14 header pin.
+    /// `gp_i2s1_data_out` = LED3). The remaining fields are the digital GPIO
+    /// pins broken out on the main-board headers JP1 and JP2; field names follow
+    /// the CXD5602 signal name, and the doc comments give the Arduino pin label.
+    /// Pins default to mode0 (GPIO); selecting an alternate function (UART2,
+    /// I2S0, SPI5, I2C0, …) is done via the `IOCAPP_IOMD` / `IOCSYS_IOMD1`
+    /// mode-mux registers, which share a group across all pins of a peripheral.
     pub struct Parts {
         pub gp_i2s1_bck: GpioPin<pac::topreg::GpI2s1Bck>,
         pub gp_i2s1_lrck: GpioPin<pac::topreg::GpI2s1Lrck>,
         pub gp_i2s1_data_in: GpioPin<pac::topreg::GpI2s1DataIn>,
         pub gp_i2s1_data_out: GpioPin<pac::topreg::GpI2s1DataOut>,
         pub gp_i2c4_bck: GpioPin<pac::topreg::GpI2c4Bck>,
+
+        // --- JP1 header ---
+        /// JP1 pin 2 — UART2_TX (Arduino D01).
+        pub gp_uart2_txd: GpioPin<pac::topreg::GpUart2Txd>,
+        /// JP1 pin 3 — UART2_RX (Arduino D00).
+        pub gp_uart2_rxd: GpioPin<pac::topreg::GpUart2Rxd>,
+        /// JP1 pin 4 — UART2_RTS (Arduino D28).
+        pub gp_uart2_rts: GpioPin<pac::topreg::GpUart2Rts>,
+        /// JP1 pin 5 — UART2_CTS (Arduino D27).
+        pub gp_uart2_cts: GpioPin<pac::topreg::GpUart2Cts>,
+        /// JP1 pin 6 — I2S0_BCK (Arduino D26).
+        pub gp_i2s0_bck: GpioPin<pac::topreg::GpI2s0Bck>,
+        /// JP1 pin 7 — I2S0_LRCK (Arduino D25).
+        pub gp_i2s0_lrck: GpioPin<pac::topreg::GpI2s0Lrck>,
+        /// JP1 pin 8 — SPI5_CS_X / EMMC_CMD (Arduino D24).
+        pub gp_emmc_cmd: GpioPin<pac::topreg::GpEmmcCmd>,
+        /// JP1 pin 9 — SPI5_SCK / EMMC_CLK (Arduino D23).
+        pub gp_emmc_clk: GpioPin<pac::topreg::GpEmmcClk>,
+        /// JP1 pin 12 — SEN_IRQ (Arduino D22).
+        pub gp_sen_irq_in: GpioPin<pac::topreg::GpSenIrqIn>,
+
+        // --- JP2 header ---
+        /// JP2 pin 4 — GPIO / EMMC_DATA3 (Arduino D21).
+        pub gp_emmc_data3: GpioPin<pac::topreg::GpEmmcData3>,
+        /// JP2 pin 5 — GPIO / EMMC_DATA2 (Arduino D20).
+        pub gp_emmc_data2: GpioPin<pac::topreg::GpEmmcData2>,
+        /// JP2 pin 6 — I2S0_DATA_IN (Arduino D19).
+        pub gp_i2s0_data_in: GpioPin<pac::topreg::GpI2s0DataIn>,
+        /// JP2 pin 7 — I2S0_DATA_OUT (Arduino D18).
+        pub gp_i2s0_data_out: GpioPin<pac::topreg::GpI2s0DataOut>,
+        /// JP2 pin 8 — SPI5_MISO / EMMC_DATA1 (Arduino D17).
+        pub gp_emmc_data1: GpioPin<pac::topreg::GpEmmcData1>,
+        /// JP2 pin 9 — SPI5_MOSI / EMMC_DATA0 (Arduino D16).
+        pub gp_emmc_data0: GpioPin<pac::topreg::GpEmmcData0>,
+        /// JP2 pin 11 — I2C0_SCL / I2C0_BCK (Arduino D15).
+        pub gp_i2c0_bck: GpioPin<pac::topreg::GpI2c0Bck>,
+        /// JP2 pin 12 — I2C0_SDA / I2C0_BDT (Arduino D14).
+        pub gp_i2c0_bdt: GpioPin<pac::topreg::GpI2c0Bdt>,
     }
 
     impl Parts {
@@ -227,6 +264,27 @@ pub mod pins {
                 gp_i2s1_data_in: unsafe { GpioPin::new(block.gp_i2s1_data_in()) },
                 gp_i2s1_data_out: unsafe { GpioPin::new(block.gp_i2s1_data_out()) },
                 gp_i2c4_bck: unsafe { GpioPin::new(block.gp_i2c4_bck()) },
+
+                // JP1 header
+                gp_uart2_txd: unsafe { GpioPin::new(block.gp_uart2_txd()) },
+                gp_uart2_rxd: unsafe { GpioPin::new(block.gp_uart2_rxd()) },
+                gp_uart2_rts: unsafe { GpioPin::new(block.gp_uart2_rts()) },
+                gp_uart2_cts: unsafe { GpioPin::new(block.gp_uart2_cts()) },
+                gp_i2s0_bck: unsafe { GpioPin::new(block.gp_i2s0_bck()) },
+                gp_i2s0_lrck: unsafe { GpioPin::new(block.gp_i2s0_lrck()) },
+                gp_emmc_cmd: unsafe { GpioPin::new(block.gp_emmc_cmd()) },
+                gp_emmc_clk: unsafe { GpioPin::new(block.gp_emmc_clk()) },
+                gp_sen_irq_in: unsafe { GpioPin::new(block.gp_sen_irq_in()) },
+
+                // JP2 header
+                gp_emmc_data3: unsafe { GpioPin::new(block.gp_emmc_data3()) },
+                gp_emmc_data2: unsafe { GpioPin::new(block.gp_emmc_data2()) },
+                gp_i2s0_data_in: unsafe { GpioPin::new(block.gp_i2s0_data_in()) },
+                gp_i2s0_data_out: unsafe { GpioPin::new(block.gp_i2s0_data_out()) },
+                gp_emmc_data1: unsafe { GpioPin::new(block.gp_emmc_data1()) },
+                gp_emmc_data0: unsafe { GpioPin::new(block.gp_emmc_data0()) },
+                gp_i2c0_bck: unsafe { GpioPin::new(block.gp_i2c0_bck()) },
+                gp_i2c0_bdt: unsafe { GpioPin::new(block.gp_i2c0_bdt()) },
             }
         }
     }
