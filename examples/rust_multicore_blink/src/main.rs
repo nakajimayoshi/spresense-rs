@@ -1,11 +1,11 @@
 //! Two-core independent LED blink — minimal multicore validation.
 //!
-//! `Core0` blinks LED A (`gp_i2s1_bck`) at ~500 ms; it spawns `Core1`, which
-//! blinks LED B (`gp_i2c4_bck`) at ~200 ms. The two LEDs live on **distinct**
-//! TOPREG registers, so the cores never touch the same word — no semaphore or
-//! mailbox is needed. Two visibly out-of-phase blink rates prove that two cores
-//! are each running their own loop (not one core toggling both). This is the
-//! hardware bring-up test for `cxd56_hal::multicore::spawn`.
+//! `Core0` blinks LED0 (`gp_i2s1_bck`) at ~500 ms; it spawns `Core1`, which
+//! blinks LED1 (`gp_i2s1_lrck`) at ~200 ms. Both are Spresense main-board LEDs
+//! on **distinct** TOPREG registers, so the cores never touch the same word —
+//! no semaphore or mailbox is needed. Two visibly out-of-phase blink rates prove
+//! that two cores are each running their own loop (not one core toggling both).
+//! This is the hardware bring-up test for `cxd56_hal::multicore::spawn`.
 
 #![no_std]
 #![no_main]
@@ -39,10 +39,10 @@ fn main() -> ! {
     let crg = pac.crg.constrain(Config::default());
     let _clocks = crg.freeze();
 
-    // Core0 owns LED A (gp_i2s1_bck — the known-good blink pin). gp_i2c4_bck is
-    // left unconfigured here; Core1 owns it (a distinct register).
+    // Core0 owns LED0 (gp_i2s1_bck). Core1 owns LED1 (gp_i2s1_lrck) — a distinct
+    // register, left unconfigured here.
     let pins = pins::Parts::new(pac.topreg);
-    let mut led_a = pins.gp_i2s1_bck.into_output(Level::Low);
+    let mut led0 = pins.gp_i2s1_bck.into_output(Level::Low);
 
     // Start Core1 on its dedicated stack. `core1_main` must call `ack_boot`
     // first and never return (see below).
@@ -56,9 +56,9 @@ fn main() -> ! {
 
     // Core0 blink loop — 500 ms period.
     loop {
-        led_a.set_high();
+        led0.set_high();
         asm::delay(500 * CYCLES_PER_MS);
-        led_a.set_low();
+        led0.set_low();
         asm::delay(500 * CYCLES_PER_MS);
     }
 }
@@ -75,19 +75,19 @@ extern "C" fn core1_main() -> ! {
     ack_boot();
     enable_fpu();
 
-    // Core1 owns LED B (gp_i2c4_bck) — re-derive its register directly, since the
+    // Core1 owns LED1 (gp_i2s1_lrck) — re-derive its register directly, since the
     // `Topreg` singleton was consumed on Core0. This is the only handle to this
     // register, so the `GpioPin::new` exclusivity contract holds.
     let block: &'static _ = unsafe { &*pac::Topreg::PTR };
-    // SAFETY: exclusive access — no other code touches gp_i2c4_bck.
-    let mut led_b = unsafe { GpioPin::new(block.gp_i2c4_bck()) }.into_output(Level::Low);
+    // SAFETY: exclusive access — no other code touches gp_i2s1_lrck.
+    let mut led1 = unsafe { GpioPin::new(block.gp_i2s1_lrck()) }.into_output(Level::Low);
 
     // 200 ms period — deliberately different from Core0 so the two LEDs are
     // visibly out of phase, proving Core1 runs independently.
     loop {
-        led_b.set_high();
+        led1.set_high();
         asm::delay(200 * CYCLES_PER_MS);
-        led_b.set_low();
+        led1.set_low();
         asm::delay(200 * CYCLES_PER_MS);
     }
 }
