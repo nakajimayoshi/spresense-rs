@@ -42,6 +42,36 @@ impl sealed::Sealed for pac::topreg::GpI2c4Bck {
 }
 impl PinReg for pac::topreg::GpI2c4Bck {}
 
+impl sealed::Sealed for pac::topreg::GpI2s1Lrck {
+    fn read_bits(&self) -> u32 {
+        self.read().bits()
+    }
+    fn write_bits(&self, val: u32) {
+        self.modify(|_, w| unsafe { w.bits(val) });
+    }
+}
+impl PinReg for pac::topreg::GpI2s1Lrck {}
+
+impl sealed::Sealed for pac::topreg::GpI2s1DataIn {
+    fn read_bits(&self) -> u32 {
+        self.read().bits()
+    }
+    fn write_bits(&self, val: u32) {
+        self.modify(|_, w| unsafe { w.bits(val) });
+    }
+}
+impl PinReg for pac::topreg::GpI2s1DataIn {}
+
+impl sealed::Sealed for pac::topreg::GpI2s1DataOut {
+    fn read_bits(&self) -> u32 {
+        self.read().bits()
+    }
+    fn write_bits(&self, val: u32) {
+        self.modify(|_, w| unsafe { w.bits(val) });
+    }
+}
+impl PinReg for pac::topreg::GpI2s1DataOut {}
+
 /// Unconfigured GPIO pin. Call [`into_output`](GpioPin::into_output) or
 /// [`into_input`](GpioPin::into_input) to configure the direction.
 pub struct GpioPin<R: PinReg> {
@@ -173,8 +203,15 @@ pub mod pins {
     use crate::pac;
 
     /// GPIO pins accessible via the TOPREG GP_* registers.
+    ///
+    /// The four `gp_i2s1_*` pins drive the Spresense main-board LEDs
+    /// (`gp_i2s1_bck` = LED0, `gp_i2s1_lrck` = LED1, `gp_i2s1_data_in` = LED2,
+    /// `gp_i2s1_data_out` = LED3); `gp_i2c4_bck` is the Arduino D14 header pin.
     pub struct Parts {
         pub gp_i2s1_bck: GpioPin<pac::topreg::GpI2s1Bck>,
+        pub gp_i2s1_lrck: GpioPin<pac::topreg::GpI2s1Lrck>,
+        pub gp_i2s1_data_in: GpioPin<pac::topreg::GpI2s1DataIn>,
+        pub gp_i2s1_data_out: GpioPin<pac::topreg::GpI2s1DataOut>,
         pub gp_i2c4_bck: GpioPin<pac::topreg::GpI2c4Bck>,
     }
 
@@ -186,6 +223,9 @@ pub mod pins {
             let block = unsafe { &*pac::Topreg::PTR };
             Self {
                 gp_i2s1_bck: unsafe { GpioPin::new(block.gp_i2s1_bck()) },
+                gp_i2s1_lrck: unsafe { GpioPin::new(block.gp_i2s1_lrck()) },
+                gp_i2s1_data_in: unsafe { GpioPin::new(block.gp_i2s1_data_in()) },
+                gp_i2s1_data_out: unsafe { GpioPin::new(block.gp_i2s1_data_out()) },
                 gp_i2c4_bck: unsafe { GpioPin::new(block.gp_i2c4_bck()) },
             }
         }
