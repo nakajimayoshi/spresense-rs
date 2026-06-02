@@ -127,7 +127,10 @@ dependencies = [
  "cargo_metadata",
  "clap",
  "env_logger",
+ "flash-writer",
  "log",
+ "mkspk",
+ "serialport",
 ]
 
 [[package]]

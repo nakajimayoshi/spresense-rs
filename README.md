@@ -15,13 +15,22 @@ This mini-tutorial expects you to have already flashed the Sony bootloader and s
 ```bash
 git clone https://github.com/bsaintjo/spresense-rs
 cd spresense-rs
-# For more information about flashing, see the Flashing section
-cargo install --path tools/mkspk
-cargo install --path tools/flash-writer
+# Installs the `cargo spresense-flash` subcommand (bundles mkspk + flash-writer).
+# For more information about flashing, see the Flashing section.
+cargo install --path tools/cargo-spresense-flash
 cd examples/rust_blink
-cargo build --release
-mkspk -c 2 target/thumbv7em-none-eabihf/release/rust_blink nuttx target/rust_blink.spk
-flash_writer -c /dev/ttyUSB0 target/rust_blink.spk
+# Build, package, and flash in one step. The serial port is auto-detected; pass
+# --port /dev/ttyUSB0 (or set SPRESENSE_PORT) to choose it explicitly.
+cargo spresense-flash --release
+```
+
+Examples whose `.cargo/config.toml` sets a `runner` (e.g. `rust_blink`,
+`rust_hello_uart`) can be flashed with plain `cargo run` — and, for UART
+examples, `cargo run` also opens a serial monitor on the board's output:
+
+```bash
+cd examples/rust_hello_uart
+cargo run --release    # build + flash + serial monitor
 ```
 
 ![Rust Blinking on Sony Spresense](./assets/spresense.gif)
@@ -47,6 +56,40 @@ The second program is [`flash.sh`](https://github.com/sonydevworld/spresense/blo
 - _IMPORTANT_: if you just got the board and haven't flashed anything to it, you will need to flash the (secondary?) bootloader. If you haven't, while flashing (at least with the SDK version) you might see an error at the top regarding a new bootloader being required accepting a EULA agreement and flashing should fail. Follow the instructions from the documentation on the [Spresense Dev Website](https://developer.spresense.sony-semicon.com/development-guides/?page=sdk_set_up&lang=en#_flashing_bootloader). All work done in this set of crates is based on the SDK v3.4.3 or later.
 
 The above points are mentioned to understand how the flash process works and illustrate that while straightforward, it can be slighly inconvienient. To that end, I've added two (LLM-translated) versions of [`mkspk`](./tools/mkspk/) and [`flash_writer`](./tools/flash-writer/) to make it simpler to have the tools needed to flash Rust programs to the Spresense. I've used these in my flashing workflow for the Rust examples here, and run integration tests to validate they produce correct output, but if you want to use the Spresense SDK flashing tools, here are the instructions for using them.
+
+### Flashing with `cargo spresense-flash`
+
+`tools/cargo-spresense-flash` wraps the whole pipeline as a Cargo subcommand. It
+links `mkspk` and `flash-writer` as libraries (no separate `cargo install` of
+those, nothing required on `PATH`), and behaves like `cargo build`/`cargo run`:
+
+```bash
+cargo install --path tools/cargo-spresense-flash
+cd examples/rust_blink
+cargo spresense-flash --release          # auto-detects the bin and the serial port
+cargo spresense-flash --release --monitor   # ...then stream the board's UART output
+```
+
+- **Target**: like `cargo run`, it builds the crate's sole binary automatically;
+  pass `--bin <name>`/`--example <name>` only when ambiguous.
+- **Serial port**: auto-detected from the attached USB serial adapters. With more
+  than one it prompts; override with `--port` or `SPRESENSE_PORT`.
+- **Install name**: the SPK header savename defaults to `nuttx` (the name the
+  bootloader boots); override with `--name`.
+- **`cargo run` runner**: add this to an example's `.cargo/config.toml` so a plain
+  `cargo run` builds, flashes, and (optionally) monitors:
+
+  ```toml
+  [target.'cfg(all(target_arch = "arm", target_os = "none"))']
+  runner = "cargo-spresense-flash spresense-flash --monitor"
+  ```
+
+  `cargo run` builds the ELF and appends its path, so the prebuilt binary is
+  flashed directly (no rebuild). Drop `--monitor` for examples without UART output.
+
+The serial monitor is a plain read-only byte stream (press Ctrl-C to exit); it
+does not yet decode `defmt` frames, so `defmt`-based examples will show encoded
+bytes.
 
 ### Flashing using Spresense SDK tools
 
