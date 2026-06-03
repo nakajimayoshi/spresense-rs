@@ -207,7 +207,7 @@ fn abort<S: SerialIo>(io: &mut S) {
 
 /// Read bytes from `src` until the buffer is full or EOF is reached.
 /// Returns the number of bytes actually read (0 means EOF).
-fn read_full<R: Read>(src: &mut R, buf: &mut Vec<u8>) -> Result<usize, FlashError> {
+fn read_full<R: Read>(src: &mut R, buf: &mut [u8]) -> Result<usize, FlashError> {
     let mut total = 0;
     buf.fill(PAD); // pre-fill with pad so short reads are already padded
     while total < buf.len() {
