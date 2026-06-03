@@ -16,7 +16,7 @@
 //! spawns from different cores are not supported.
 
 use super::cpu::Core;
-use crate::pac;
+use crate::regs::crg;
 use core::ptr;
 use core::sync::atomic::{AtomicBool, Ordering};
 
@@ -66,13 +66,12 @@ pub unsafe fn spawn(
     }
     let cpu = core.index() as u32;
     let bit = 1u32 << (16 + cpu);
-    let crg = unsafe { &*pac::Crg::PTR };
 
     BOOT_ACK.store(false, Ordering::Release);
 
     // 1. Hold the worker in reset (active-low: clear bit 16+cpu).
-    let r = crg.reset().read().bits();
-    crg.reset().write(|w| unsafe { w.bits(r & !bit) });
+    let r = crg().reset().read().bits();
+    crg().reset().write(|w| unsafe { w.bits(r & !bit) });
 
     // 2. Write the worker's initial stack and reset vector into the boot mailbox.
     unsafe {
@@ -81,9 +80,9 @@ pub unsafe fn spawn(
     }
 
     // 3. Clock supply, then stop (boot-prep pulse).
-    let g = crg.ck_gate_ahb().read().bits();
-    crg.ck_gate_ahb().write(|w| unsafe { w.bits(g | bit) });
-    crg.ck_gate_ahb().write(|w| unsafe { w.bits(g & !bit) });
+    let g = crg().ck_gate_ahb().read().bits();
+    crg().ck_gate_ahb().write(|w| unsafe { w.bits(g | bit) });
+    crg().ck_gate_ahb().write(|w| unsafe { w.bits(g & !bit) });
 
     // 4. Replicate the booting core's address-converter view to the worker so it
     //    sees the same flat memory map (single combined image).
@@ -94,10 +93,10 @@ pub unsafe fn spawn(
     }
 
     // 5. Release reset (set bit) and supply the clock.
-    let r = crg.reset().read().bits();
-    crg.reset().write(|w| unsafe { w.bits(r | bit) });
-    let g = crg.ck_gate_ahb().read().bits();
-    crg.ck_gate_ahb().write(|w| unsafe { w.bits(g | bit) });
+    let r = crg().reset().read().bits();
+    crg().reset().write(|w| unsafe { w.bits(r | bit) });
+    let g = crg().ck_gate_ahb().read().bits();
+    crg().ck_gate_ahb().write(|w| unsafe { w.bits(g | bit) });
 
     // 6. Wait for the worker to report it has consumed the boot mailbox.
     let mut budget = 5_000_000u32;

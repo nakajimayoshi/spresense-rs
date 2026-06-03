@@ -256,8 +256,9 @@ pub mod pins {
         pub fn new(_topreg: pac::Topreg) -> Self {
             // Safety: ownership of `pac::Topreg` — obtainable only via
             // `pac::Peripherals::take()` — guarantees no other code holds
-            // a reference to this register block.
-            let block = unsafe { &*pac::Topreg::PTR };
+            // a reference to this register block. The accessor in
+            // `crate::regs::topreg()` documents the general aliasing invariant.
+            let block = crate::regs::topreg();
             Self {
                 gp_i2s1_bck: unsafe { GpioPin::new(block.gp_i2s1_bck()) },
                 gp_i2s1_lrck: unsafe { GpioPin::new(block.gp_i2s1_lrck()) },

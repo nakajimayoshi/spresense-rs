@@ -5,7 +5,7 @@
 //! `nuttx/arch/arm/src/cxd56xx/cxd56_clock.c`. Cited line ranges in the doc
 //! comments.
 
-use crate::pac;
+use crate::regs::{crg, topreg};
 
 /// `APP_CKSEL` register address — lives in `topreg_sub` at offset 0x418.
 /// `cxd56_clock.c:1636` reads it through `CXD56_TOPREG_APP_CKSEL`.
@@ -26,7 +26,7 @@ fn read_gnss_div() -> u32 {
 
 /// SYS/IOP root clock. Mirrors `cxd56_get_sys_baseclock` (cxd56_clock.c:1573).
 pub fn sys_hz(rcosc: u32, rtc: u32, syspll: u32, xosc: u32) -> u32 {
-    let val = unsafe { (*pac::Topreg::PTR).cksel_root().read().bits() };
+    let val = topreg().cksel_root().read().bits();
     match (val >> 22) & 0x3 {
         0 => rcosc,
         1 => {
@@ -44,21 +44,21 @@ pub fn sys_hz(rcosc: u32, rtc: u32, syspll: u32, xosc: u32) -> u32 {
 
 /// AHB-side clock. `cxd56_clock.c:2265`.
 pub fn sys_ahb_hz(sys: u32) -> u32 {
-    let bus = unsafe { (*pac::Topreg::PTR).ckdiv_cpu_dsp_bus().read().bits() };
+    let bus = topreg().ckdiv_cpu_dsp_bus().read().bits();
     let ahb = 1u32 << ((bus >> 16) & 0x7);
     sys / ahb
 }
 
 /// APB-side clock. `cxd56_clock.c:2275`.
 pub fn sys_apb_hz(sys_ahb: u32) -> u32 {
-    let bus = unsafe { (*pac::Topreg::PTR).ckdiv_cpu_dsp_bus().read().bits() };
+    let bus = topreg().ckdiv_cpu_dsp_bus().read().bits();
     let apb = 1u32 << ((bus >> 24) & 0x3);
     sys_ahb / apb
 }
 
 /// SPI-flash controller clock. `cxd56_clock.c:2285`.
 pub fn sys_sfc_hz(sys: u32) -> u32 {
-    let bus = unsafe { (*pac::Topreg::PTR).ckdiv_cpu_dsp_bus().read().bits() };
+    let bus = topreg().ckdiv_cpu_dsp_bus().read().bits();
     let sfc = (bus >> 28) & 0xf;
     if sfc <= 9 {
         sys / (sfc * 2 + 2)
@@ -89,7 +89,7 @@ pub fn appsmp_hz(xosc: u32) -> u32 {
 
 /// SCU base clock. `cxd56_clock.c:1606`.
 pub fn scu_hz(rcosc: u32, rtc: u32, xosc: u32) -> u32 {
-    let val = unsafe { (*pac::Topreg::PTR).cksel_scu().read().bits() };
+    let val = topreg().cksel_scu().read().bits();
     match val & 0x3 {
         0 => rcosc,
         1 => xosc / (((val >> 8) & 0x3) + 1),
@@ -106,13 +106,13 @@ pub fn scu_hz(rcosc: u32, rtc: u32, xosc: u32) -> u32 {
 
 /// COM-bus clock (SPI0/I2C2/UART1). `cxd56_clock.c:1665`.
 pub fn com_hz(sys: u32) -> u32 {
-    let val = unsafe { (*pac::Topreg::PTR).ckdiv_com().read().bits() };
+    let val = topreg().ckdiv_com().read().bits();
     sys / ((val & 0x1f) + 1)
 }
 
 /// PMU I2C (I2C4) base clock. `cxd56_clock.c:2334`.
 pub fn pmui2c_hz(sys_apb: u32, rtc: u32, rcosc: u32) -> u32 {
-    let val = unsafe { (*pac::Topreg::PTR).cksel_pmu().read().bits() };
+    let val = topreg().cksel_pmu().read().bits();
     match val & 0x3 {
         0 => sys_apb,
         1 => rtc,
@@ -134,7 +134,7 @@ fn gear_apply(appsmp: u32, n: u32, m: u32) -> u32 {
 
 /// USB clock. `cxd56_clock.c:2372`.
 pub fn usb_hz(appsmp: u32) -> u32 {
-    let val = unsafe { (*pac::Crg::PTR).gear_per_usb().read().bits() };
+    let val = crg().gear_per_usb().read().bits();
     let n = (val >> 16) & 1;
     let m = val & 0x3;
     gear_apply(appsmp, n, m)
@@ -142,7 +142,7 @@ pub fn usb_hz(appsmp: u32) -> u32 {
 
 /// SDIO clock. `cxd56_clock.c:1673`.
 pub fn sdio_hz(appsmp: u32) -> u32 {
-    let val = unsafe { (*pac::Crg::PTR).gear_per_sdio().read().bits() };
+    let val = crg().gear_per_sdio().read().bits();
     let n = (val >> 16) & 1;
     let m = val & 0x3;
     gear_apply(appsmp, n, m)
@@ -150,7 +150,7 @@ pub fn sdio_hz(appsmp: u32) -> u32 {
 
 /// IMG-SPI clock (SPI4). `cxd56_clock.c:1693`.
 pub fn img_spi_hz(appsmp: u32) -> u32 {
-    let val = unsafe { (*pac::Crg::PTR).gear_img_spi().read().bits() };
+    let val = crg().gear_img_spi().read().bits();
     let n = (val >> 16) & 1;
     let m = val & 0x7f;
     gear_apply(appsmp, n, m)
@@ -158,7 +158,7 @@ pub fn img_spi_hz(appsmp: u32) -> u32 {
 
 /// IMG-WSPI clock (SPI5). `cxd56_clock.c:1713`.
 pub fn img_wspi_hz(appsmp: u32) -> u32 {
-    let val = unsafe { (*pac::Crg::PTR).gear_img_wspi().read().bits() };
+    let val = crg().gear_img_wspi().read().bits();
     let n = (val >> 16) & 1;
     let m = val & 0xf;
     gear_apply(appsmp, n, m)
@@ -166,7 +166,7 @@ pub fn img_wspi_hz(appsmp: u32) -> u32 {
 
 /// IMG-UART clock (UART2). `cxd56_clock.c:1365`.
 pub fn img_uart_hz(appsmp: u32) -> u32 {
-    let val = unsafe { (*pac::Crg::PTR).gear_img_uart().read().bits() };
+    let val = crg().gear_img_uart().read().bits();
     let n = (val >> 16) & 1;
     let m = val & 0x7f;
     gear_apply(appsmp, n, m)
@@ -174,8 +174,8 @@ pub fn img_uart_hz(appsmp: u32) -> u32 {
 
 /// IMG VSYNC clock. `cxd56_clock.c:2392`.
 pub fn img_vsync_hz(appsmp: u32) -> u32 {
-    let n = unsafe { (*pac::Crg::PTR).gear_n_img_venb().read().bits() };
-    let m = unsafe { (*pac::Crg::PTR).gear_m_img_venb().read().bits() };
+    let n = crg().gear_n_img_venb().read().bits();
+    let m = crg().gear_m_img_venb().read().bits();
     if n != 0 && m != 0 {
         ((appsmp as u64) * n as u64 / m as u64) as u32
     } else {
@@ -186,21 +186,21 @@ pub fn img_vsync_hz(appsmp: u32) -> u32 {
 /// HPADC clock. `cxd56_clock.c:2318`.
 pub fn hpadc_hz(rcosc: u32, rtc: u32) -> u32 {
     let scu_src = suc32k_hz(rcosc, rtc);
-    let div = unsafe { (*pac::Topreg::PTR).ckdiv_scu().read().bits() };
+    let div = topreg().ckdiv_scu().read().bits();
     scu_src / (1u32 << ((div >> 4) & 0xf))
 }
 
 /// LPADC clock. `cxd56_clock.c:2326`.
 pub fn lpadc_hz(rcosc: u32, rtc: u32) -> u32 {
     let scu_src = suc32k_hz(rcosc, rtc);
-    let div = unsafe { (*pac::Topreg::PTR).ckdiv_scu().read().bits() };
+    let div = topreg().ckdiv_scu().read().bits();
     scu_src / (1u32 << (div & 0xf))
 }
 
 /// SCU 32k source — RCOSC/250 or RTC depending on `CKSEL_SCU[4]`.
 /// `cxd56_clock.c:2302`.
 fn suc32k_hz(rcosc: u32, rtc: u32) -> u32 {
-    let ckscu = unsafe { (*pac::Topreg::PTR).cksel_scu().read().bits() };
+    let ckscu = topreg().cksel_scu().read().bits();
     if (ckscu >> 4) & 0x1 == 0 {
         rcosc / 250
     } else {

@@ -1,5 +1,6 @@
 use crate::clocks::{ClockError, Clocks, PeripheralId, buses};
 use crate::pac;
+use crate::regs::topreg;
 use core::fmt;
 use embedded_hal_nb::nb;
 use embedded_hal_nb::serial::{ErrorKind, ErrorType};
@@ -63,9 +64,8 @@ impl Default for UartConfig {
 // Reference: cxd5602_pinconfig.h:510, cxd5602_topreg.h:149,159-160,
 //            cxd56_pinconfig.c:53,139-141,391.
 fn uart1_pinmux() {
-    let topreg = unsafe { &*pac::Topreg::PTR };
     // TXD: 2mA drive (LOWEMI=1), float (PDN=1, PUN=1), input disabled (ENZI=0).
-    topreg.io_spi0_cs_x().write(|w| {
+    topreg().io_spi0_cs_x().write(|w| {
         w.lowemi()
             .set_bit()
             .pdn()
@@ -76,7 +76,7 @@ fn uart1_pinmux() {
             .clear_bit()
     });
     // RXD: same but input enabled (ENZI=1).
-    topreg.io_spi0_sck().write(|w| {
+    topreg().io_spi0_sck().write(|w| {
         w.lowemi()
             .set_bit()
             .pdn()
@@ -87,7 +87,7 @@ fn uart1_pinmux() {
             .set_bit()
     });
     // SPI0A[13:12] = Func1 → UART1.  FieldWriter<2> needs unsafe bits().
-    topreg
+    topreg()
         .iocsys_iomd0()
         .modify(|_, w| unsafe { w.spi0a().bits(1) });
 }
@@ -97,9 +97,8 @@ fn uart1_pinmux() {
 // RXD = P1n_01 (pin 68): IO_UART2_RXD (TOPREG+0x910), input enabled.
 // Reference: CXD5602 user manual §3.1 pp.66,71-74; cxd5602_pinconfig.h:356-357,577.
 fn uart2_pinmux() {
-    let topreg = unsafe { &*pac::Topreg::PTR };
     // TXD: 2mA drive (LOWEMI=1), float (PDN=1, PUN=1), input disabled (ENZI=0).
-    topreg.io_uart2_txd().write(|w| {
+    topreg().io_uart2_txd().write(|w| {
         w.lowemi()
             .set_bit()
             .pdn()
@@ -110,7 +109,7 @@ fn uart2_pinmux() {
             .clear_bit()
     });
     // RXD: same but input enabled (ENZI=1).
-    topreg.io_uart2_rxd().write(|w| {
+    topreg().io_uart2_rxd().write(|w| {
         w.lowemi()
             .set_bit()
             .pdn()
@@ -121,7 +120,7 @@ fn uart2_pinmux() {
             .set_bit()
     });
     // UART2[3:2] = Func1 → UART2.  FieldWriter<2> needs unsafe bits().
-    topreg
+    topreg()
         .iocapp_iomd()
         .modify(|_, w| unsafe { w.uart2().bits(1) });
 }

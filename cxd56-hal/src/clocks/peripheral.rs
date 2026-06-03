@@ -4,7 +4,7 @@
 //! uniform shape across the CXD5602's clock subsystem, so we keep the
 //! per-peripheral logic explicit and short.
 
-use crate::pac;
+use crate::regs::{crg, topreg, topreg_sub};
 use fugit::Hertz;
 
 use super::gate::{self, ImgClient, SysiopBridgeClient, sysiop_sub_bits};
@@ -154,12 +154,10 @@ impl PeripheralId {
         }
         let (max_divisor, write_gear): (u32, fn(u32)) = match self {
             PeripheralId::Spi4 => (0x7f, |gear| {
-                let crg = unsafe { &*pac::Crg::PTR };
-                crg.gear_img_spi().write(|w| unsafe { w.bits(gear) });
+                crg().gear_img_spi().write(|w| unsafe { w.bits(gear) });
             }),
             PeripheralId::Spi5 => (0xf, |gear| {
-                let crg = unsafe { &*pac::Crg::PTR };
-                crg.gear_img_wspi().write(|w| unsafe { w.bits(gear) });
+                crg().gear_img_wspi().write(|w| unsafe { w.bits(gear) });
             }),
             _ => return Err(GearError::NotASpi),
         };
@@ -178,14 +176,14 @@ impl PeripheralId {
 fn spi4_enable() -> Result<(), ClockError> {
     pmu::enable_domain(PmuDomain::AppSub)?;
     gate::img_acquire(ImgClient::Spi4);
-    let crg = unsafe { &*pac::Crg::PTR };
-    crg.gear_img_spi().write(|w| unsafe { w.bits(0x0001_0002) });
+    crg()
+        .gear_img_spi()
+        .write(|w| unsafe { w.bits(0x0001_0002) });
     Ok(())
 }
 
 fn spi4_disable() -> Result<(), ClockError> {
-    let crg = unsafe { &*pac::Crg::PTR };
-    crg.gear_img_spi().write(|w| unsafe { w.bits(0) });
+    crg().gear_img_spi().write(|w| unsafe { w.bits(0) });
     gate::img_release(ImgClient::Spi4);
     pmu::disable_domain(PmuDomain::AppSub)?;
     Ok(())
@@ -194,15 +192,14 @@ fn spi4_disable() -> Result<(), ClockError> {
 fn spi5_enable() -> Result<(), ClockError> {
     pmu::enable_domain(PmuDomain::AppSub)?;
     gate::img_acquire(ImgClient::Spi5);
-    let crg = unsafe { &*pac::Crg::PTR };
-    crg.gear_img_wspi()
+    crg()
+        .gear_img_wspi()
         .write(|w| unsafe { w.bits(0x0001_0004) });
     Ok(())
 }
 
 fn spi5_disable() -> Result<(), ClockError> {
-    let crg = unsafe { &*pac::Crg::PTR };
-    crg.gear_img_wspi().write(|w| unsafe { w.bits(0) });
+    crg().gear_img_wspi().write(|w| unsafe { w.bits(0) });
     gate::img_release(ImgClient::Spi5);
     pmu::disable_domain(PmuDomain::AppSub)?;
     Ok(())
@@ -211,16 +208,15 @@ fn spi5_disable() -> Result<(), ClockError> {
 fn img_uart_enable() -> Result<(), ClockError> {
     pmu::enable_domain(PmuDomain::AppSub)?;
     gate::img_acquire(ImgClient::Uart2);
-    let crg = unsafe { &*pac::Crg::PTR };
     // Default M=4 (apportions 156 MHz/4 ≈ 39 MHz, matches NuttX default).
-    crg.gear_img_uart()
+    crg()
+        .gear_img_uart()
         .write(|w| unsafe { w.bits(0x0001_0004) });
     Ok(())
 }
 
 fn img_uart_disable() -> Result<(), ClockError> {
-    let crg = unsafe { &*pac::Crg::PTR };
-    crg.gear_img_uart().write(|w| unsafe { w.bits(0) });
+    crg().gear_img_uart().write(|w| unsafe { w.bits(0) });
     gate::img_release(ImgClient::Uart2);
     pmu::disable_domain(PmuDomain::AppSub)?;
     Ok(())
@@ -228,36 +224,36 @@ fn img_uart_disable() -> Result<(), ClockError> {
 
 fn usb_enable() -> Result<(), ClockError> {
     pmu::enable_domain(PmuDomain::AppSub)?;
-    let crg = unsafe { &*pac::Crg::PTR };
-    let topreg = unsafe { &*pac::Topreg::PTR };
-
-    let c = crg.ck_gate_ahb().read().bits();
+    let c = crg().ck_gate_ahb().read().bits();
     if c & (1 << 8) != 0 {
         return Ok(());
     }
     // Assert XRS_USB (=0), set CK_GATE_USB, wait, release reset, enable
     // USBPHY, set gear. Mirrors cxd56_clock.c:631-650.
-    let r = crg.reset().read().bits();
-    crg.reset().write(|w| unsafe { w.bits(r & !(1 << 8)) });
-    crg.ck_gate_ahb().write(|w| unsafe { w.bits(c | (1 << 8)) });
+    let r = crg().reset().read().bits();
+    crg().reset().write(|w| unsafe { w.bits(r & !(1 << 8)) });
+    crg()
+        .ck_gate_ahb()
+        .write(|w| unsafe { w.bits(c | (1 << 8)) });
     pmu::busy_wait(10);
-    crg.reset().write(|w| unsafe { w.bits(r | (1 << 8)) });
-    topreg.usbphy_cken().write(|w| unsafe { w.bits(1) });
-    crg.gear_per_usb().write(|w| unsafe { w.bits(0x0001_0002) });
+    crg().reset().write(|w| unsafe { w.bits(r | (1 << 8)) });
+    topreg().usbphy_cken().write(|w| unsafe { w.bits(1) });
+    crg()
+        .gear_per_usb()
+        .write(|w| unsafe { w.bits(0x0001_0002) });
     Ok(())
 }
 
 fn usb_disable() -> Result<(), ClockError> {
-    let crg = unsafe { &*pac::Crg::PTR };
-    let topreg = unsafe { &*pac::Topreg::PTR };
-    let c = crg.ck_gate_ahb().read().bits();
+    let c = crg().ck_gate_ahb().read().bits();
     if c & (1 << 8) != 0 {
-        crg.gear_per_usb().write(|w| unsafe { w.bits(0) });
-        topreg.usbphy_cken().write(|w| unsafe { w.bits(0) });
-        crg.ck_gate_ahb()
+        crg().gear_per_usb().write(|w| unsafe { w.bits(0) });
+        topreg().usbphy_cken().write(|w| unsafe { w.bits(0) });
+        crg()
+            .ck_gate_ahb()
             .write(|w| unsafe { w.bits(c & !(1 << 8)) });
-        let r = crg.reset().read().bits();
-        crg.reset().write(|w| unsafe { w.bits(r & !(1 << 8)) });
+        let r = crg().reset().read().bits();
+        crg().reset().write(|w| unsafe { w.bits(r & !(1 << 8)) });
     }
     pmu::disable_domain(PmuDomain::AppSub)?;
     Ok(())
@@ -265,30 +261,32 @@ fn usb_disable() -> Result<(), ClockError> {
 
 fn sdio_enable() -> Result<(), ClockError> {
     pmu::enable_domain(PmuDomain::AppSub)?;
-    let crg = unsafe { &*pac::Crg::PTR };
-    let c = crg.ck_gate_ahb().read().bits();
+    let c = crg().ck_gate_ahb().read().bits();
     if c & (1 << 9) != 0 {
         return Ok(());
     }
-    let r = crg.reset().read().bits();
-    crg.reset().write(|w| unsafe { w.bits(r & !(1 << 9)) });
-    crg.ck_gate_ahb().write(|w| unsafe { w.bits(c | (1 << 9)) });
-    crg.gear_per_sdio()
+    let r = crg().reset().read().bits();
+    crg().reset().write(|w| unsafe { w.bits(r & !(1 << 9)) });
+    crg()
+        .ck_gate_ahb()
+        .write(|w| unsafe { w.bits(c | (1 << 9)) });
+    crg()
+        .gear_per_sdio()
         .write(|w| unsafe { w.bits(0x0001_0002) });
     pmu::busy_wait(10);
-    crg.reset().write(|w| unsafe { w.bits(r | (1 << 9)) });
+    crg().reset().write(|w| unsafe { w.bits(r | (1 << 9)) });
     Ok(())
 }
 
 fn sdio_disable() -> Result<(), ClockError> {
-    let crg = unsafe { &*pac::Crg::PTR };
-    let c = crg.ck_gate_ahb().read().bits();
+    let c = crg().ck_gate_ahb().read().bits();
     if c & (1 << 9) != 0 {
-        crg.gear_per_sdio().write(|w| unsafe { w.bits(0) });
-        crg.ck_gate_ahb()
+        crg().gear_per_sdio().write(|w| unsafe { w.bits(0) });
+        crg()
+            .ck_gate_ahb()
             .write(|w| unsafe { w.bits(c & !(1 << 9)) });
-        let r = crg.reset().read().bits();
-        crg.reset().write(|w| unsafe { w.bits(r & !(1 << 9)) });
+        let r = crg().reset().read().bits();
+        crg().reset().write(|w| unsafe { w.bits(r & !(1 << 9)) });
     }
     pmu::disable_domain(PmuDomain::AppSub)?;
     Ok(())
@@ -300,8 +298,7 @@ fn sdio_disable() -> Result<(), ClockError> {
 // ============================================================================
 
 fn sysiop_sub_peripheral_enable(client: SysiopBridgeClient, cken_bit: u32, xrst_bit: u32) {
-    let topreg = unsafe { &*pac::TopregSub::PTR };
-    let v = topreg.sysiop_sub_cken().read().bits();
+    let v = topreg_sub().sysiop_sub_cken().read().bits();
     if v & cken_bit != 0 {
         return;
     }
@@ -318,8 +315,7 @@ fn sysiop_sub_peripheral_enable(client: SysiopBridgeClient, cken_bit: u32, xrst_
 }
 
 fn sysiop_sub_peripheral_disable(client: SysiopBridgeClient, cken_bit: u32, xrst_bit: u32) {
-    let topreg = unsafe { &*pac::TopregSub::PTR };
-    let v = topreg.sysiop_sub_cken().read().bits();
+    let v = topreg_sub().sysiop_sub_cken().read().bits();
     if v & cken_bit == 0 {
         return;
     }
@@ -408,28 +404,26 @@ const XRST_I2C0: u32 = 1 << 5;
 /// Enable the SCU umbrella clock (bridge + core blocks). Idempotent.
 /// Mirrors `cxd56_scu_clock_enable` (cxd56_clock.c:1876).
 fn scu_clock_enable() {
-    let topreg = unsafe { &*pac::Topreg::PTR };
-
-    if topreg.sysiop_cken().read().bits() & CKEN_BRG_SCU != 0 {
+    if topreg().sysiop_cken().read().bits() & CKEN_BRG_SCU != 0 {
         return;
     }
 
     // Default SCU clock source: RCOSC (sel = 0).
-    topreg.cksel_scu().write(|w| unsafe { w.bits(0) });
+    topreg().cksel_scu().write(|w| unsafe { w.bits(0) });
 
-    topreg
+    topreg()
         .crg_int_clr0()
         .write(|w| unsafe { w.bits(0xffff_ffff) });
 
     // Enable SCU bridge.
-    let v = topreg.sysiop_cken().read().bits();
-    topreg
+    let v = topreg().sysiop_cken().read().bits();
+    topreg()
         .sysiop_cken()
         .write(|w| unsafe { w.bits(v | CKEN_BRG_SCU) });
 
     // Enable SCU umbrella blocks.
-    let v = topreg.scu_cken().read().bits();
-    topreg
+    let v = topreg().scu_cken().read().bits();
+    topreg()
         .scu_cken()
         .write(|w| unsafe { w.bits(v | SCU_SCU | SCU_SC | SCU_32K | SCU_SEQ) });
 
@@ -438,7 +432,7 @@ fn scu_clock_enable() {
         CRG_CK_SCU | CRG_CK_SCU_SC | CRG_CK_BRG_SCU | CRG_CK_32K | CRG_CK_SCU_SEQ;
     let mut retry = 1000i32;
     loop {
-        if topreg.crg_int_stat_raw0().read().bits() & INTR_MASK == INTR_MASK {
+        if topreg().crg_int_stat_raw0().read().bits() & INTR_MASK == INTR_MASK {
             break;
         }
         pmu::busy_wait(1000);
@@ -448,7 +442,7 @@ fn scu_clock_enable() {
         }
     }
 
-    topreg
+    topreg()
         .crg_int_clr0()
         .write(|w| unsafe { w.bits(0xffff_ffff) });
 }
@@ -456,28 +450,30 @@ fn scu_clock_enable() {
 /// Set or clear `block` bits in SCU_CKEN, polling `intr` in CRG_INT_STAT_RAW0.
 /// Mirrors `cxd56_scu_clock_ctrl` (cxd56_clock.c:1834).
 fn scu_clock_ctrl(block: u32, intr: u32, on: bool) {
-    let topreg = unsafe { &*pac::Topreg::PTR };
-
-    topreg
+    topreg()
         .crg_int_clr0()
         .write(|w| unsafe { w.bits(0xffff_ffff) });
 
-    let val = topreg.scu_cken().read().bits();
+    let val = topreg().scu_cken().read().bits();
     if on {
         if val & block == block {
             return; // already on
         }
-        topreg.scu_cken().write(|w| unsafe { w.bits(val | block) });
+        topreg()
+            .scu_cken()
+            .write(|w| unsafe { w.bits(val | block) });
     } else {
         if val & block == 0 {
             return; // already off
         }
-        topreg.scu_cken().write(|w| unsafe { w.bits(val & !block) });
+        topreg()
+            .scu_cken()
+            .write(|w| unsafe { w.bits(val & !block) });
     }
 
     let mut retry = 10_000i32;
     loop {
-        if topreg.crg_int_stat_raw0().read().bits() & intr != 0 {
+        if topreg().crg_int_stat_raw0().read().bits() & intr != 0 {
             break;
         }
         pmu::busy_wait(1000);
@@ -487,7 +483,7 @@ fn scu_clock_ctrl(block: u32, intr: u32, on: bool) {
         }
     }
 
-    topreg
+    topreg()
         .crg_int_clr0()
         .write(|w| unsafe { w.bits(0xffff_ffff) });
 }
@@ -497,15 +493,14 @@ fn scu_i2c0_enable() -> Result<(), ClockError> {
     pmu::enable_domain(pmu::PmuDomain::Scu)?;
     scu_clock_enable();
 
-    let topreg = unsafe { &*pac::Topreg::PTR };
-    if topreg.scu_cken().read().bits() & SCU_I2C0 != 0 {
+    if topreg().scu_cken().read().bits() & SCU_I2C0 != 0 {
         return Ok(()); // already enabled
     }
 
     scu_clock_ctrl(SCU_I2C0, CRG_CK_I2C0, true);
     scu_clock_ctrl(SCU_I2C0, CRG_CK_I2C0, false); // reset pulse
-    let rst = topreg.swreset_scu().read().bits();
-    topreg
+    let rst = topreg().swreset_scu().read().bits();
+    topreg()
         .swreset_scu()
         .write(|w| unsafe { w.bits(rst | XRST_I2C0) }); // release reset
     scu_clock_ctrl(SCU_I2C0, CRG_CK_I2C0, true);
@@ -515,10 +510,9 @@ fn scu_i2c0_enable() -> Result<(), ClockError> {
 
 /// Disable I2C0 in the SCU domain.
 fn scu_i2c0_disable() -> Result<(), ClockError> {
-    let topreg = unsafe { &*pac::Topreg::PTR };
     scu_clock_ctrl(SCU_I2C0, CRG_CK_I2C0, false);
-    let rst = topreg.swreset_scu().read().bits();
-    topreg
+    let rst = topreg().swreset_scu().read().bits();
+    topreg()
         .swreset_scu()
         .write(|w| unsafe { w.bits(rst & !XRST_I2C0) });
     pmu::disable_domain(pmu::PmuDomain::Scu)?;

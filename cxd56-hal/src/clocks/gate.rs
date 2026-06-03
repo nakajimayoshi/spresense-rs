@@ -10,7 +10,7 @@
 //!   in `RESET`) — shared by SPI4, SPI5, UART2, GE2D, CISIF, VSYNC encode.
 //!   See `cxd56_img_clock_enable/disable` at `cxd56_clock.c:1797-1828`.
 
-use crate::pac;
+use crate::regs::{crg, topreg_sub};
 use core::sync::atomic::{AtomicU32, Ordering};
 
 // ---------- IMG umbrella ----------
@@ -37,16 +37,16 @@ const XRS_IMG_BIT: u32 = 1 << 4;
 pub(crate) fn img_acquire(client: ImgClient) {
     let prev = IMG_ACTIVE.fetch_or(client as u32, Ordering::Relaxed);
     if prev == 0 {
-        let crg = unsafe { &*pac::Crg::PTR };
-        let g = crg.ck_gate_ahb().read().bits();
-        crg.ck_gate_ahb()
+        let g = crg().ck_gate_ahb().read().bits();
+        crg()
+            .ck_gate_ahb()
             .write(|w| unsafe { w.bits(g | CK_GATE_IMG_BIT) });
         // Read-back to drain the AHB write and let the gate settle before
         // deasserting reset. Mirrors cxd56_clock.c:1808.
-        let _ = crg.reset().read().bits();
+        let _ = crg().reset().read().bits();
         super::pmu::busy_wait(10);
-        let r = crg.reset().read().bits();
-        crg.reset().write(|w| unsafe { w.bits(r | XRS_IMG_BIT) });
+        let r = crg().reset().read().bits();
+        crg().reset().write(|w| unsafe { w.bits(r | XRS_IMG_BIT) });
     }
 }
 
@@ -55,9 +55,9 @@ pub(crate) fn img_release(client: ImgClient) {
     let prev = IMG_ACTIVE.fetch_and(!(client as u32), Ordering::Relaxed);
     let next = prev & !(client as u32);
     if next == 0 {
-        let crg = unsafe { &*pac::Crg::PTR };
-        let g = crg.ck_gate_ahb().read().bits();
-        crg.ck_gate_ahb()
+        let g = crg().ck_gate_ahb().read().bits();
+        crg()
+            .ck_gate_ahb()
             .write(|w| unsafe { w.bits(g & !CK_GATE_IMG_BIT) });
     }
 }
@@ -80,10 +80,11 @@ const CK_COM_BRG: u32 = 1 << 1;
 
 #[inline]
 fn modify_sysiop_sub_cken(set: u32, clr: u32) {
-    let topreg = unsafe { &*pac::TopregSub::PTR };
-    let v = topreg.sysiop_sub_cken().read().bits();
+    let v = topreg_sub().sysiop_sub_cken().read().bits();
     let new = (v & !clr) | set;
-    topreg.sysiop_sub_cken().write(|w| unsafe { w.bits(new) });
+    topreg_sub()
+        .sysiop_sub_cken()
+        .write(|w| unsafe { w.bits(new) });
 }
 
 pub(crate) fn sysiop_bridge_acquire(client: SysiopBridgeClient) {

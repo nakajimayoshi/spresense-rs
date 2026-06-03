@@ -2,7 +2,7 @@
 //!
 //! Mirrors `cxd56_get_clock` in `nuttx/arch/arm/src/cxd56xx/cxd56_clock.c:1513-1571`.
 
-use crate::pac;
+use crate::regs::topreg;
 use core::sync::atomic::{AtomicU32, Ordering};
 
 /// RTC clock — 32.768 kHz, externally supplied.
@@ -45,7 +45,7 @@ pub fn rtc_hz() -> u32 {
 /// and `ISP_LV_SELRCDIV[1:0]` is the RCDIV code (0→1, 1→2, 3→4).
 /// Mirrors `cxd56_clock.c:1530-1567`.
 pub fn syspll_hz(xosc: u32) -> u32 {
-    let ctrl = unsafe { (*pac::Topreg::PTR).sys_pll_ctrl2().read().bits() };
+    let ctrl = topreg().sys_pll_ctrl2().read().bits();
     let rc = match ctrl >> 30 {
         0 => 1,
         1 => 2,

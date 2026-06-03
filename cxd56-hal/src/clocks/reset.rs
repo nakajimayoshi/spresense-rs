@@ -5,7 +5,7 @@
 //! primitives — `pulse` (assert then release) and `set` (raw bit-set / -clear) —
 //! that the per-peripheral enable sequences in [`super::peripheral`] use.
 
-use crate::pac;
+use crate::regs::{crg, topreg};
 
 /// Which CRG software-reset register to touch.
 #[derive(Copy, Clone, Debug)]
@@ -20,23 +20,19 @@ pub enum ResetReg {
 
 #[inline]
 fn read(reg: ResetReg) -> u32 {
-    let crg = unsafe { &*pac::Crg::PTR };
-    let topreg = unsafe { &*pac::Topreg::PTR };
     match reg {
-        ResetReg::Crg => crg.reset().read().bits(),
-        ResetReg::SwresetBus => topreg.swreset_bus().read().bits(),
-        ResetReg::SwresetScu => topreg.swreset_scu().read().bits(),
+        ResetReg::Crg => crg().reset().read().bits(),
+        ResetReg::SwresetBus => topreg().swreset_bus().read().bits(),
+        ResetReg::SwresetScu => topreg().swreset_scu().read().bits(),
     }
 }
 
 #[inline]
 fn write(reg: ResetReg, val: u32) {
-    let crg = unsafe { &*pac::Crg::PTR };
-    let topreg = unsafe { &*pac::Topreg::PTR };
     match reg {
-        ResetReg::Crg => crg.reset().write(|w| unsafe { w.bits(val) }),
-        ResetReg::SwresetBus => topreg.swreset_bus().write(|w| unsafe { w.bits(val) }),
-        ResetReg::SwresetScu => topreg.swreset_scu().write(|w| unsafe { w.bits(val) }),
+        ResetReg::Crg => crg().reset().write(|w| unsafe { w.bits(val) }),
+        ResetReg::SwresetBus => topreg().swreset_bus().write(|w| unsafe { w.bits(val) }),
+        ResetReg::SwresetScu => topreg().swreset_scu().write(|w| unsafe { w.bits(val) }),
     };
 }
 

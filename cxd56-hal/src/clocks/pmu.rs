@@ -9,7 +9,7 @@
 //! `critical_section` for the read-modify-write of the refcount + register
 //! write — same scope as `spin_lock_irqsave` in the C.
 
-use crate::pac;
+use crate::regs::{topreg, topreg_sub};
 use core::sync::atomic::{AtomicU32, Ordering};
 
 use super::peripheral::ClockError;
@@ -110,9 +110,8 @@ fn delay_us(us: u32) {
 /// SYSIOP_SUB enable-reset-enable dance (`cxd56_clock.c:246-252`).
 /// `CXD56_TOPREG_CHIP_ID = CXD56_TOPREG_SUB_BASE + 0x1490`.
 pub(crate) fn busy_wait(cnt: u32) {
-    let sub = unsafe { &*pac::TopregSub::PTR };
     for _ in 0..cnt {
-        let _ = sub.chip_id().read().bits();
+        let _ = topreg_sub().chip_id().read().bits();
     }
 }
 
@@ -120,9 +119,8 @@ pub(crate) fn busy_wait(cnt: u32) {
 /// [`ClockError::PmuTimeout`] after 20000 unproductive iterations.
 /// Mirrors `do_power_control` (`cxd56_clock.c:254`).
 fn kick_and_poll(read: impl Fn() -> u32, mask: u32, want: u32) -> Result<(), ClockError> {
-    let topreg = unsafe { &*pac::Topreg::PTR };
     for _ in 0..POWER_CONTROL_RETRY {
-        topreg.pmu_pw_ctl().write(|w| w.power_ctrl_on().set_bit());
+        topreg().pmu_pw_ctl().write(|w| w.power_ctrl_on().set_bit());
         delay_us(KICK_DELAY_US);
         if read() & mask == want {
             delay_us(SETTLE_DELAY_US);
@@ -134,50 +132,45 @@ fn kick_and_poll(read: impl Fn() -> u32, mask: u32, want: u32) -> Result<(), Clo
 
 #[inline]
 fn write_pwd_ctl(mask: u32) {
-    let topreg = unsafe { &*pac::Topreg::PTR };
-    topreg
+    topreg()
         .pwd_ctl()
         .write(|w| unsafe { w.bits(mask | (mask << 16)) });
 }
 
 #[inline]
 fn write_pwd_ctl_off(mask: u32) {
-    let topreg = unsafe { &*pac::Topreg::PTR };
-    topreg.pwd_ctl().write(|w| unsafe { w.bits(mask << 16) });
+    topreg().pwd_ctl().write(|w| unsafe { w.bits(mask << 16) });
 }
 
 #[inline]
 fn read_pwd_stat() -> u32 {
-    let topreg = unsafe { &*pac::Topreg::PTR };
-    topreg.pwd_stat().read().bits()
+    topreg().pwd_stat().read().bits()
 }
 
 #[inline]
 fn write_ana_pw_ctl(mask: u32) {
-    let topreg = unsafe { &*pac::Topreg::PTR };
-    topreg
+    topreg()
         .ana_pw_ctl()
         .write(|w| unsafe { w.bits(mask | (mask << 16)) });
 }
 
 #[inline]
 fn write_ana_pw_ctl_off(mask: u32) {
-    let topreg = unsafe { &*pac::Topreg::PTR };
-    topreg.ana_pw_ctl().write(|w| unsafe { w.bits(mask << 16) });
+    topreg()
+        .ana_pw_ctl()
+        .write(|w| unsafe { w.bits(mask << 16) });
 }
 
 #[inline]
 fn read_ana_pw_stat() -> u32 {
-    let topreg = unsafe { &*pac::Topreg::PTR };
-    topreg.ana_pw_stat().read().bits()
+    topreg().ana_pw_stat().read().bits()
 }
 
 fn release_pwd_reset(mask: u32) {
     if mask & RESET_RELEASE_MASK == 0 {
         return;
     }
-    let topreg = unsafe { &*pac::Topreg::PTR };
-    topreg
+    topreg()
         .pwd_reset0()
         .write(|w| unsafe { w.bits(mask | (mask << 16)) });
 }

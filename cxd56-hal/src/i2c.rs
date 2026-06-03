@@ -1,5 +1,6 @@
 use crate::clocks::{ClockError, Clocks, PeripheralId};
 use crate::pac;
+use crate::regs::topreg;
 use embedded_hal::i2c::{ErrorKind, ErrorType, I2c, Operation};
 use fugit::Hertz;
 
@@ -56,12 +57,15 @@ pub struct I2c0 {
 // Both pads: 2 mA drive (LOWEMI=1), pull-up (PUN=1), input enabled (ENZI=1)
 // for open-drain operation. IOCSYS_IOMD1[19:18] = 1 (Func1 → I2C0).
 fn i2c0_pinmux() {
-    let t = unsafe { &*pac::Topreg::PTR };
-    t.io_i2c0_bck()
+    topreg()
+        .io_i2c0_bck()
         .write(|w| w.lowemi().set_bit().pun().set_bit().enzi().set_bit());
-    t.io_i2c0_bdt()
+    topreg()
+        .io_i2c0_bdt()
         .write(|w| w.lowemi().set_bit().pun().set_bit().enzi().set_bit());
-    t.iocsys_iomd1().modify(|_, w| unsafe { w.i2c0().bits(1) });
+    topreg()
+        .iocsys_iomd1()
+        .modify(|_, w| unsafe { w.i2c0().bits(1) });
 }
 
 // Disable the controller and wait for IC_ENABLE_STATUS.IC_EN to clear.
