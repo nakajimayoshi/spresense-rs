@@ -1,17 +1,28 @@
 //! Clock subsystem.
 //!
-//! The CXD5602 boot ROM and PMU firmware own the PLL, root mux, and bus
-//! dividers — user code reads back the resulting frequencies and controls
-//! per-peripheral clock gates, software resets, and a small set of M/N
-//! "gear" dividers (USB, SDIO, SPI4, SPI5, audio, ADCs).
+//! # Architecture
 //!
-//! Entry point:
+//! The CXD5602 SYSIOP (Cortex-M0+) owns the PLL, root mux, and bus dividers.
+//! The User Manual (§3.5.1 p.167, §3.13.3.3 p.974) explicitly states those
+//! registers are "controlled by the API — use as RO registers."  User code:
+//!
+//! - **Reads** clock rates via [`Crg::freeze`] (a re-samplable snapshot).
+//! - **Controls** per-peripheral gates, software resets, and a small set of
+//!   APP-local M/N "gear" dividers (USB, SDIO, SPI4/5, audio, ADCs) directly
+//!   via the APP-local CRG at `0x0201_1000`.
+//! - **Requests** CPU/bus operating-point changes (HP ≈ 156 MHz / LP ≈ 39 MHz)
+//!   from the SYSIOP over the ICC CPU-FIFO protocol via [`Crg::request_perf`].
+//!
+//! # Entry point
 //!
 //! ```ignore
 //! let dp = pac::Peripherals::take().unwrap();
 //! let mut crg = dp.crg.constrain(Config::default());
 //! let clocks = crg.freeze();
 //! PeripheralId::Uart1.enable()?;
+//!
+//! // Switch to high-performance mode (156 MHz):
+//! let clocks = crg.request_perf(Perf::Hp)?;
 //! ```
 
 use crate::pac;
@@ -20,11 +31,13 @@ use fugit::Hertz;
 pub mod buses;
 pub mod gate;
 pub mod peripheral;
+pub mod pm;
 pub mod pmu;
 pub mod reset;
 pub mod sources;
 
 pub use peripheral::{ClockError, GearError, I2cPort, PeripheralId, SpiPort};
+pub use pm::{PmError, Perf};
 
 /// Board-level clock configuration.
 ///
@@ -73,6 +86,24 @@ impl Crg {
     /// that affect bus dividers.
     pub fn freeze(&self) -> Clocks {
         Clocks::sample(self.cfg)
+    }
+
+    /// Request a CPU/bus operating-point change from the SYSIOP loader firmware.
+    ///
+    /// Drives the ICC `FREQLOCK` → `CLK_CHG_START` / `CLK_CHG_END` handshake
+    /// and returns a fresh [`Clocks`] snapshot once the new operating point is
+    /// stable.
+    ///
+    /// Operating points (XOSC = 26 MHz, User Manual Table APP-807/808):
+    /// - [`Perf::Hp`]: APP CPU ~156 MHz, VDD_CORE = 1.0 V
+    /// - [`Perf::Lp`]: APP CPU  ~39 MHz, VDD_CORE = 0.7 V
+    ///
+    /// This call **blocks** (polls the CPU FIFO) until the SYSIOP confirms the
+    /// transition. After it returns, all downstream frequency calculations
+    /// (UART baud, SysTick, etc.) must use the new [`Clocks`].
+    pub fn request_perf(&mut self, perf: Perf) -> Result<Clocks, PmError> {
+        pm::request_perf(perf)?;
+        Ok(self.freeze())
     }
 
     /// Access the raw PMU sequencer (escape hatch for SCU firmware load etc.).
