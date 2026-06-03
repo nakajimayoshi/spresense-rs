@@ -6772,6 +6772,16 @@
         </register>
       </registers>
     </peripheral>
+    <peripheral derivedFrom="I2C0">
+      <name>I2C1</name>
+      <description>DesignWare DW_apb_i2c master controller (SCU_I2C1)</description>
+      <baseAddress>0x0418D800</baseAddress>
+      <interrupt>
+        <name>I2C1</name>
+        <description>I2C1 (SCU_I2C1) interrupt</description>
+        <value>18</value>
+      </interrupt>
+    </peripheral>
     <peripheral>
       <name>SPI4</name>
       <version>1.0</version>

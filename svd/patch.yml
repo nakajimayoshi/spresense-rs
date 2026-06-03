@@ -8,15 +8,15 @@ _modify:
     are met:\\n\
     \\n\
     1. Redistributions of source code must retain the above copyright\\n\
-       notice, this list of conditions and the following disclaimer.\\n\
+    notice, this list of conditions and the following disclaimer.\\n\
     2. Redistributions in binary form must reproduce the above copyright\\n\
-       notice, this list of conditions and the following disclaimer in\\n\
-       the documentation and/or other materials provided with the\\n\
-       distribution.\\n\
+    notice, this list of conditions and the following disclaimer in\\n\
+    the documentation and/or other materials provided with the\\n\
+    distribution.\\n\
     3. Neither the name of Sony Semiconductor Solutions Corporation nor\\n\
-       the names of its contributors may be used to endorse or promote\\n\
-       products derived from this software without specific prior written\\n\
-       permission.\\n\
+    the names of its contributors may be used to endorse or promote\\n\
+    products derived from this software without specific prior written\\n\
+    permission.\\n\
     \\n\
     THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS\\n\
     \"AS IS\" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT\\n\
@@ -88,7 +88,6 @@ CPU_FIFO:
       _replace_enum:
         NotEmpty: [0, ""]
         Empty: [1, ""]
-
 
 # GE2D / ROT image-engine interrupts (see convention header above). The base SVD
 # already carries these at the correct 0-based offsets, so the _modify blocks
@@ -5365,3 +5364,18 @@ _add:
         addressOffset: 0xFC
         access: read-only
         resetValue: 0x44570140
+  # I2C1: second DW_apb_i2c master (SCU_I2C1). Register map is identical to I2C0,
+  # so derive it — only baseAddress and the interrupt differ.
+  # Base: CXD56_SCU_I2C1_BASE = SYS_MIRROR(0x04000000) + 0x18D800 = 0x0418D800
+  #   (cxd5602_memorymap.h:81; SCU APB sub-block I2C1@0xD800, §3.9.3 Figure SCU-80).
+  # Interrupt = 18 (see convention header): NuttX CXD56_IRQ_SCU_I2C1 = EXTINT+18
+  #   (irq.h:83); Manual Table Interrupt-33 INT_CAUSE0[19:16] "SCU" sub-bit 18 (p.123).
+  I2C1:
+    description: "DesignWare DW_apb_i2c master controller (SCU_I2C1)"
+    baseAddress: 0x0418D800
+    derivedFrom: I2C0
+    interrupts:
+      I2C1:
+        description: "I2C1 (SCU_I2C1) interrupt"
+        value: 18
+
