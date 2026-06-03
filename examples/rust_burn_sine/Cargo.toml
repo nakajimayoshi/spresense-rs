@@ -1,0 +1,39 @@
+[package]
+name = "rust_burn_sine"
+version = "0.1.0"
+edition = "2024"
+
+[workspace]
+
+[dependencies]
+# burn runtime — all at the same published version so generated code aligns
+burn       = { version = "0.21.0", default-features = false, features = ["flex"] }
+burn-flex  = { version = "0.21.0", default-features = false, features = ["critical-section"] }
+burn-store = { version = "0.21.0", default-features = false, features = ["burnpack"] }
+
+# heap allocator + cross-core atomic (burn-flex needs a critical-section impl)
+embedded-alloc  = "0.7.0"
+portable-atomic = { version = "1", features = ["critical-section"] }
+critical-section = "1.2"
+
+# Spresense runtime + I/O (replaces embassy-rp / usb-logger / defmt-rtt)
+cortex-m    = { version = "0.7.7", features = ["inline-asm", "critical-section-single-core"] }
+cortex-m-rt = "0.7.5"
+panic-halt  = "1.0.0"
+embedded-hal = "1.0.0"
+cxd56-hal   = { path = "../../cxd56-hal", features = ["rt", "critical-section"] }
+
+[build-dependencies]
+burn-onnx = "0.21.0"
+
+[profile.dev]
+panic = "abort"
+lto = true
+opt-level = "z"
+
+[profile.release]
+panic = "abort"
+opt-level = "s"
+lto = true
+codegen-units = 1
+debug = 2
