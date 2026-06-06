@@ -96,26 +96,26 @@ impl UartBuilder {
     /// Reads `clk.hz()` and drops the borrow — the returned [`Uart`] carries
     /// `'static`, requiring no ongoing borrow of the clock or `Crg`.
     pub fn with_fixed_clock<C: FixedClock>(self, clk: &C) -> Result<Uart<'static>, UartError> {
-        let regs = self.build(clk.hz())?;
-        Ok(Uart { regs, _life: PhantomData })
+        let (regs, id) = self.build(clk.hz())?;
+        Ok(Uart { regs, id, _life: PhantomData })
     }
 
     /// Finish with a dynamic clock source (rate tracks `request_perf`).
     ///
     /// The returned [`Uart`]`<'a>` borrows `clk` for `'a`, which — when `clk`
-    /// is a field borrowed from a [`Clock`](crate::clocks::Clock) — transitively
-    /// pins the `Crg`, preventing `request_perf` while the UART is alive.
+    /// is a field borrowed from a [`Clock`](crate::clocks::Clock) — pins the
+    /// owning `Clock`, preventing `request_perf` while the UART is alive.
     pub fn with_dyn_clock<'a, C: DynClock>(self, clk: &'a C) -> Result<Uart<'a>, UartError> {
-        let regs = self.build(clk.hz())?;
-        Ok(Uart { regs, _life: PhantomData })
+        let (regs, id) = self.build(clk.hz())?;
+        Ok(Uart { regs, id, _life: PhantomData })
     }
 
-    fn build(self, hz: Hertz<u32>) -> Result<*const pac::uart1::RegisterBlock, UartError> {
+    fn build(self, hz: Hertz<u32>) -> Result<(*const pac::uart1::RegisterBlock, PeripheralId), UartError> {
         self.id.enable()?;
         (self.pinmux)();
         let regs = self.base as *const pac::uart1::RegisterBlock;
         pl011_init(unsafe { &*regs }, hz.to_Hz(), &self.config)?;
-        Ok(regs)
+        Ok((regs, self.id))
     }
 }
 
@@ -126,16 +126,23 @@ impl UartBuilder {
 ///   rate does not depend on the APP operating point.
 /// - Tied to the dynamic clock source when built via
 ///   [`UartBuilder::with_dyn_clock`] — the UART borrows the clock, which
-///   transitively borrows the `Crg`, preventing `request_perf` until this
-///   value is dropped.
+///   pins the owning [`Clock`](crate::clocks::Clock), preventing
+///   `request_perf` until this value is dropped.
 pub struct Uart<'a> {
     regs: *const pac::uart1::RegisterBlock,
+    id: PeripheralId,
     _life: PhantomData<&'a ()>,
 }
 
 // The raw pointer is logically owned and exclusively controlled, matching
 // the PAC `Periph` Send impl.
 unsafe impl Send for Uart<'_> {}
+
+impl Drop for Uart<'_> {
+    fn drop(&mut self) {
+        self.id.disable().ok();
+    }
+}
 
 impl<'a> Uart<'a> {
     #[inline]

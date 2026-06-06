@@ -1,5 +1,5 @@
-use super::{Clocks, Crg};
-use core::marker::PhantomData;
+use super::pm::{self, Perf, PmError};
+use super::{Clocks, Crg, pmu};
 use fugit::Hertz;
 
 /// Clock source whose rate is independent of the APP operating point.
@@ -24,7 +24,8 @@ impl FixedClock for Fixed {
 }
 
 /// A perf-dependent clock sample. Not `Copy`; no public constructor.
-/// Must be borrowed from a live [`Clock`], keeping the `Crg` borrow intact.
+/// Must be borrowed from a live [`Clock`], keeping the `Clock` borrow
+/// intact.
 pub struct Dyn(Hertz<u32>);
 
 impl DynClock for Dyn {
@@ -33,18 +34,18 @@ impl DynClock for Dyn {
     }
 }
 
-/// Typed clock snapshot that holds [`Crg`] borrowed for `'a`.
+/// Owned typed clock snapshot. Consumes the [`Crg`] peripheral.
 ///
-/// Obtained via [`Crg::clock`] or [`Crg::request_perf`]. While this value
-/// (or any peripheral borrowing a [`Dyn`] field from it) is alive, the
-/// originating `Crg` cannot be borrowed mutably, preventing `request_perf`
-/// from silently invalidating a peripheral's baud/gear configuration.
+/// Obtained via [`Crg::into_clock`]. While this value (or any peripheral
+/// borrowing a [`Dyn`] field from it) is alive, the `Clock` cannot be
+/// borrowed mutably, preventing [`request_perf`](Clock::request_perf) from
+/// silently invalidating a peripheral's baud/gear configuration.
 ///
 /// Fixed fields are `pub` and `Copy` — they may be held freely. Dynamic
 /// fields are only accessible by reference via the accessor methods, which
 /// ties their lifetime to `&self`, preserving the dependency chain.
-pub struct Clock<'a> {
-    _crg: PhantomData<&'a Crg>,
+pub struct Clock {
+    crg: Crg,
     // Perf-independent — safe to copy out.
     pub xosc: Fixed,
     pub rcosc: Fixed,
@@ -62,7 +63,7 @@ pub struct Clock<'a> {
     pub gps_cpu: Fixed,
     pub gps_ahb: Fixed,
     // Perf-dependent — private to prevent move-out that would decouple the
-    // lifetime from the `Crg` borrow. Access via &self methods below.
+    // borrow from the owning `Clock`. Access via `&self` methods below.
     appsmp: Dyn,
     usb: Dyn,
     sdio: Dyn,
@@ -72,12 +73,12 @@ pub struct Clock<'a> {
     img_vsync: Dyn,
 }
 
-impl<'a> Clock<'a> {
-    /// Sample all clocks, tying the result's lifetime to `crg`.
-    pub(crate) fn sample(crg: &'a Crg) -> Self {
+impl Clock {
+    /// Consume `crg` and sample all clocks.
+    pub(crate) fn new(crg: Crg) -> Self {
         let c = Clocks::sample(crg.cfg);
         Self {
-            _crg: PhantomData,
+            crg,
             xosc: Fixed(c.xosc),
             rcosc: Fixed(c.rcosc),
             rtc: Fixed(c.rtc),
@@ -101,6 +102,43 @@ impl<'a> Clock<'a> {
             img_wspi: Dyn(c.img_wspi),
             img_vsync: Dyn(c.img_vsync),
         }
+    }
+
+    /// Request a CPU/bus operating-point change from the SYSIOP loader firmware.
+    ///
+    /// Drives the ICC `FREQLOCK` → `CLK_CHG_START` / `CLK_CHG_END` handshake
+    /// and updates the dynamic clock fields once the new operating point is
+    /// stable.
+    ///
+    /// Operating points (XOSC = 26 MHz, User Manual Table APP-807/808):
+    /// - [`Perf::Hp`]: APP CPU ~156 MHz, VDD_CORE = 1.0 V
+    /// - [`Perf::Lp`]: APP CPU  ~39 MHz, VDD_CORE = 0.7 V
+    ///
+    /// This call **blocks** (polls the CPU FIFO) until the SYSIOP confirms the
+    /// transition. While any peripheral holds a borrow of a [`Dyn`] field from
+    /// this `Clock`, the borrow checker prevents calling `request_perf` (which
+    /// requires `&mut self`).
+    pub fn request_perf(&mut self, perf: Perf) -> Result<(), PmError> {
+        pm::request_perf(perf)?;
+        let c = Clocks::sample(self.crg.cfg);
+        self.appsmp    = Dyn(c.appsmp);
+        self.usb       = Dyn(c.usb);
+        self.sdio      = Dyn(c.sdio);
+        self.img_uart  = Dyn(c.img_uart);
+        self.img_spi   = Dyn(c.img_spi);
+        self.img_wspi  = Dyn(c.img_wspi);
+        self.img_vsync = Dyn(c.img_vsync);
+        Ok(())
+    }
+
+    /// Snapshot every readable clock. Cheap; delegates to the owned `Crg`.
+    pub fn freeze(&self) -> Clocks {
+        self.crg.freeze()
+    }
+
+    /// Access the raw PMU sequencer (escape hatch for SCU firmware load etc.).
+    pub fn pmu(&mut self) -> pmu::PmuCtl<'_> {
+        self.crg.pmu()
     }
 
     pub fn appsmp(&self) -> &Dyn {
