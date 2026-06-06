@@ -10,7 +10,7 @@ use panic_halt as _;
 
 use cxd56_hal::clocks::{Config, RccExt};
 use cxd56_hal::pac;
-use cxd56_hal::{delay_alt::Delay, uart_alt::UartBuilder};
+use cxd56_hal::{delay_alt::Delay, uart_alt::Uart};
 
 #[entry]
 fn main() -> ! {
@@ -22,8 +22,7 @@ fn main() -> ! {
 
     let mut delay = Delay::new(core.SYST, &clocks);
 
-    let builder = UartBuilder::new(pac.uart1, Default::default());
-    let mut uart = builder.build(&clocks).unwrap();
+    let mut uart = Uart::new(pac.uart1, Default::default(), &clocks).unwrap();
 
     let mut n: u32 = 0;
     loop {
