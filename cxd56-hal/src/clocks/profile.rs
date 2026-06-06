@@ -65,7 +65,7 @@ pub struct Clock {
 
 impl Clock {
     /// Consume `crg` and sample all clocks.
-    pub(crate) fn new(crg: Crg) -> Self {
+    pub fn new(crg: Crg) -> Self {
         let c = Clocks::sample(crg.cfg);
         Self {
             crg,
