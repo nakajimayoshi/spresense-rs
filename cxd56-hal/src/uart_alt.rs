@@ -116,6 +116,7 @@ pub trait UartPeriph: sealed::Sealed {
     /// correctly-lifetimed driver. Bodies are textually identical across
     /// impls; only the return *type* (and therefore the `'a` propagation)
     /// differs.
+    #[doc(hidden)]
     fn wrap<'a>(regs: *const pac::uart1::RegisterBlock, id: PeripheralId) -> Self::Output<'a>;
 }
 
@@ -138,7 +139,7 @@ impl UartPeriph for pac::Uart1 {
     // COM is Fixed/Copy — Output<'a> = Uart<'static>; 'a is unused in the
     // returned value (the PhantomData marker is 'static). The Clock borrow
     // ends at the call site, pinning nothing.
-    type Output<'a> = Uart<'static>;
+    type Output<'clk> = Uart<'static>;
 
     fn wrap<'a>(regs: *const pac::uart1::RegisterBlock, id: PeripheralId) -> Self::Output<'a> {
         Uart {
@@ -164,9 +165,8 @@ impl sealed::Sealed for pac::Uart2 {
 impl UartPeriph for pac::Uart2 {
     // IMG_UART is Dyn — Output<'a> = Uart<'a>; the returned Uart borrows
     // the Clock for 'a, blocking Clock::request_perf until dropped.
-    type Output<'a> = Uart<'a>;
+    type Output<'clk> = Uart<'clk>;
 
-    #[doc(hidden)]
     fn wrap<'a>(regs: *const pac::uart1::RegisterBlock, id: PeripheralId) -> Self::Output<'a> {
         Uart {
             regs,
@@ -230,7 +230,7 @@ impl<U: UartPeriph> UartBuilder<U> {
     /// - `U = pac::Uart2` → [`Uart<'a>`]: IMG_UART is Dyn; the returned
     ///   `Uart` borrows `clock` for `'a`, preventing
     ///   [`Clock::request_perf`] (needs `&mut Clock`) until dropped.
-    pub fn build<'a>(self, clock: &'a Clock) -> Result<U::Output<'a>, UartError> {
+    pub fn build<'clk>(self, clock: &'clk Clock) -> Result<U::Output<'clk>, UartError> {
         let hz = U::base_hz(clock);
         let (regs, id) = self.init(hz)?;
         Ok(U::wrap(regs, id))
@@ -246,10 +246,10 @@ impl<U: UartPeriph> UartBuilder<U> {
 ///   [`UartBuilder<pac::Uart2>`] — UART2 uses the dynamic IMG_UART clock,
 ///   so the UART borrows the `Clock`, preventing [`Clock::request_perf`]
 ///   until this value is dropped.
-pub struct Uart<'a> {
+pub struct Uart<'clk> {
     regs: *const pac::uart1::RegisterBlock,
     id: PeripheralId,
-    _life: PhantomData<&'a ()>,
+    _life: PhantomData<&'clk ()>,
 }
 
 // The raw pointer is logically owned and exclusively controlled, matching
@@ -262,7 +262,7 @@ impl Drop for Uart<'_> {
     }
 }
 
-impl<'a> Uart<'a> {
+impl<'clk> Uart<'clk> {
     #[inline]
     fn regs(&self) -> &pac::uart1::RegisterBlock {
         unsafe { &*self.regs }
