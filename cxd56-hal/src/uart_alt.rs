@@ -91,17 +91,6 @@ mod sealed {
 /// Sealed — implemented only for [`pac::Uart1`] and [`pac::Uart2`] within
 /// this crate. Downstream code cannot add new implementors.
 pub trait UartPeriph: sealed::Sealed {
-    /// Clock-gate / reset id used by [`PeripheralId::enable`].
-    // const ID: PeripheralId;
-    /// Route this UART's signals to the board pins.
-    // fn pinmux();
-    /// Register base, type-erased to `uart1::RegisterBlock`.
-    ///
-    /// UART2's `RegisterBlock` is identical at every offset this driver
-    /// touches (see `pl011_init`), so the cast from `uart2::RegisterBlock`
-    /// is sound.
-    // fn regs() -> *const pac::uart1::RegisterBlock;
-
     /// The type returned by [`UartBuilder::build`] and how its lifetime
     /// relates to the [`Clock`] borrow:
     ///
