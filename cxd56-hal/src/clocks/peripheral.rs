@@ -12,11 +12,13 @@ use super::pmu::{self, PmuDomain};
 use super::reset::{self, ResetReg};
 
 /// Errors surfaced from clock-enable/disable.
-#[derive(Debug)]
+#[derive(Debug, thiserror::Error)]
 pub enum ClockError {
     /// PMU power-domain never asserted/de-asserted within 20000 polls.
+    #[error("PMU power-domain did not settle within the poll budget")]
     PmuTimeout,
     /// This [`PeripheralId`] is not implemented in v1 of the HAL.
+    #[error("peripheral not implemented in this HAL")]
     Unimplemented,
 }
 
