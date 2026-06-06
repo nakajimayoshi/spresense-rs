@@ -7,6 +7,7 @@ pub mod delay;
 pub mod delay_alt;
 pub mod gpio;
 pub mod i2c;
+pub mod i2c_alt;
 pub mod multicore;
 pub(crate) mod regs;
 pub mod uart;
