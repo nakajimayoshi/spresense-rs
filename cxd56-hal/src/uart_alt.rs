@@ -1,65 +1,36 @@
-use crate::clocks::{Clock, PeripheralId};
-use crate::pac;
-use crate::uart::{
-    Parity, StopBits, UartConfig, UartError, WordLength, brd, uart1_pinmux, uart2_pinmux,
-};
+use arm_pl011_uart as pl011;
 use core::fmt;
 use core::marker::PhantomData;
+use core::ptr::NonNull;
 use embedded_hal_nb::nb;
-use embedded_hal_nb::serial::{ErrorKind, ErrorType};
+use embedded_hal_nb::serial::ErrorType;
+use embedded_io;
 use fugit::Hertz;
+use thiserror::Error;
 
-// Run the PL011 initialisation sequence over a type-erased register block.
-//
-// UART1 and UART2 both implement PL011. Their RegisterBlock types are distinct
-// in the PAC but identical at every offset this driver touches; the only
-// difference is offset 0x1C (UART1 = reserved, UART2 = RTO register), which
-// is never accessed here. Casting UART2's base address to
-// *const uart1::RegisterBlock is therefore sound.
-fn pl011_init(
-    uart: &pac::uart1::RegisterBlock,
-    f_uart: u32,
-    config: &UartConfig,
-) -> Result<(), UartError> {
-    let (ibrd, fbrd) = brd(f_uart, config.baud_rate)?;
+use crate::clocks::{Clock, ClockError, PeripheralId};
+use crate::pac;
+use crate::uart::{Parity, StopBits, UartConfig, WordLength, uart1_pinmux, uart2_pinmux};
 
-    uart.cr().write(|w| unsafe { w.bits(0) });
-    uart.lcr_h().write(|w| unsafe { w.bits(0) });
-    uart.dmacr().write(|w| unsafe { w.bits(0) });
-    uart.rsr()
-        .write(|w| w.roe().error().rbe().error().rpe().error().rfe().error());
-
-    uart.ibrd().write(|w| unsafe { w.baud_divint().bits(ibrd) });
-    uart.fbrd()
-        .write(|w| unsafe { w.baud_divfrac().bits(fbrd) });
-
-    uart.lcr_h().write(|w| {
-        let w = match config.word_length {
-            WordLength::Eight => w.wlen()._8bits(),
-            WordLength::Seven => w.wlen()._7bits(),
-            WordLength::Six => w.wlen()._6bits(),
-            WordLength::Five => w.wlen()._5bits(),
-        };
-        let w = match config.stop_bits {
-            StopBits::One => w.stp2().not_selected(),
-            StopBits::Two => w.stp2().selected(),
-        };
-        match config.parity {
-            Parity::None => w.pen().disabled(),
-            Parity::Even => w.pen().enabled().eps().even_parity(),
-            Parity::Odd => w.pen().enabled().eps().odd_parity(),
-        }
-    });
-
-    uart.ifls().write(|w| unsafe { w.bits(0) });
-    uart.icr().write(|w| unsafe { w.bits(0x7ff) });
-
-    uart.lcr_h()
-        .modify(|r, w| unsafe { w.bits(r.bits() | (1 << 4)) }); // FEN
-    uart.cr()
-        .write(|w| w.uarten().enabled().txe().enabled().rxe().enabled());
-
-    Ok(())
+// Map our config types to the external driver's LineConfig.
+fn line_config(config: &UartConfig) -> pl011::LineConfig {
+    pl011::LineConfig {
+        data_bits: match config.word_length {
+            WordLength::Five => pl011::DataBits::Bits5,
+            WordLength::Six => pl011::DataBits::Bits6,
+            WordLength::Seven => pl011::DataBits::Bits7,
+            WordLength::Eight => pl011::DataBits::Bits8,
+        },
+        parity: match config.parity {
+            Parity::None => pl011::Parity::None,
+            Parity::Even => pl011::Parity::Even,
+            Parity::Odd => pl011::Parity::Odd,
+        },
+        stop_bits: match config.stop_bits {
+            StopBits::One => pl011::StopBits::One,
+            StopBits::Two => pl011::StopBits::Two,
+        },
+    }
 }
 
 mod sealed {
@@ -74,9 +45,10 @@ mod sealed {
         fn pinmux();
         /// Register base, type-erased to `uart1::RegisterBlock`.
         ///
-        /// UART2's `RegisterBlock` is identical at every offset this driver
-        /// touches (see `pl011_init`), so the cast from `uart2::RegisterBlock`
-        /// is sound.
+        /// Used to derive the `PL011Registers` pointer for the external driver.
+        /// Both UART1 and UART2 share the same PL011 register layout over the
+        /// 0x1000-byte MMIO window; the cast of UART2's base address is sound on
+        /// the same argument as the former direct PAC-cast approach.
         fn regs() -> *const pac::uart1::RegisterBlock;
 
         /// Sample this peripheral's base clock. Returns a `Copy` [`Hertz`] so
@@ -91,22 +63,21 @@ mod sealed {
 /// Sealed — implemented only for [`pac::Uart1`] and [`pac::Uart2`] within
 /// this crate. Downstream code cannot add new implementors.
 pub trait UartPeriph: sealed::Sealed {
-    /// The type returned by [`UartBuilder::build`] and how its lifetime
-    /// relates to the [`Clock`] borrow:
+    /// The type returned by [`Uart::new`] and how its lifetime relates to the
+    /// [`Clock`] borrow:
     ///
-    /// - `pac::Uart1`: `Output<'a> = Uart<'static>` — COM is a Fixed clock;
-    ///   the borrow of `Clock` ends at `build`, pinning nothing.
-    /// - `pac::Uart2`: `Output<'a> = Uart<'a>` — IMG_UART is a Dyn clock;
-    ///   the UART borrows `Clock` for `'a`, blocking
+    /// - `pac::Uart1`: `Output<'clk> = Uart<'static, pac::Uart1>` — COM is a
+    ///   Fixed clock; the borrow of `Clock` ends at `new`, pinning nothing.
+    /// - `pac::Uart2`: `Output<'clk> = Uart<'clk, pac::Uart2>` — IMG_UART is
+    ///   a Dyn clock; the UART borrows `Clock` for `'clk`, blocking
     ///   [`Clock::request_perf`] until dropped.
-    type Output<'a>;
+    type Output<'clk>;
 
-    /// Wrap an initialised register base and gate id in the
-    /// correctly-lifetimed driver. Bodies are textually identical across
-    /// impls; only the return *type* (and therefore the `'a` propagation)
-    /// differs.
+    /// Wrap an initialised inner driver in the correctly-lifetimed driver
+    /// struct. Bodies are textually identical across impls; only the return
+    /// *type* (and therefore the `'clk` propagation) differs.
     #[doc(hidden)]
-    fn wrap<'a>(regs: *const pac::uart1::RegisterBlock, id: PeripheralId) -> Self::Output<'a>;
+    fn wrap<'clk>(inner: pl011::Uart<'static>) -> Self::Output<'clk>;
 }
 
 impl sealed::Sealed for pac::Uart1 {
@@ -125,15 +96,15 @@ impl sealed::Sealed for pac::Uart1 {
     }
 }
 impl UartPeriph for pac::Uart1 {
-    // COM is Fixed/Copy — Output<'a> = Uart<'static>; 'a is unused in the
-    // returned value (the PhantomData marker is 'static). The Clock borrow
+    // COM is Fixed/Copy — Output<'clk> = Uart<'static, _>; 'clk is unused in
+    // the returned value (the PhantomData marker is 'static). The Clock borrow
     // ends at the call site, pinning nothing.
-    type Output<'clk> = Uart<'static>;
+    type Output<'clk> = Uart<'static, pac::Uart1>;
 
-    fn wrap<'a>(regs: *const pac::uart1::RegisterBlock, id: PeripheralId) -> Self::Output<'a> {
+    fn wrap<'clk>(inner: pl011::Uart<'static>) -> Self::Output<'clk> {
         Uart {
-            regs,
-            id,
+            inner,
+            _uart: PhantomData,
             _life: PhantomData,
         }
     }
@@ -152,205 +123,186 @@ impl sealed::Sealed for pac::Uart2 {
     }
 }
 impl UartPeriph for pac::Uart2 {
-    // IMG_UART is Dyn — Output<'a> = Uart<'a>; the returned Uart borrows
-    // the Clock for 'a, blocking Clock::request_perf until dropped.
-    type Output<'clk> = Uart<'clk>;
+    // IMG_UART is Dyn — Output<'clk> = Uart<'clk, _>; the returned Uart
+    // borrows the Clock for 'clk, blocking Clock::request_perf until dropped.
+    type Output<'clk> = Uart<'clk, pac::Uart2>;
 
-    fn wrap<'a>(regs: *const pac::uart1::RegisterBlock, id: PeripheralId) -> Self::Output<'a> {
+    fn wrap<'clk>(inner: pl011::Uart<'static>) -> Self::Output<'clk> {
         Uart {
-            regs,
-            id,
+            inner,
+            _uart: PhantomData,
             _life: PhantomData,
         }
     }
 }
 
-/// Builder for a type-erased, profile-aware UART driver.
+/// Errors from the profile-aware UART driver.
 ///
-/// Generic over the PAC peripheral token `U` (`pac::Uart1` or `pac::Uart2`).
-/// Consuming that token ensures exclusive hardware ownership. Use
-/// [`UartBuilder::new`] to construct the builder — `U` is inferred from the
-/// token you pass — then call [`build`](UartBuilder::build) to obtain a
-/// [`Uart`]. The return type and its lifetime are determined by `U` via
-/// [`UartPeriph::Output`]:
-///
-/// - `UartBuilder<pac::Uart1>` — COM is a Fixed clock; `.build` returns
-///   [`Uart<'static>`], pinning nothing.
-/// - `UartBuilder<pac::Uart2>` — IMG_UART is a Dyn clock; `.build` returns
-///   [`Uart<'a>`] that borrows the [`Clock`], preventing
-///   [`Clock::request_perf`] while the UART is alive.
-pub struct UartBuilder<U> {
-    config: UartConfig,
-    _uart: PhantomData<U>,
+/// Wraps foreign error types so they are not re-exported through this
+/// module's public API. Use [`core::error::Error::source`] to inspect the
+/// underlying cause.
+#[derive(Debug, Error)]
+pub enum UartError {
+    /// Clock gate enable or disable failed.
+    #[error("clock gate error: {0}")]
+    Clock(#[from] ClockError),
+    /// PL011 driver error (baud divisor overflow, or RX overrun/parity/framing/break).
+    #[error("pl011 error: {0}")]
+    Pl011(#[from] pl011::Error),
 }
 
-impl<U: UartPeriph> UartBuilder<U> {
-    /// Consume `uart` (the PAC ownership token) and record `config`.
-    ///
-    /// `U` is inferred from the token — no need to name it explicitly:
-    /// ```ignore
-    /// let builder = UartBuilder::new(dp.uart1, UartConfig::default());
-    /// ```
-    pub fn new(uart: U, config: UartConfig) -> Self {
-        let _ = uart; // ZST ownership token; no destructor to run
-        Self {
-            config,
-            _uart: PhantomData,
+impl embedded_hal_nb::serial::Error for UartError {
+    fn kind(&self) -> embedded_hal_nb::serial::ErrorKind {
+        match self {
+            UartError::Pl011(e) => embedded_hal_nb::serial::Error::kind(e),
+            UartError::Clock(_) => embedded_hal_nb::serial::ErrorKind::Other,
         }
     }
+}
 
-    fn init(
-        self,
-        hz: Hertz<u32>,
-    ) -> Result<(*const pac::uart1::RegisterBlock, PeripheralId), UartError> {
-        U::ID.enable()?;
-        U::pinmux();
-        let regs = U::regs();
-        pl011_init(unsafe { &*regs }, hz.to_Hz(), &self.config)?;
-        Ok((regs, U::ID))
-    }
-
-    /// Enable the peripheral, run the PL011 init sequence, and return the
-    /// correctly-lifetimed driver.
-    ///
-    /// The return type is resolved per token via [`UartPeriph::Output`]:
-    /// - `U = pac::Uart1` → [`Uart<'static>`]: COM is Fixed/Copy; the borrow
-    ///   of `clock` ends here, pinning nothing.
-    /// - `U = pac::Uart2` → [`Uart<'a>`]: IMG_UART is Dyn; the returned
-    ///   `Uart` borrows `clock` for `'a`, preventing
-    ///   [`Clock::request_perf`] (needs `&mut Clock`) until dropped.
-    pub fn build<'clk>(self, clock: &'clk Clock) -> Result<U::Output<'clk>, UartError> {
-        let hz = U::base_hz(clock);
-        let (regs, id) = self.init(hz)?;
-        Ok(U::wrap(regs, id))
+impl embedded_io::Error for UartError {
+    fn kind(&self) -> embedded_io::ErrorKind {
+        match self {
+            UartError::Pl011(e) => embedded_io::Error::kind(e),
+            UartError::Clock(_) => embedded_io::ErrorKind::Other,
+        }
     }
 }
 
-/// Type-erased, blocking PL011 UART driver.
+/// Generic, profile-aware PL011 UART driver backed by [`arm_pl011_uart::Uart`].
 ///
-/// The lifetime `'a` is:
-/// - `'static` when built from [`UartBuilder<pac::Uart1>`] — UART1 uses the
-///   fixed COM clock whose rate is independent of the APP operating point.
+/// `U` is the PAC UART token (`pac::Uart1` or `pac::Uart2`). Consuming the
+/// token at construction ensures exclusive hardware ownership.
+///
+/// The lifetime `'clk` is:
+/// - `'static` when built from [`pac::Uart1`] — UART1 uses the fixed COM
+///   clock whose rate is independent of the APP operating point; the borrow
+///   of `Clock` ends at [`Uart::new`].
 /// - Tied to the [`Clock`](crate::clocks::Clock) when built from
-///   [`UartBuilder<pac::Uart2>`] — UART2 uses the dynamic IMG_UART clock,
-///   so the UART borrows the `Clock`, preventing [`Clock::request_perf`]
-///   until this value is dropped.
-pub struct Uart<'clk> {
-    regs: *const pac::uart1::RegisterBlock,
-    id: PeripheralId,
+///   [`pac::Uart2`] — UART2 uses the dynamic IMG_UART clock, so the UART
+///   borrows the `Clock`, preventing [`Clock::request_perf`] until dropped.
+///
+/// Use [`Uart::new`] to construct the driver — `U` is inferred from the PAC
+/// token you pass. The return type and its lifetime are determined by `U` via
+/// [`UartPeriph::Output`].
+pub struct Uart<'clk, U: UartPeriph> {
+    inner: pl011::Uart<'static>,
+    _uart: PhantomData<U>,
     _life: PhantomData<&'clk ()>,
 }
 
-// The raw pointer is logically owned and exclusively controlled, matching
-// the PAC `Periph` Send impl.
-unsafe impl Send for Uart<'_> {}
+// Exclusive peripheral ownership — the PAC token was consumed at construction,
+// matching the PAC `Periph` Send impl.
+unsafe impl<U: UartPeriph> Send for Uart<'_, U> {}
 
-impl Drop for Uart<'_> {
-    fn drop(&mut self) {
-        self.id.disable().ok();
-    }
-}
-
-impl<'clk> Uart<'clk> {
-    #[inline]
-    fn regs(&self) -> &pac::uart1::RegisterBlock {
-        unsafe { &*self.regs }
+impl<'clk, U: UartPeriph> Uart<'clk, U> {
+    /// Enable the peripheral, run the PL011 init sequence, and return the
+    /// correctly-lifetimed driver.
+    ///
+    /// Consumes `uart` (the PAC ownership token, a ZST) for exclusive hardware
+    /// access. The return type is resolved per token via [`UartPeriph::Output`]:
+    ///
+    /// - `U = pac::Uart1` → [`Uart<'static, pac::Uart1>`]: COM is Fixed/Copy;
+    ///   the borrow of `clock` ends here, pinning nothing.
+    /// - `U = pac::Uart2` → [`Uart<'a, pac::Uart2>`]: IMG_UART is Dyn; the
+    ///   returned `Uart` borrows `clock` for `'a`, preventing
+    ///   [`Clock::request_perf`] (needs `&mut Clock`) until dropped.
+    #[allow(clippy::new_ret_no_self)] // intentional: returns U::Output<'a> (branded by the clock-lifetime GAT)
+    pub fn new<'a>(uart: U, config: UartConfig, clock: &'a Clock) -> Result<U::Output<'a>, UartError> {
+        let hz = U::base_hz(clock);
+        let _ = uart; // ZST ownership token; no destructor to run
+        U::ID.enable()?;
+        U::pinmux();
+        // SAFETY: `U::regs()` returns the fixed, properly-aligned base address of
+        // this UART's PL011 register block. We consumed the PAC token `U` above,
+        // ensuring there is no other alias to this peripheral for the program's
+        // lifetime. Both UART1 and UART2 expose the same PL011 register layout
+        // over the 0x1000-byte MMIO window (`PL011Registers` is
+        // `#[repr(C, align(4))]`); casting UART2's base address is sound on the
+        // same argument as the former direct PAC-cast. The `'static` lifetime
+        // reflects that the MMIO address is valid for the entire program.
+        let ptr = NonNull::new(U::regs() as *mut pl011::PL011Registers)
+            .expect("PL011 base address is null");
+        let mut inner = pl011::Uart::new(unsafe { pl011::UniqueMmioPointer::new(ptr) });
+        inner.enable(line_config(&config), config.baud_rate, hz.to_Hz())?;
+        Ok(U::wrap(inner))
     }
 
     /// Transmit one byte, blocking until the TX FIFO has room.
     #[inline]
     pub fn write_byte(&mut self, byte: u8) {
-        while self.regs().fr().read().txff().bit_is_set() {}
-        self.regs().dr().write(|w| unsafe { w.bits(byte as u32) });
+        while self.inner.is_tx_fifo_full() {}
+        self.inner.write_word(byte);
     }
 
     /// Read one byte if the RX FIFO is non-empty, otherwise return `None`.
+    ///
+    /// Returns `None` on both an empty FIFO and RX errors (overrun/parity/
+    /// framing/break); use the [`embedded_hal_nb`] or [`embedded_io`] trait
+    /// impls to observe error detail.
     #[inline]
     pub fn read_byte(&mut self) -> Option<u8> {
-        if self.regs().fr().read().rxfe().bit_is_set() {
-            None
-        } else {
-            Some(self.regs().dr().read().bits() as u8)
-        }
+        self.inner.read_word().ok().flatten()
     }
 
     /// Block until the TX FIFO and shift register are empty.
     #[inline]
     pub fn flush(&mut self) {
-        while self.regs().fr().read().busy().bit_is_set() {}
+        while self.inner.is_busy() {}
     }
 }
 
-impl fmt::Write for Uart<'_> {
+impl<U: UartPeriph> Drop for Uart<'_, U> {
+    fn drop(&mut self) {
+        U::ID.disable().ok();
+    }
+}
+
+impl<U: UartPeriph> fmt::Write for Uart<'_, U> {
     fn write_str(&mut self, s: &str) -> fmt::Result {
-        for byte in s.bytes() {
-            self.write_byte(byte);
-        }
-        Ok(())
+        fmt::Write::write_str(&mut self.inner, s)
     }
 }
 
-impl ErrorType for Uart<'_> {
-    type Error = ErrorKind;
+impl<U: UartPeriph> ErrorType for Uart<'_, U> {
+    type Error = UartError;
 }
 
-impl embedded_hal_nb::serial::Read<u8> for Uart<'_> {
+impl<U: UartPeriph> embedded_hal_nb::serial::Read<u8> for Uart<'_, U> {
     fn read(&mut self) -> nb::Result<u8, Self::Error> {
-        match self.read_byte() {
-            Some(b) => Ok(b),
-            None => Err(nb::Error::WouldBlock),
-        }
+        embedded_hal_nb::serial::Read::read(&mut self.inner)
+            .map_err(|e| e.map(UartError::from))
     }
 }
 
-impl embedded_hal_nb::serial::Write<u8> for Uart<'_> {
+impl<U: UartPeriph> embedded_hal_nb::serial::Write<u8> for Uart<'_, U> {
     fn write(&mut self, word: u8) -> nb::Result<(), Self::Error> {
-        if self.regs().fr().read().txff().bit_is_set() {
-            Err(nb::Error::WouldBlock)
-        } else {
-            self.regs().dr().write(|w| unsafe { w.bits(word as u32) });
-            Ok(())
-        }
+        embedded_hal_nb::serial::Write::write(&mut self.inner, word)
+            .map_err(|e| e.map(UartError::from))
     }
 
     fn flush(&mut self) -> nb::Result<(), Self::Error> {
-        if self.regs().fr().read().busy().bit_is_set() {
-            Err(nb::Error::WouldBlock)
-        } else {
-            Ok(())
-        }
+        embedded_hal_nb::serial::Write::flush(&mut self.inner)
+            .map_err(|e| e.map(UartError::from))
     }
 }
 
-impl embedded_io::ErrorType for Uart<'_> {
-    type Error = embedded_io::ErrorKind;
+impl<U: UartPeriph> embedded_io::ErrorType for Uart<'_, U> {
+    type Error = UartError;
 }
 
-impl embedded_io::Write for Uart<'_> {
+impl<U: UartPeriph> embedded_io::Write for Uart<'_, U> {
     fn write(&mut self, buf: &[u8]) -> Result<usize, Self::Error> {
-        for &byte in buf {
-            self.write_byte(byte);
-        }
-        Ok(buf.len())
+        embedded_io::Write::write(&mut self.inner, buf).map_err(UartError::from)
     }
 
     fn flush(&mut self) -> Result<(), Self::Error> {
-        while nb::block!(<Self as embedded_hal_nb::serial::Write<u8>>::flush(self)).is_err() {}
-        Ok(())
+        embedded_io::Write::flush(&mut self.inner).map_err(UartError::from)
     }
 }
 
-impl embedded_io::Read for Uart<'_> {
+impl<U: UartPeriph> embedded_io::Read for Uart<'_, U> {
     fn read(&mut self, buf: &mut [u8]) -> Result<usize, Self::Error> {
-        while self.regs().fr().read().rxfe().bit_is_set() {}
-        let mut count = 0;
-        while count < buf.len() {
-            if self.regs().fr().read().rxfe().bit_is_set() {
-                break;
-            }
-            buf[count] = self.regs().dr().read().bits() as u8;
-            count += 1;
-        }
-        Ok(count)
+        embedded_io::Read::read(&mut self.inner, buf).map_err(UartError::from)
     }
 }
