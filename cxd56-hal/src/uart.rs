@@ -63,7 +63,7 @@ impl Default for UartConfig {
 // RXD = SPI0_SCK  (pin 18): IO_SPI0_SCK  (TOPREG+0x848), input enabled.
 // Reference: cxd5602_pinconfig.h:510, cxd5602_topreg.h:149,159-160,
 //            cxd56_pinconfig.c:53,139-141,391.
-fn uart1_pinmux() {
+pub(crate) fn uart1_pinmux() {
     // TXD: 2mA drive (LOWEMI=1), float (PDN=1, PUN=1), input disabled (ENZI=0).
     topreg().io_spi0_cs_x().write(|w| {
         w.lowemi()
@@ -96,7 +96,7 @@ fn uart1_pinmux() {
 // TXD = P1n_00 (pin 67): IO_UART2_TXD (TOPREG+0x90c), IOCAPP_IOMD UART2=1.
 // RXD = P1n_01 (pin 68): IO_UART2_RXD (TOPREG+0x910), input enabled.
 // Reference: CXD5602 user manual §3.1 pp.66,71-74; cxd5602_pinconfig.h:356-357,577.
-fn uart2_pinmux() {
+pub(crate) fn uart2_pinmux() {
     // TXD: 2mA drive (LOWEMI=1), float (PDN=1, PUN=1), input disabled (ENZI=0).
     topreg().io_uart2_txd().write(|w| {
         w.lowemi()
@@ -128,7 +128,7 @@ fn uart2_pinmux() {
 /// Compute baud-rate divisors from a clock frequency. Returns `(ibrd, fbrd)` or
 /// `Err(UartError::BadBaud)` if the divisor is zero or overflows the 16-bit IBRD.
 /// PL011 baud: BRD = f / (16 * baud), split as IBRD (integer) + FBRD (6-bit fraction).
-fn brd(f_uart: u32, baud: u32) -> Result<(u16, u8), UartError> {
+pub(crate) fn brd(f_uart: u32, baud: u32) -> Result<(u16, u8), UartError> {
     let brd_x64 = (f_uart as u64 * 4) / baud as u64;
     let ibrd = (brd_x64 >> 6) as u32;
     let fbrd = (brd_x64 & 0x3F) as u32;

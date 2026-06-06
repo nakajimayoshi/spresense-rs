@@ -21,8 +21,10 @@
 //! let clocks = crg.freeze();
 //! PeripheralId::Uart1.enable()?;
 //!
-//! // Switch to high-performance mode (156 MHz):
-//! let clocks = crg.request_perf(Perf::Hp)?;
+//! // Switch to high-performance mode and get a profile-typed clock snapshot.
+//! // The returned Clock<'_> borrows crg; request_perf cannot be called again
+//! // while any peripheral borrows a dynamic field of this Clock.
+//! let clock = crg.request_perf(Perf::Hp)?;
 //! ```
 
 use crate::pac;
@@ -32,12 +34,14 @@ pub mod buses;
 pub mod gate;
 pub mod peripheral;
 pub mod pm;
+pub mod profile;
 pub mod pmu;
 pub mod reset;
 pub mod sources;
 
 pub use peripheral::{ClockError, GearError, I2cPort, PeripheralId, SpiPort};
 pub use pm::{PmError, Perf};
+pub use profile::{Clock, Dyn, DynClock, Fixed, FixedClock};
 
 /// Board-level clock configuration.
 ///
@@ -91,19 +95,28 @@ impl Crg {
     /// Request a CPU/bus operating-point change from the SYSIOP loader firmware.
     ///
     /// Drives the ICC `FREQLOCK` → `CLK_CHG_START` / `CLK_CHG_END` handshake
-    /// and returns a fresh [`Clocks`] snapshot once the new operating point is
-    /// stable.
+    /// and returns a [`Clock`] snapshot tied to this `Crg` once the new
+    /// operating point is stable.
     ///
     /// Operating points (XOSC = 26 MHz, User Manual Table APP-807/808):
     /// - [`Perf::Hp`]: APP CPU ~156 MHz, VDD_CORE = 1.0 V
     /// - [`Perf::Lp`]: APP CPU  ~39 MHz, VDD_CORE = 0.7 V
     ///
     /// This call **blocks** (polls the CPU FIFO) until the SYSIOP confirms the
-    /// transition. After it returns, all downstream frequency calculations
-    /// (UART baud, SysTick, etc.) must use the new [`Clocks`].
-    pub fn request_perf(&mut self, perf: Perf) -> Result<Clocks, PmError> {
+    /// transition. The returned [`Clock`]`<'_>` borrows this `Crg`; another
+    /// call to `request_perf` cannot be issued until that `Clock` — and any
+    /// peripheral borrowing a dynamic field of it — goes out of scope.
+    pub fn request_perf(&mut self, perf: Perf) -> Result<Clock<'_>, PmError> {
         pm::request_perf(perf)?;
-        Ok(self.freeze())
+        Ok(Clock::sample(self))
+    }
+
+    /// Sample the current clock tree without changing the operating point.
+    ///
+    /// Cheaper than `request_perf` — no ICC round-trip. The returned
+    /// [`Clock`]`<'_>` borrows this `Crg` for the same reasons.
+    pub fn clock(&self) -> Clock<'_> {
+        Clock::sample(self)
     }
 
     /// Access the raw PMU sequencer (escape hatch for SCU firmware load etc.).

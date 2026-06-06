@@ -9,3 +9,4 @@ pub mod i2c;
 pub mod multicore;
 pub(crate) mod regs;
 pub mod uart;
+pub mod uart_alt;
