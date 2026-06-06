@@ -60,12 +60,49 @@ fn pl011_init(
     Ok(())
 }
 
+mod sealed {
+    pub trait Sealed {}
+}
+
+/// Maps a PAC UART token to its HAL wiring: clock-gate id, register base,
+/// and pin-mux routine.
+///
+/// Sealed — implemented only for [`pac::Uart1`] and [`pac::Uart2`] within
+/// this crate. Downstream code cannot add new implementors.
+pub trait UartPeriph: sealed::Sealed {
+    /// Clock-gate / reset id used by [`PeripheralId::enable`].
+    const ID: PeripheralId;
+    /// Route this UART's signals to the board pins.
+    fn pinmux();
+    /// Register base, type-erased to `uart1::RegisterBlock`.
+    ///
+    /// UART2's `RegisterBlock` is identical at every offset this driver
+    /// touches (see `pl011_init`), so the cast from `uart2::RegisterBlock`
+    /// is sound.
+    fn regs() -> *const pac::uart1::RegisterBlock;
+}
+
+impl sealed::Sealed for pac::Uart1 {}
+impl UartPeriph for pac::Uart1 {
+    const ID: PeripheralId = PeripheralId::Uart1;
+    fn pinmux() { uart1_pinmux() }
+    fn regs() -> *const pac::uart1::RegisterBlock { pac::Uart1::PTR }
+}
+
+impl sealed::Sealed for pac::Uart2 {}
+impl UartPeriph for pac::Uart2 {
+    const ID: PeripheralId = PeripheralId::ImgUart;
+    fn pinmux() { uart2_pinmux() }
+    fn regs() -> *const pac::uart1::RegisterBlock { pac::Uart2::PTR as *const _ }
+}
+
 /// Builder for a type-erased, profile-aware UART driver.
 ///
 /// Generic over the PAC peripheral token `U` (`pac::Uart1` or `pac::Uart2`).
-/// Consuming that token ensures exclusive hardware ownership. Call the
-/// peripheral-specific [`build`](UartBuilder::build) to finish construction
-/// and obtain a [`Uart`].
+/// Consuming that token ensures exclusive hardware ownership. Use
+/// [`UartBuilder::new`] to construct the builder — `U` is inferred from the
+/// token you pass — then call the peripheral-specific
+/// [`build`](UartBuilder::build) to obtain a [`Uart`].
 ///
 /// - `UartBuilder<pac::Uart1>` — UART1 runs on the fixed COM clock; `.build`
 ///   returns [`Uart<'static>`], pinning nothing.
@@ -73,21 +110,34 @@ fn pl011_init(
 ///   `.build` returns [`Uart<'a>`] that borrows the [`Clock`], preventing
 ///   [`Clock::request_perf`] while the UART is alive.
 pub struct UartBuilder<U> {
-    base: usize,
-    id: PeripheralId,
-    pinmux: fn(),
     config: UartConfig,
     _uart: PhantomData<U>,
 }
 
-impl UartBuilder<pac::Uart1> {
-    /// Consume `uart1` (the SYSIOP_SUB debug UART, on-board CP2102N bridge).
-    pub fn uart1(uart: pac::Uart1, config: UartConfig) -> Self {
-        let base = pac::Uart1::PTR as usize;
-        let _ = uart; // consume the ownership token; Periph is a ZST with no destructor
-        Self { base, id: PeripheralId::Uart1, pinmux: uart1_pinmux, config, _uart: PhantomData }
+impl<U: UartPeriph> UartBuilder<U> {
+    /// Consume `uart` (the PAC ownership token) and record `config`.
+    ///
+    /// `U` is inferred from the token — no need to name it explicitly:
+    /// ```ignore
+    /// let builder = UartBuilder::new(dp.uart1, UartConfig::default());
+    /// ```
+    pub fn new(uart: U, config: UartConfig) -> Self {
+        let _ = uart; // ZST ownership token; no destructor to run
+        Self { config, _uart: PhantomData }
     }
 
+    fn init(self, hz: Hertz<u32>)
+        -> Result<(*const pac::uart1::RegisterBlock, PeripheralId), UartError>
+    {
+        U::ID.enable()?;
+        U::pinmux();
+        let regs = U::regs();
+        pl011_init(unsafe { &*regs }, hz.to_Hz(), &self.config)?;
+        Ok((regs, U::ID))
+    }
+}
+
+impl UartBuilder<pac::Uart1> {
     /// Build the driver using the COM clock from `clock`.
     ///
     /// COM is a [`Fixed`](crate::clocks::Fixed) field — its rate is
@@ -100,13 +150,6 @@ impl UartBuilder<pac::Uart1> {
 }
 
 impl UartBuilder<pac::Uart2> {
-    /// Consume `uart2` (the IMG-domain UART, JP1 extension header pins 2-5).
-    pub fn uart2(uart: pac::Uart2, config: UartConfig) -> Self {
-        let base = pac::Uart2::PTR as usize;
-        let _ = uart;
-        Self { base, id: PeripheralId::ImgUart, pinmux: uart2_pinmux, config, _uart: PhantomData }
-    }
-
     /// Build the driver using the IMG_UART clock from `clock`.
     ///
     /// IMG_UART is a [`Dyn`](crate::clocks::Dyn) field — its rate tracks
@@ -116,16 +159,6 @@ impl UartBuilder<pac::Uart2> {
     pub fn build<'a>(self, clock: &'a Clock) -> Result<Uart<'a>, UartError> {
         let (regs, id) = self.init(clock.img_uart().hz())?;
         Ok(Uart { regs, id, _life: PhantomData })
-    }
-}
-
-impl<U> UartBuilder<U> {
-    fn init(self, hz: Hertz<u32>) -> Result<(*const pac::uart1::RegisterBlock, PeripheralId), UartError> {
-        self.id.enable()?;
-        (self.pinmux)();
-        let regs = self.base as *const pac::uart1::RegisterBlock;
-        pl011_init(unsafe { &*regs }, hz.to_Hz(), &self.config)?;
-        Ok((regs, self.id))
     }
 }
 
