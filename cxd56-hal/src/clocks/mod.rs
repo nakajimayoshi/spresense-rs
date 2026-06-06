@@ -36,7 +36,7 @@ pub mod sources;
 
 pub use peripheral::{ClockError, GearError, I2cPort, PeripheralId, SpiPort};
 pub use pm::{PmError, Perf};
-pub use profile::{Clock, Dyn, DynClock, Fixed, FixedClock};
+pub use profile::{Clock, Dyn, Fixed};
 
 /// Board-level clock configuration.
 ///

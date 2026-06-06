@@ -2,23 +2,13 @@ use super::pm::{self, Perf, PmError};
 use super::{Clocks, Crg, pmu};
 use fugit::Hertz;
 
-/// Clock source whose rate is independent of the APP operating point.
-pub trait FixedClock {
-    fn hz(&self) -> Hertz<u32>;
-}
-
-/// Clock source whose rate tracks the APP operating point (`request_perf`).
-pub trait DynClock {
-    fn hz(&self) -> Hertz<u32>;
-}
-
 /// A perf-independent clock sample. `Copy` — safe to hold after the
 /// originating [`Clock`] is dropped.
 #[derive(Copy, Clone)]
 pub struct Fixed(pub Hertz<u32>);
 
-impl FixedClock for Fixed {
-    fn hz(&self) -> Hertz<u32> {
+impl Fixed {
+    pub fn hz(&self) -> Hertz<u32> {
         self.0
     }
 }
@@ -28,8 +18,8 @@ impl FixedClock for Fixed {
 /// intact.
 pub struct Dyn(Hertz<u32>);
 
-impl DynClock for Dyn {
-    fn hz(&self) -> Hertz<u32> {
+impl Dyn {
+    pub fn hz(&self) -> Hertz<u32> {
         self.0
     }
 }
