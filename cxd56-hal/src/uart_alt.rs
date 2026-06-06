@@ -1,6 +1,8 @@
 use crate::clocks::{Clock, PeripheralId};
 use crate::pac;
-use crate::uart::{Parity, StopBits, UartConfig, UartError, WordLength, brd, uart1_pinmux, uart2_pinmux};
+use crate::uart::{
+    Parity, StopBits, UartConfig, UartError, WordLength, brd, uart1_pinmux, uart2_pinmux,
+};
 use core::fmt;
 use core::marker::PhantomData;
 use embedded_hal_nb::nb;
@@ -61,7 +63,26 @@ fn pl011_init(
 }
 
 mod sealed {
-    pub trait Sealed {}
+    use fugit::Hertz;
+
+    use super::pac;
+    use crate::clocks::{Clock, PeripheralId};
+
+    pub trait Sealed {
+        const ID: PeripheralId;
+        /// Route this UART's signals to the board pins.
+        fn pinmux();
+        /// Register base, type-erased to `uart1::RegisterBlock`.
+        ///
+        /// UART2's `RegisterBlock` is identical at every offset this driver
+        /// touches (see `pl011_init`), so the cast from `uart2::RegisterBlock`
+        /// is sound.
+        fn regs() -> *const pac::uart1::RegisterBlock;
+
+        /// Sample this peripheral's base clock. Returns a `Copy` [`Hertz`] so
+        /// the borrow of `clock` ends here; any lifetime tie lives in `Output`.
+        fn base_hz(clock: &Clock) -> Hertz<u32>;
+    }
 }
 
 /// Maps a PAC UART token to its HAL wiring: clock-gate id, register base,
@@ -71,15 +92,15 @@ mod sealed {
 /// this crate. Downstream code cannot add new implementors.
 pub trait UartPeriph: sealed::Sealed {
     /// Clock-gate / reset id used by [`PeripheralId::enable`].
-    const ID: PeripheralId;
+    // const ID: PeripheralId;
     /// Route this UART's signals to the board pins.
-    fn pinmux();
+    // fn pinmux();
     /// Register base, type-erased to `uart1::RegisterBlock`.
     ///
     /// UART2's `RegisterBlock` is identical at every offset this driver
     /// touches (see `pl011_init`), so the cast from `uart2::RegisterBlock`
     /// is sound.
-    fn regs() -> *const pac::uart1::RegisterBlock;
+    // fn regs() -> *const pac::uart1::RegisterBlock;
 
     /// The type returned by [`UartBuilder::build`] and how its lifetime
     /// relates to the [`Clock`] borrow:
@@ -91,45 +112,68 @@ pub trait UartPeriph: sealed::Sealed {
     ///   [`Clock::request_perf`] until dropped.
     type Output<'a>;
 
-    /// Sample this peripheral's base clock. Returns a `Copy` [`Hertz`] so
-    /// the borrow of `clock` ends here; any lifetime tie lives in `Output`.
-    fn base_hz(clock: &Clock) -> Hertz<u32>;
-
     /// Wrap an initialised register base and gate id in the
     /// correctly-lifetimed driver. Bodies are textually identical across
     /// impls; only the return *type* (and therefore the `'a` propagation)
     /// differs.
-    fn wrap<'a>(regs: *const pac::uart1::RegisterBlock, id: PeripheralId)
-        -> Self::Output<'a>;
+    fn wrap<'a>(regs: *const pac::uart1::RegisterBlock, id: PeripheralId) -> Self::Output<'a>;
 }
 
-impl sealed::Sealed for pac::Uart1 {}
-impl UartPeriph for pac::Uart1 {
+impl sealed::Sealed for pac::Uart1 {
     const ID: PeripheralId = PeripheralId::Uart1;
-    fn pinmux() { uart1_pinmux() }
-    fn regs() -> *const pac::uart1::RegisterBlock { pac::Uart1::PTR }
 
+    fn pinmux() {
+        uart1_pinmux()
+    }
+
+    fn regs() -> *const pac::uart1::RegisterBlock {
+        pac::Uart1::PTR
+    }
+
+    fn base_hz(clock: &Clock) -> Hertz<u32> {
+        clock.com.hz()
+    }
+}
+impl UartPeriph for pac::Uart1 {
     // COM is Fixed/Copy — Output<'a> = Uart<'static>; 'a is unused in the
     // returned value (the PhantomData marker is 'static). The Clock borrow
     // ends at the call site, pinning nothing.
     type Output<'a> = Uart<'static>;
-    fn base_hz(clock: &Clock) -> Hertz<u32> { clock.com.hz() }
-    fn wrap<'a>(regs: *const pac::uart1::RegisterBlock, id: PeripheralId)
-        -> Self::Output<'a> { Uart { regs, id, _life: PhantomData } }
+
+    fn wrap<'a>(regs: *const pac::uart1::RegisterBlock, id: PeripheralId) -> Self::Output<'a> {
+        Uart {
+            regs,
+            id,
+            _life: PhantomData,
+        }
+    }
 }
 
-impl sealed::Sealed for pac::Uart2 {}
-impl UartPeriph for pac::Uart2 {
+impl sealed::Sealed for pac::Uart2 {
     const ID: PeripheralId = PeripheralId::ImgUart;
-    fn pinmux() { uart2_pinmux() }
-    fn regs() -> *const pac::uart1::RegisterBlock { pac::Uart2::PTR as *const _ }
-
+    fn pinmux() {
+        uart2_pinmux()
+    }
+    fn regs() -> *const pac::uart1::RegisterBlock {
+        pac::Uart2::PTR as *const _
+    }
+    fn base_hz(clock: &Clock) -> Hertz<u32> {
+        clock.img_uart().hz()
+    }
+}
+impl UartPeriph for pac::Uart2 {
     // IMG_UART is Dyn — Output<'a> = Uart<'a>; the returned Uart borrows
     // the Clock for 'a, blocking Clock::request_perf until dropped.
     type Output<'a> = Uart<'a>;
-    fn base_hz(clock: &Clock) -> Hertz<u32> { clock.img_uart().hz() }
-    fn wrap<'a>(regs: *const pac::uart1::RegisterBlock, id: PeripheralId)
-        -> Self::Output<'a> { Uart { regs, id, _life: PhantomData } }
+
+    #[doc(hidden)]
+    fn wrap<'a>(regs: *const pac::uart1::RegisterBlock, id: PeripheralId) -> Self::Output<'a> {
+        Uart {
+            regs,
+            id,
+            _life: PhantomData,
+        }
+    }
 }
 
 /// Builder for a type-erased, profile-aware UART driver.
@@ -160,12 +204,16 @@ impl<U: UartPeriph> UartBuilder<U> {
     /// ```
     pub fn new(uart: U, config: UartConfig) -> Self {
         let _ = uart; // ZST ownership token; no destructor to run
-        Self { config, _uart: PhantomData }
+        Self {
+            config,
+            _uart: PhantomData,
+        }
     }
 
-    fn init(self, hz: Hertz<u32>)
-        -> Result<(*const pac::uart1::RegisterBlock, PeripheralId), UartError>
-    {
+    fn init(
+        self,
+        hz: Hertz<u32>,
+    ) -> Result<(*const pac::uart1::RegisterBlock, PeripheralId), UartError> {
         U::ID.enable()?;
         U::pinmux();
         let regs = U::regs();
