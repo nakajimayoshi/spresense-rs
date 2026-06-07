@@ -1,11 +1,13 @@
 mod monitor;
 mod port;
+mod test;
 
 use std::{
     env, fs,
     io::{self, BufRead, BufReader, IsTerminal, Write},
     path::{Path, PathBuf},
     process::{Command, Stdio},
+    time::Duration,
 };
 
 use anyhow::{anyhow, bail, Context, Result};
@@ -93,6 +95,15 @@ struct Cli {
     /// After flashing, open a serial monitor on the board's console output
     #[arg(long)]
     monitor: bool,
+
+    /// After flashing, run the firmware as a test: reset the board, decode its
+    /// defmt output, and exit 0 (pass) / 1 (fail) / 2 (timeout, no verdict).
+    #[arg(long)]
+    test: bool,
+
+    /// Seconds to wait for a PASS/FAIL verdict in --test mode before timing out.
+    #[arg(long, value_name = "SECS", default_value_t = 30)]
+    test_timeout: u64,
 }
 
 fn main() -> Result<()> {
@@ -133,6 +144,13 @@ fn main() -> Result<()> {
 
     let port = port::resolve(cli.port.as_deref())?;
     flash(&port, cli.baud, &staged_spk)?;
+
+    if cli.test {
+        // Decode the board's defmt stream against this ELF and turn the verdict
+        // into a process exit code (0 pass / 1 fail / 2 timeout). Never returns.
+        let outcome = test::run(&port, &elf_src, Duration::from_secs(cli.test_timeout))?;
+        std::process::exit(outcome.exit_code());
+    }
 
     if cli.monitor {
         monitor::run(&port)?;
