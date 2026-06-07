@@ -236,6 +236,15 @@ impl Uart1 {
     pub fn flush(&mut self) {
         while self.uart.fr().read().busy().bit_is_set() {}
     }
+
+    /// Enable or disable PL011 internal loopback (UARTCR.LBE). When enabled, the
+    /// transmit serial output is routed back to the receive input on-chip, so
+    /// bytes written can be read straight back with no external wiring — useful
+    /// for a self-contained UART self-test.
+    #[inline]
+    pub fn set_loopback(&mut self, on: bool) {
+        self.uart.cr().modify(|_, w| w.lbe().bit(on));
+    }
 }
 
 impl fmt::Write for Uart1 {
@@ -401,6 +410,15 @@ impl Uart2 {
     #[inline]
     pub fn flush(&mut self) {
         while self.uart.fr().read().busy().bit_is_set() {}
+    }
+
+    /// Enable or disable PL011 internal loopback (UARTCR.LBE). When enabled, the
+    /// transmit serial output is routed back to the receive input on-chip, so
+    /// bytes written can be read straight back with no external wiring — useful
+    /// for a self-contained UART self-test.
+    #[inline]
+    pub fn set_loopback(&mut self, on: bool) {
+        self.uart.cr().modify(|_, w| w.lbe().bit(on));
     }
 }
 
