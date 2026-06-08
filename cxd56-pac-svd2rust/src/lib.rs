@@ -23,6 +23,7 @@ extern "C" {
     fn UART1();
     fn SPI3();
     fn I2C0();
+    fn I2C1();
     fn EXDEVICE_0();
     fn EXDEVICE_1();
     fn EXDEVICE_2();
@@ -92,7 +93,7 @@ pub static __INTERRUPTS: [Vector; 119] = [
     Vector { _reserved: 0 },
     Vector { _handler: SPI3 },
     Vector { _handler: I2C0 },
-    Vector { _reserved: 0 },
+    Vector { _handler: I2C1 },
     Vector { _reserved: 0 },
     Vector {
         _handler: EXDEVICE_0,
@@ -232,6 +233,8 @@ pub enum Interrupt {
     SPI3 = 16,
     ///17 - I2C0 (SCU_I2C0) interrupt
     I2C0 = 17,
+    ///18 - I2C1 (SCU_I2C1) interrupt
+    I2C1 = 18,
     ///20 - GPIO external interrupt slot 0
     EXDEVICE_0 = 20,
     ///21 - GPIO external interrupt slot 1
@@ -470,6 +473,24 @@ impl core::fmt::Debug for I2c0 {
 }
 ///DesignWare DW_apb_i2c master controller (SCU_I2C0 / sensor I2C bus)
 pub mod i2c0;
+///DesignWare DW_apb_i2c master controller (SCU_I2C1)
+pub type I2c1 = crate::Periph<i2c0::RegisterBlock, 0x0418_d800>;
+impl core::fmt::Debug for I2c1 {
+    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+        f.debug_struct("I2c1").finish()
+    }
+}
+///DesignWare DW_apb_i2c master controller (SCU_I2C1)
+pub use self::i2c0 as i2c1;
+///SCU ADC Interface — LPADC/HPADC control and per-channel FIFO read ports. CPU APB read of LPADC_FIFO(n) dequeues one sample from the hardware FIFO of LPADC channel n (no iSoP needed). UM §3.21.12.1; Mirror base 0x0418DC00.
+pub type ScuAdcif = crate::Periph<scu_adcif::RegisterBlock, 0x0418_dc00>;
+impl core::fmt::Debug for ScuAdcif {
+    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+        f.debug_struct("ScuAdcif").finish()
+    }
+}
+///SCU ADC Interface — LPADC/HPADC control and per-channel FIFO read ports. CPU APB read of LPADC_FIFO(n) dequeues one sample from the hardware FIFO of LPADC channel n (no iSoP needed). UM §3.21.12.1; Mirror base 0x0418DC00.
+pub mod scu_adcif;
 ///Synchronous Serial Port Controller (IMG SPI)
 pub type Spi4 = crate::Periph<spi4::RegisterBlock, 0x0210_3400>;
 impl core::fmt::Debug for Spi4 {
@@ -572,6 +593,10 @@ pub struct Peripherals {
     pub spi3: Spi3,
     ///I2C0
     pub i2c0: I2c0,
+    ///I2C1
+    pub i2c1: I2c1,
+    ///SCU_ADCIF
+    pub scu_adcif: ScuAdcif,
     ///SPI4
     pub spi4: Spi4,
     ///SPI5
@@ -625,6 +650,8 @@ impl Peripherals {
             spi0: Spi0::steal(),
             spi3: Spi3::steal(),
             i2c0: I2c0::steal(),
+            i2c1: I2c1::steal(),
+            scu_adcif: ScuAdcif::steal(),
             spi4: Spi4::steal(),
             spi5: Spi5::steal(),
             topreg: Topreg::steal(),
