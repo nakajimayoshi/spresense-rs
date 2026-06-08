@@ -6783,6 +6783,565 @@
       </interrupt>
     </peripheral>
     <peripheral>
+      <name>SCU_ADCIF</name>
+      <description>SCU ADC Interface — LPADC/HPADC control and per-channel FIFO read ports. CPU APB read of LPADC_FIFO(n) dequeues one sample from the hardware FIFO of LPADC channel n (no iSoP needed). UM §3.21.12.1; Mirror base 0x0418DC00.</description>
+      <baseAddress>0x0418DC00</baseAddress>
+      <addressBlock>
+        <offset>0x0</offset>
+        <size>0x400</size>
+        <usage>registers</usage>
+      </addressBlock>
+      <registers>
+        <register>
+          <dim>4</dim>
+          <dimIncrement>0x4</dimIncrement>
+          <name>LPADC_FIFO[%s]</name>
+          <description>LPADC ch%s FIFO Read Port — dequeue one 10-bit sample (MSB-aligned in 16-bit word; DATA = bits[15:6] as 0..=1023)</description>
+          <addressOffset>0x0</addressOffset>
+          <access>read-only</access>
+          <resetValue>0x00000000</resetValue>
+          <fields>
+            <field>
+              <name>DATA</name>
+              <description>10-bit ADC result, right-justified (raw bits[15:6] of MSB-aligned word; multiply by VDDA_LPADC/1023 for volts)</description>
+              <bitOffset>6</bitOffset>
+              <bitWidth>10</bitWidth>
+            </field>
+          </fields>
+        </register>
+        <register>
+          <dim>2</dim>
+          <dimIncrement>0x4</dimIncrement>
+          <name>HPADC_FIFO[%s]</name>
+          <description>HPADC ch%s FIFO Read Port (SEN_AIN0/1, Arduino A4/A5)</description>
+          <addressOffset>0x80</addressOffset>
+          <access>read-only</access>
+          <resetValue>0x00000000</resetValue>
+          <fields>
+            <field>
+              <name>DATA</name>
+              <description>10-bit HPADC sample, right-justified</description>
+              <bitOffset>6</bitOffset>
+              <bitWidth>10</bitWidth>
+            </field>
+          </fields>
+        </register>
+        <register>
+          <name>LPADC_A0</name>
+          <description>LPADC Enable Control — LV_ADC_EN (UM Table ADC-106)</description>
+          <addressOffset>0x200</addressOffset>
+          <access>read-write</access>
+          <resetValue>0x00000000</resetValue>
+          <fields>
+            <field>
+              <name>LV_ADC_EN</name>
+              <description>LPADC enable: 0=standby, 1=active</description>
+              <bitOffset>0</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+          </fields>
+        </register>
+        <register>
+          <name>LPADC_A1</name>
+          <description>LPADC Channel Switching Control (UM Table ADC-107)</description>
+          <addressOffset>0x204</addressOffset>
+          <access>read-write</access>
+          <resetValue>0x00000000</resetValue>
+          <fields>
+            <field>
+              <name>LV_CH_SEL_INV</name>
+              <description>ADCH selector for GNSS (active channel: 0=CH0 … 3=CH3)</description>
+              <bitOffset>8</bitOffset>
+              <bitWidth>2</bitWidth>
+            </field>
+            <field>
+              <name>LV_CH_SEL_MODE</name>
+              <description>Channel switching mode</description>
+              <bitOffset>0</bitOffset>
+              <bitWidth>3</bitWidth>
+            </field>
+          </fields>
+        </register>
+        <register>
+          <name>LPADC_D0</name>
+          <description>LPADC Software Reset, common to all channels (UM Table ADC-108)</description>
+          <addressOffset>0x210</addressOffset>
+          <access>read-write</access>
+          <resetValue>0x00000000</resetValue>
+          <fields>
+            <field>
+              <name>SW_RESET</name>
+              <description>LPADC software reset (write 1 to reset, then clear)</description>
+              <bitOffset>0</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+          </fields>
+        </register>
+        <register>
+          <name>LPADC_D1</name>
+          <description>LPADC ch0 sample-rate divider and FIFO watermark (UM Table ADC-109)</description>
+          <addressOffset>0x214</addressOffset>
+          <access>read-write</access>
+          <resetValue>0x00000008</resetValue>
+          <fields>
+            <field>
+              <name>SAMP_RATIO2</name>
+              <description>PWM synchronisation enables, bits[8:0] (bit8=disabled)</description>
+              <bitOffset>12</bitOffset>
+              <bitWidth>9</bitWidth>
+            </field>
+            <field>
+              <name>SAMP_RATIO</name>
+              <description>Sampling frequency divider: rate = CK_SCU_U32KL / 2^n (0=÷1 … 15=÷32768)</description>
+              <bitOffset>8</bitOffset>
+              <bitWidth>4</bitWidth>
+            </field>
+            <field>
+              <name>DMA_HS_EN</name>
+              <description>DMA handshake-signal enable for this channel</description>
+              <bitOffset>5</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>FIFO_WATERMARK</name>
+              <description>FIFO almost-full watermark (default 8; set to 1 for immediate notification)</description>
+              <bitOffset>0</bitOffset>
+              <bitWidth>4</bitWidth>
+            </field>
+          </fields>
+        </register>
+        <register>
+          <name>LPADC_D2</name>
+          <description>LPADC per-channel FIFO enable (UM Table ADC-110). Bit n=1 enables ADCIF hardware FIFO for channel n.</description>
+          <addressOffset>0x218</addressOffset>
+          <access>read-write</access>
+          <resetValue>0x00000000</resetValue>
+          <fields>
+            <field>
+              <name>FIFO_EN</name>
+              <description>Per-channel FIFO enable: bit0=ch0, bit1=ch1, bit2=ch2, bit3=ch3</description>
+              <bitOffset>0</bitOffset>
+              <bitWidth>4</bitWidth>
+            </field>
+          </fields>
+        </register>
+        <register>
+          <name>LPADC_D4</name>
+          <description>LPADC ch1 sample-rate divider and FIFO watermark (UM Table ADC-111)</description>
+          <addressOffset>0x21C</addressOffset>
+          <access>read-write</access>
+          <resetValue>0x00000008</resetValue>
+          <fields>
+            <field>
+              <name>SAMP_RATIO2</name>
+              <description>PWM sync enables [8:0]</description>
+              <bitOffset>12</bitOffset>
+              <bitWidth>9</bitWidth>
+            </field>
+            <field>
+              <name>SAMP_RATIO</name>
+              <description>Frequency divider: 0=÷1 … 15=÷32768</description>
+              <bitOffset>8</bitOffset>
+              <bitWidth>4</bitWidth>
+            </field>
+            <field>
+              <name>DMA_HS_EN</name>
+              <description>DMA handshake enable</description>
+              <bitOffset>5</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>FIFO_WATERMARK</name>
+              <description>FIFO watermark</description>
+              <bitOffset>0</bitOffset>
+              <bitWidth>4</bitWidth>
+            </field>
+          </fields>
+        </register>
+        <register>
+          <name>LPADC_D5</name>
+          <description>LPADC ch2 (SEN_AIN4 / Arduino A2) sample-rate and watermark</description>
+          <addressOffset>0x220</addressOffset>
+          <access>read-write</access>
+          <resetValue>0x00000008</resetValue>
+          <fields>
+            <field>
+              <name>SAMP_RATIO2</name>
+              <description>PWM sync enables [8:0]</description>
+              <bitOffset>12</bitOffset>
+              <bitWidth>9</bitWidth>
+            </field>
+            <field>
+              <name>SAMP_RATIO</name>
+              <description>Frequency divider: 0=÷1 … 15=÷32768</description>
+              <bitOffset>8</bitOffset>
+              <bitWidth>4</bitWidth>
+            </field>
+            <field>
+              <name>DMA_HS_EN</name>
+              <description>DMA handshake enable</description>
+              <bitOffset>5</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>FIFO_WATERMARK</name>
+              <description>FIFO watermark</description>
+              <bitOffset>0</bitOffset>
+              <bitWidth>4</bitWidth>
+            </field>
+          </fields>
+        </register>
+        <register>
+          <name>LPADC_D6</name>
+          <description>LPADC ch3 (SEN_AIN5 / Arduino A3) sample-rate and watermark</description>
+          <addressOffset>0x224</addressOffset>
+          <access>read-write</access>
+          <resetValue>0x00000008</resetValue>
+          <fields>
+            <field>
+              <name>SAMP_RATIO2</name>
+              <description>PWM sync enables [8:0]</description>
+              <bitOffset>12</bitOffset>
+              <bitWidth>9</bitWidth>
+            </field>
+            <field>
+              <name>SAMP_RATIO</name>
+              <description>Frequency divider: 0=÷1 … 15=÷32768</description>
+              <bitOffset>8</bitOffset>
+              <bitWidth>4</bitWidth>
+            </field>
+            <field>
+              <name>DMA_HS_EN</name>
+              <description>DMA handshake enable</description>
+              <bitOffset>5</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>FIFO_WATERMARK</name>
+              <description>FIFO watermark</description>
+              <bitOffset>0</bitOffset>
+              <bitWidth>4</bitWidth>
+            </field>
+          </fields>
+        </register>
+        <register>
+          <name>LPADC_AT0</name>
+          <description>LPADC analog timing register 0 (bit0 must be cleared, cxd56_adc.c:469)</description>
+          <addressOffset>0x300</addressOffset>
+          <access>read-write</access>
+          <resetValue>0x00000000</resetValue>
+          <fields>
+            <field>
+              <name>TIMING0</name>
+              <description>Analog timing control bit 0 (SDK always writes 0)</description>
+              <bitOffset>0</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+          </fields>
+        </register>
+        <register>
+          <name>LPADC_AT1</name>
+          <description>LPADC analog warm-up timing (SDK sets bits[7:0]=0x04, cxd56_adc.c:462)</description>
+          <addressOffset>0x304</addressOffset>
+          <access>read-write</access>
+          <resetValue>0x00000000</resetValue>
+          <fields>
+            <field>
+              <name>WARMUP</name>
+              <description>Analog warm-up count (SDK: 0x04)</description>
+              <bitOffset>0</bitOffset>
+              <bitWidth>8</bitWidth>
+            </field>
+          </fields>
+        </register>
+        <register>
+          <name>HPADC_AC0</name>
+          <description>HPADC common clock control (placeholder)</description>
+          <addressOffset>0x240</addressOffset>
+          <access>read-write</access>
+          <resetValue>0x00000000</resetValue>
+          <fields>
+            <field>
+              <name>BITS</name>
+              <description>Raw register value</description>
+              <bitOffset>0</bitOffset>
+              <bitWidth>32</bitWidth>
+            </field>
+          </fields>
+        </register>
+        <register>
+          <name>HPADC_AC1</name>
+          <description>HPADC common enable control (placeholder)</description>
+          <addressOffset>0x244</addressOffset>
+          <access>read-write</access>
+          <resetValue>0x00000000</resetValue>
+          <fields>
+            <field>
+              <name>BITS</name>
+              <description>Raw register value</description>
+              <bitOffset>0</bitOffset>
+              <bitWidth>32</bitWidth>
+            </field>
+          </fields>
+        </register>
+        <register>
+          <name>HPADC_DC</name>
+          <description>HPADC two-element vector mode control (placeholder)</description>
+          <addressOffset>0x250</addressOffset>
+          <access>read-write</access>
+          <resetValue>0x00000000</resetValue>
+          <fields>
+            <field>
+              <name>BITS</name>
+              <description>Raw register value</description>
+              <bitOffset>0</bitOffset>
+              <bitWidth>32</bitWidth>
+            </field>
+          </fields>
+        </register>
+        <register>
+          <name>HPADC0_A0</name>
+          <description>HPADC0 clock selection (placeholder)</description>
+          <addressOffset>0x280</addressOffset>
+          <access>read-write</access>
+          <resetValue>0x00000000</resetValue>
+          <fields>
+            <field>
+              <name>BITS</name>
+              <description>Raw register value</description>
+              <bitOffset>0</bitOffset>
+              <bitWidth>32</bitWidth>
+            </field>
+          </fields>
+        </register>
+        <register>
+          <name>HPADC0_A1</name>
+          <description>HPADC0 enable control (placeholder)</description>
+          <addressOffset>0x284</addressOffset>
+          <access>read-write</access>
+          <resetValue>0x00000000</resetValue>
+          <fields>
+            <field>
+              <name>BITS</name>
+              <description>Raw register value</description>
+              <bitOffset>0</bitOffset>
+              <bitWidth>32</bitWidth>
+            </field>
+          </fields>
+        </register>
+        <register>
+          <name>HPADC0_A2</name>
+          <description>HPADC0 clock enable (placeholder)</description>
+          <addressOffset>0x288</addressOffset>
+          <access>read-write</access>
+          <resetValue>0x00000000</resetValue>
+          <fields>
+            <field>
+              <name>BITS</name>
+              <description>Raw register value</description>
+              <bitOffset>0</bitOffset>
+              <bitWidth>32</bitWidth>
+            </field>
+          </fields>
+        </register>
+        <register>
+          <name>HPADC0_A3</name>
+          <description>HPADC0 LPF control (placeholder; reset=0x100)</description>
+          <addressOffset>0x28C</addressOffset>
+          <access>read-write</access>
+          <resetValue>0x00000100</resetValue>
+          <fields>
+            <field>
+              <name>BITS</name>
+              <description>Raw register value</description>
+              <bitOffset>0</bitOffset>
+              <bitWidth>32</bitWidth>
+            </field>
+          </fields>
+        </register>
+        <register>
+          <name>HPADC0_D0</name>
+          <description>HPADC0 software reset (placeholder)</description>
+          <addressOffset>0x290</addressOffset>
+          <access>read-write</access>
+          <resetValue>0x00000000</resetValue>
+          <fields>
+            <field>
+              <name>BITS</name>
+              <description>Raw register value</description>
+              <bitOffset>0</bitOffset>
+              <bitWidth>32</bitWidth>
+            </field>
+          </fields>
+        </register>
+        <register>
+          <name>HPADC0_D1</name>
+          <description>HPADC0 basic setting (placeholder; reset=0x10)</description>
+          <addressOffset>0x294</addressOffset>
+          <access>read-write</access>
+          <resetValue>0x00000010</resetValue>
+          <fields>
+            <field>
+              <name>BITS</name>
+              <description>Raw register value</description>
+              <bitOffset>0</bitOffset>
+              <bitWidth>32</bitWidth>
+            </field>
+          </fields>
+        </register>
+        <register>
+          <name>HPADC0_D2</name>
+          <description>HPADC0 ADC data acceptance (placeholder)</description>
+          <addressOffset>0x298</addressOffset>
+          <access>read-write</access>
+          <resetValue>0x00000000</resetValue>
+          <fields>
+            <field>
+              <name>BITS</name>
+              <description>Raw register value</description>
+              <bitOffset>0</bitOffset>
+              <bitWidth>32</bitWidth>
+            </field>
+          </fields>
+        </register>
+        <register>
+          <name>HPADC1_A0</name>
+          <description>HPADC1 clock selection (placeholder)</description>
+          <addressOffset>0x2C0</addressOffset>
+          <access>read-write</access>
+          <resetValue>0x00000000</resetValue>
+          <fields>
+            <field>
+              <name>BITS</name>
+              <description>Raw register value</description>
+              <bitOffset>0</bitOffset>
+              <bitWidth>32</bitWidth>
+            </field>
+          </fields>
+        </register>
+        <register>
+          <name>HPADC1_A1</name>
+          <description>HPADC1 enable control (placeholder)</description>
+          <addressOffset>0x2C4</addressOffset>
+          <access>read-write</access>
+          <resetValue>0x00000000</resetValue>
+          <fields>
+            <field>
+              <name>BITS</name>
+              <description>Raw register value</description>
+              <bitOffset>0</bitOffset>
+              <bitWidth>32</bitWidth>
+            </field>
+          </fields>
+        </register>
+        <register>
+          <name>HPADC1_A2</name>
+          <description>HPADC1 clock enable (placeholder)</description>
+          <addressOffset>0x2C8</addressOffset>
+          <access>read-write</access>
+          <resetValue>0x00000000</resetValue>
+          <fields>
+            <field>
+              <name>BITS</name>
+              <description>Raw register value</description>
+              <bitOffset>0</bitOffset>
+              <bitWidth>32</bitWidth>
+            </field>
+          </fields>
+        </register>
+        <register>
+          <name>HPADC1_A3</name>
+          <description>HPADC1 LPF control (placeholder; reset=0x100)</description>
+          <addressOffset>0x2CC</addressOffset>
+          <access>read-write</access>
+          <resetValue>0x00000100</resetValue>
+          <fields>
+            <field>
+              <name>BITS</name>
+              <description>Raw register value</description>
+              <bitOffset>0</bitOffset>
+              <bitWidth>32</bitWidth>
+            </field>
+          </fields>
+        </register>
+        <register>
+          <name>HPADC1_D0</name>
+          <description>HPADC1 software reset (placeholder)</description>
+          <addressOffset>0x2D0</addressOffset>
+          <access>read-write</access>
+          <resetValue>0x00000000</resetValue>
+          <fields>
+            <field>
+              <name>BITS</name>
+              <description>Raw register value</description>
+              <bitOffset>0</bitOffset>
+              <bitWidth>32</bitWidth>
+            </field>
+          </fields>
+        </register>
+        <register>
+          <name>HPADC1_D1</name>
+          <description>HPADC1 basic setting (placeholder; reset=0x10)</description>
+          <addressOffset>0x2D4</addressOffset>
+          <access>read-write</access>
+          <resetValue>0x00000010</resetValue>
+          <fields>
+            <field>
+              <name>BITS</name>
+              <description>Raw register value</description>
+              <bitOffset>0</bitOffset>
+              <bitWidth>32</bitWidth>
+            </field>
+          </fields>
+        </register>
+        <register>
+          <name>HPADC1_D2</name>
+          <description>HPADC1 ADC data acceptance (placeholder)</description>
+          <addressOffset>0x2D8</addressOffset>
+          <access>read-write</access>
+          <resetValue>0x00000000</resetValue>
+          <fields>
+            <field>
+              <name>BITS</name>
+              <description>Raw register value</description>
+              <bitOffset>0</bitOffset>
+              <bitWidth>32</bitWidth>
+            </field>
+          </fields>
+        </register>
+        <register>
+          <name>ADCIF_DCT</name>
+          <description>ADCIF register-map revision code (RO; reads 0xADC1F000)</description>
+          <addressOffset>0x3D0</addressOffset>
+          <access>read-only</access>
+          <resetValue>0xADC1F000</resetValue>
+          <fields>
+            <field>
+              <name>REVISION</name>
+              <description>Revision code (always 0xADC1F000)</description>
+              <bitOffset>0</bitOffset>
+              <bitWidth>32</bitWidth>
+            </field>
+          </fields>
+        </register>
+        <register>
+          <name>SCU_ADCIF_CKPOWER</name>
+          <description>ADCIF clock and power control (reset=0x1 = clocked; write 0 to gate)</description>
+          <addressOffset>0x3D4</addressOffset>
+          <access>read-write</access>
+          <resetValue>0x00000001</resetValue>
+          <fields>
+            <field>
+              <name>BITS</name>
+              <description>Clock/power control bits</description>
+              <bitOffset>0</bitOffset>
+              <bitWidth>32</bitWidth>
+            </field>
+          </fields>
+        </register>
+      </registers>
+    </peripheral>
+    <peripheral>
       <name>SPI4</name>
       <version>1.0</version>
       <description>Synchronous Serial Port Controller (IMG SPI)</description>
