@@ -3,6 +3,7 @@ unsafe extern "C" {
     fn UART1();
     fn SPI3();
     fn I2C0();
+    fn I2C1();
     fn EXDEVICE_0();
     fn EXDEVICE_1();
     fn EXDEVICE_2();
@@ -68,7 +69,7 @@ pub static __INTERRUPTS: [Vector; 119] = [
     Vector { _reserved: 0 },
     Vector { _handler: SPI3 },
     Vector { _handler: I2C0 },
-    Vector { _reserved: 0 },
+    Vector { _handler: I2C1 },
     Vector { _reserved: 0 },
     Vector {
         _handler: EXDEVICE_0,

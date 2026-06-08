@@ -14,6 +14,8 @@ pub enum Interrupt {
     SPI3 = 16,
     ///17 - I2C0 (SCU_I2C0) interrupt
     I2C0 = 17,
+    ///18 - I2C1 (SCU_I2C1) interrupt
+    I2C1 = 18,
     ///20 - GPIO external interrupt slot 0
     EXDEVICE_0 = 20,
     ///21 - GPIO external interrupt slot 1
@@ -138,6 +140,11 @@ pub const RTC1: RTC0::RTC0 = unsafe { RTC0::RTC0::from_ptr(0x0410_9000usize as _
 pub const SPI3: SPI0::SPI0 = unsafe { SPI0::SPI0::from_ptr(0x0418_d000usize as _) };
 ///DesignWare DW_apb_i2c master controller (SCU_I2C0 / sensor I2C bus)
 pub const I2C0: I2C0::I2C0 = unsafe { I2C0::I2C0::from_ptr(0x0418_d400usize as _) };
+///DesignWare DW_apb_i2c master controller (SCU_I2C1)
+pub const I2C1: I2C0::I2C0 = unsafe { I2C0::I2C0::from_ptr(0x0418_d800usize as _) };
+///SCU ADC Interface — LPADC/HPADC control and per-channel FIFO read ports. CPU APB read of LPADC_FIFO(n) dequeues one sample from the hardware FIFO of LPADC channel n (no iSoP needed). UM §3.21.12.1; Mirror base 0x0418DC00.
+pub const SCU_ADCIF: SCU_ADCIF::SCU_ADCIF =
+    unsafe { SCU_ADCIF::SCU_ADCIF::from_ptr(0x0418_dc00usize as _) };
 ///Synchronous Serial Port Controller (SPIM)
 pub const SPI0: SPI0::SPI0 = unsafe { SPI0::SPI0::from_ptr(0x041a_a000usize as _) };
 ///UART
@@ -170,6 +177,7 @@ pub mod GE2D;
 pub mod I2C0;
 pub mod ROT;
 pub mod RTC0;
+pub mod SCU_ADCIF;
 pub mod SMP_RAM_CTRL;
 pub mod SPH;
 pub mod SPI0;
