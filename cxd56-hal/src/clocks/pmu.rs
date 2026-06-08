@@ -38,8 +38,8 @@ pub enum AnaDomain {
     Rcosc = 0,
     Xosc = 1,
     Syspll = 2,
-    Hpadc = 9,
-    Lpadc = 10,
+    Hpadc = 12,
+    Lpadc = 13,
 }
 
 /// Domains whose reset must be explicitly released after power-on.
@@ -100,7 +100,7 @@ pub(crate) fn set_appsmp_hz(hz: u32) {
 }
 
 /// Busy-wait without depending on the public [`Delay`](crate::delay::Delay).
-fn delay_us(us: u32) {
+pub(crate) fn delay_us(us: u32) {
     let hz = APPSMP_HZ.load(Ordering::Relaxed);
     let cycles = ((hz as u64) * us as u64 / 1_000_000) as u32;
     cortex_m::asm::delay(cycles.max(1));

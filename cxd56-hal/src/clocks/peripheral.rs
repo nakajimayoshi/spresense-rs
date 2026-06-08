@@ -102,6 +102,7 @@ impl PeripheralId {
             PeripheralId::Spim => spim_enable(),
             PeripheralId::I2cm => i2cm_enable(),
             PeripheralId::I2c0 => scu_i2c0_enable(),
+            PeripheralId::LpAdc => scu_lpadc_enable(),
             _ => Err(ClockError::Unimplemented),
         }
     }
@@ -118,6 +119,7 @@ impl PeripheralId {
             PeripheralId::Spim => spim_disable(),
             PeripheralId::I2cm => i2cm_disable(),
             PeripheralId::I2c0 => scu_i2c0_disable(),
+            PeripheralId::LpAdc => scu_lpadc_disable(),
             _ => Err(ClockError::Unimplemented),
         }
     }
@@ -403,6 +405,15 @@ const SCU_I2C0: u32 = 1 << 1;
 // SWRESET_SCU bit 5 — I2C0 reset release.
 const XRST_I2C0: u32 = 1 << 5;
 
+// SCU_CKEN bit 6 — LPADC (CK_SCU_U32KL). NuttX `g_sculpadc.cken = 6`.
+const SCU_LPADC: u32 = 1 << 6;
+
+// CRG_INT_STAT_RAW0 bit 17 — LPADC clock ready. NuttX `g_sculpadc.crgintmask = 17`.
+const CRG_CK_LPADC: u32 = 1 << 17;
+
+// SWRESET_SCU bit 4 — LPADC reset release. NuttX `g_sculpadc.swreset = 4`.
+const XRST_SCU_LPADC: u32 = 1 << 4;
+
 /// Enable the SCU umbrella clock (bridge + core blocks). Idempotent.
 /// Mirrors `cxd56_scu_clock_enable` (cxd56_clock.c:1876).
 fn scu_clock_enable() {
@@ -517,6 +528,40 @@ fn scu_i2c0_disable() -> Result<(), ClockError> {
     topreg()
         .swreset_scu()
         .write(|w| unsafe { w.bits(rst & !XRST_I2C0) });
+    pmu::disable_domain(pmu::PmuDomain::Scu)?;
+    Ok(())
+}
+
+/// Enable LPADC in the SCU domain. Mirrors `cxd56_scu_peri_clock_enable(&g_sculpadc)`.
+/// NuttX `g_sculpadc`: cken=6, swreset=4, crgintmask=17.
+fn scu_lpadc_enable() -> Result<(), ClockError> {
+    pmu::enable_domain(pmu::PmuDomain::Scu)?;
+    pmu::enable_analog(pmu::AnaDomain::Lpadc)?;
+    scu_clock_enable();
+
+    if topreg().scu_cken().read().bits() & SCU_LPADC != 0 {
+        return Ok(()); // already enabled
+    }
+
+    scu_clock_ctrl(SCU_LPADC, CRG_CK_LPADC, true);
+    scu_clock_ctrl(SCU_LPADC, CRG_CK_LPADC, false); // reset pulse
+    let rst = topreg().swreset_scu().read().bits();
+    topreg()
+        .swreset_scu()
+        .write(|w| unsafe { w.bits(rst | XRST_SCU_LPADC) }); // release reset
+    scu_clock_ctrl(SCU_LPADC, CRG_CK_LPADC, true);
+
+    Ok(())
+}
+
+/// Disable LPADC in the SCU domain.
+fn scu_lpadc_disable() -> Result<(), ClockError> {
+    scu_clock_ctrl(SCU_LPADC, CRG_CK_LPADC, false);
+    let rst = topreg().swreset_scu().read().bits();
+    topreg()
+        .swreset_scu()
+        .write(|w| unsafe { w.bits(rst & !XRST_SCU_LPADC) });
+    pmu::disable_analog(pmu::AnaDomain::Lpadc)?;
     pmu::disable_domain(pmu::PmuDomain::Scu)?;
     Ok(())
 }
