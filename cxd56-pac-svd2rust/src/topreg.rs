@@ -112,24 +112,27 @@ pub struct RegisterBlock {
     iocapp_iomd: IocappIomd,
     _reserved85: [u8; 0x0b5c],
     gp_i2c4_bck: GpI2c4Bck,
-    _reserved86: [u8; 0x8c],
+    _reserved86: [u8; 0x3c],
+    gp_spi0_cs_x: GpSpi0CsX,
+    gp_spi0_sck: GpSpi0Sck,
+    _reserved88: [u8; 0x48],
     gp_sen_irq_in: GpSenIrqIn,
-    _reserved87: [u8; 0x18],
+    _reserved89: [u8; 0x18],
     gp_i2c0_bck: GpI2c0Bck,
     gp_i2c0_bdt: GpI2c0Bdt,
-    _reserved89: [u8; 0x3c],
+    _reserved91: [u8; 0x3c],
     gp_uart2_txd: GpUart2Txd,
     gp_uart2_rxd: GpUart2Rxd,
     gp_uart2_cts: GpUart2Cts,
     gp_uart2_rts: GpUart2Rts,
-    _reserved93: [u8; 0x10],
+    _reserved95: [u8; 0x10],
     gp_emmc_clk: GpEmmcClk,
     gp_emmc_cmd: GpEmmcCmd,
     gp_emmc_data0: GpEmmcData0,
     gp_emmc_data1: GpEmmcData1,
     gp_emmc_data2: GpEmmcData2,
     gp_emmc_data3: GpEmmcData3,
-    _reserved99: [u8; 0x30],
+    _reserved101: [u8; 0x30],
     gp_i2s0_bck: GpI2s0Bck,
     gp_i2s0_lrck: GpI2s0Lrck,
     gp_i2s0_data_in: GpI2s0DataIn,
@@ -569,6 +572,16 @@ impl RegisterBlock {
     #[inline(always)]
     pub const fn gp_i2c4_bck(&self) -> &GpI2c4Bck {
         &self.gp_i2c4_bck
+    }
+    ///0x2040 - GPIO SYS pin 17 — SPI0_CS_X / UART1_TX (on-board console)
+    #[inline(always)]
+    pub const fn gp_spi0_cs_x(&self) -> &GpSpi0CsX {
+        &self.gp_spi0_cs_x
+    }
+    ///0x2044 - GPIO SYS pin 18 — SPI0_SCK / UART1_RX (on-board console)
+    #[inline(always)]
+    pub const fn gp_spi0_sck(&self) -> &GpSpi0Sck {
+        &self.gp_spi0_sck
     }
     ///0x2090 - GPIO SYS pin 37 — SEN_IRQ / Arduino D22 (JP1)
     #[inline(always)]
@@ -1450,6 +1463,24 @@ For information about available fields see [`mod@gp_i2c4_bck`] module*/
 pub type GpI2c4Bck = crate::Reg<gp_i2c4_bck::GpI2c4BckSpec>;
 ///GPIO SYS pin 1 — I2C4 clock / Arduino D14
 pub mod gp_i2c4_bck;
+/**GP_SPI0_CS_X (rw) register accessor: GPIO SYS pin 17 — SPI0_CS_X / UART1_TX (on-board console)
+
+You can [`read`](crate::Reg::read) this register and get [`gp_spi0_cs_x::R`]. You can [`reset`](crate::Reg::reset), [`write`](crate::Reg::write), [`write_with_zero`](crate::Reg::write_with_zero) this register using [`gp_spi0_cs_x::W`]. You can also [`modify`](crate::Reg::modify) this register. See [API](https://docs.rs/svd2rust/#read--modify--write-api).
+
+For information about available fields see [`mod@gp_spi0_cs_x`] module*/
+#[doc(alias = "GP_SPI0_CS_X")]
+pub type GpSpi0CsX = crate::Reg<gp_spi0_cs_x::GpSpi0CsXSpec>;
+///GPIO SYS pin 17 — SPI0_CS_X / UART1_TX (on-board console)
+pub mod gp_spi0_cs_x;
+/**GP_SPI0_SCK (rw) register accessor: GPIO SYS pin 18 — SPI0_SCK / UART1_RX (on-board console)
+
+You can [`read`](crate::Reg::read) this register and get [`gp_spi0_sck::R`]. You can [`reset`](crate::Reg::reset), [`write`](crate::Reg::write), [`write_with_zero`](crate::Reg::write_with_zero) this register using [`gp_spi0_sck::W`]. You can also [`modify`](crate::Reg::modify) this register. See [API](https://docs.rs/svd2rust/#read--modify--write-api).
+
+For information about available fields see [`mod@gp_spi0_sck`] module*/
+#[doc(alias = "GP_SPI0_SCK")]
+pub type GpSpi0Sck = crate::Reg<gp_spi0_sck::GpSpi0SckSpec>;
+///GPIO SYS pin 18 — SPI0_SCK / UART1_RX (on-board console)
+pub mod gp_spi0_sck;
 /**GP_I2S1_BCK (rw) register accessor: GPIO APP pin 97 — I2S1_BCK / LED0 on Spresense main board
 
 You can [`read`](crate::Reg::read) this register and get [`gp_i2s1_bck::R`]. You can [`reset`](crate::Reg::reset), [`write`](crate::Reg::write), [`write_with_zero`](crate::Reg::write_with_zero) this register using [`gp_i2s1_bck::W`]. You can also [`modify`](crate::Reg::modify) this register. See [API](https://docs.rs/svd2rust/#read--modify--write-api).
