@@ -39,6 +39,9 @@ macro_rules! impl_pinreg {
 // Every TOPREG GP_* register shares the IN[0] / OUT[8] / DIR[16] layout, so a
 // single macro covers them all.
 impl_pinreg!(
+    // UART1 console pads (SPI0_CS_X = TX, SPI0_SCK = RX); Func0 is GPIO.
+    GpSpi0CsX,
+    GpSpi0Sck,
     // Main-board LEDs + Arduino D14 (pre-existing)
     GpI2s1Bck,
     GpI2s1Lrck,
@@ -207,6 +210,12 @@ pub mod pins {
     /// I2S0, SPI5, I2C0, …) is done via the `IOCAPP_IOMD` / `IOCSYS_IOMD1`
     /// mode-mux registers, which share a group across all pins of a peripheral.
     pub struct Parts {
+        /// SPI0_CS_X — UART1_TX / on-board console.
+        /// Func0 = GPIO, Func1 = UART1, Func2 = SPI0.
+        pub gp_spi0_cs_x: GpioPin<pac::topreg::GpSpi0CsX>,
+        /// SPI0_SCK — UART1_RX / on-board console.
+        /// Func0 = GPIO, Func1 = UART1, Func2 = SPI0.
+        pub gp_spi0_sck: GpioPin<pac::topreg::GpSpi0Sck>,
         pub gp_i2s1_bck: GpioPin<pac::topreg::GpI2s1Bck>,
         pub gp_i2s1_lrck: GpioPin<pac::topreg::GpI2s1Lrck>,
         pub gp_i2s1_data_in: GpioPin<pac::topreg::GpI2s1DataIn>,
@@ -260,6 +269,8 @@ pub mod pins {
             // `crate::regs::topreg()` documents the general aliasing invariant.
             let block = crate::regs::topreg();
             Self {
+                gp_spi0_cs_x: unsafe { GpioPin::new(block.gp_spi0_cs_x()) },
+                gp_spi0_sck: unsafe { GpioPin::new(block.gp_spi0_sck()) },
                 gp_i2s1_bck: unsafe { GpioPin::new(block.gp_i2s1_bck()) },
                 gp_i2s1_lrck: unsafe { GpioPin::new(block.gp_i2s1_lrck()) },
                 gp_i2s1_data_in: unsafe { GpioPin::new(block.gp_i2s1_data_in()) },

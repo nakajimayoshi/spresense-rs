@@ -28,7 +28,7 @@
 //! use embedded_hal::spi::{SpiBus, MODE_0};
 //! use fugit::Hertz;
 //!
-//! let mut spi = Spi::new(dp.spi5, SpiConfig::default(), &clock)?;
+//! let mut spi = Spi::new(dp.spi5, pins, SpiConfig::default(), &clock)?;
 //! let mut buf = [0xA5u8, 0x5A];
 //! spi.transfer_in_place(&mut buf)?;
 //! ```
@@ -56,6 +56,7 @@ use fugit::Hertz;
 use thiserror::Error;
 
 use crate::clocks::{Clock, ClockError, PeripheralId, SpiPort};
+use crate::gpio::GpioPin;
 use crate::pac;
 use crate::regs::topreg;
 
@@ -149,6 +150,9 @@ mod sealed {
         /// Route this SPI's pads to the SPI function.
         fn pinmux();
 
+        /// Restore this SPI's pads to Func0 (GPIO).
+        fn unpinmux();
+
         /// Read the current base clock for this SPI block from hardware.
         ///
         /// Called *after* [`PeripheralId::enable`] has programmed the gear
@@ -156,6 +160,25 @@ mod sealed {
         /// than the potentially-stale cached [`crate::clocks::Dyn`] field.
         fn base_hz(clock: &Clock) -> Hertz<u32>;
     }
+}
+
+/// GPIO tokens for the SPI5 pads (EMMC-A group, Func2).
+///
+/// Consumed by [`Spi::new`] to enforce at the type level that no other code
+/// can drive these pads as GPIO while the SPI bus is live. Returned by
+/// [`Spi::free`] with the pads restored to Func0 (GPIO).
+///
+/// | Field  | Spresense pad | Arduino | Header |
+/// |--------|--------------|---------|--------|
+/// | `sck`  | EMMC_CLK     | D23     | JP1-9  |
+/// | `csn`  | EMMC_CMD     | D24     | JP1-8  |
+/// | `mosi` | EMMC_DATA0   | D16     | JP2-9  |
+/// | `miso` | EMMC_DATA1   | D17     | JP2-8  |
+pub struct Spi5Pins {
+    pub sck:  GpioPin<pac::topreg::GpEmmcClk>,
+    pub csn:  GpioPin<pac::topreg::GpEmmcCmd>,
+    pub mosi: GpioPin<pac::topreg::GpEmmcData0>,
+    pub miso: GpioPin<pac::topreg::GpEmmcData1>,
 }
 
 /// Maps a PAC SPI token to its clock-gate, pin-mux, and base clock.
@@ -171,8 +194,11 @@ pub trait SpiPeriph: sealed::Sealed {
     /// for `'clk`, blocking perf changes until dropped.
     type Output<'clk>;
 
+    /// GPIO pin bundle consumed at construction and returned by [`Spi::free`].
+    type Pins;
+
     #[doc(hidden)]
-    fn wrap<'clk>(spi: Self) -> Self::Output<'clk>;
+    fn wrap<'clk>(spi: Self, pins: Self::Pins) -> Self::Output<'clk>;
 }
 
 // ============================================================================
@@ -184,6 +210,10 @@ impl sealed::Sealed for pac::Spi5 {
 
     fn pinmux() {
         spi5_pinmux();
+    }
+
+    fn unpinmux() {
+        spi5_unpinmux();
     }
 
     fn base_hz(clock: &Clock) -> Hertz<u32> {
@@ -199,12 +229,10 @@ impl SpiPeriph for pac::Spi5 {
     /// `img_wspi` is Dyn: the borrow of `Clock` is retained for `'clk`.
     /// Mirrors `uart_alt::UartPeriph for pac::Uart2` (`:125-137`).
     type Output<'clk> = Spi<'clk, pac::Spi5>;
+    type Pins = Spi5Pins;
 
-    fn wrap<'clk>(spi: Self) -> Self::Output<'clk> {
-        Spi {
-            spi,
-            _life: PhantomData,
-        }
+    fn wrap<'clk>(spi: Self, pins: Self::Pins) -> Self::Output<'clk> {
+        Spi { spi, pins, _life: PhantomData }
     }
 }
 
@@ -224,6 +252,7 @@ impl SpiPeriph for pac::Spi5 {
 /// Use [`Spi::new`] to construct; `S` is inferred from the PAC token passed.
 pub struct Spi<'clk, S: SpiPeriph> {
     spi: S,
+    pins: S::Pins,
     _life: PhantomData<&'clk ()>,
 }
 
@@ -242,8 +271,13 @@ impl<'clk, S: SpiPeriph> Spi<'clk, S> {
     /// - `S = pac::Spi5` → [`Spi<'a, pac::Spi5>`]: `img_wspi` is Dyn; the
     ///   returned `Spi` borrows `clock` for `'a`, preventing
     ///   [`Clock::request_perf`] until dropped.
+    /// Consume the SPI peripheral and its GPIO pin tokens, configure the
+    /// PL022, and return the driver.
+    ///
+    /// `pins` enforces at the type level that no other code can use these pads
+    /// as GPIO while the bus is live. Call [`Spi::free`] to release them.
     #[allow(clippy::new_ret_no_self)] // intentional: returns S::Output<'a>
-    pub fn new<'a>(spi: S, config: SpiConfig, clock: &'a Clock)
+    pub fn new<'a>(spi: S, pins: S::Pins, config: SpiConfig, clock: &'a Clock)
         -> Result<S::Output<'a>, SpiError>
     {
         // Enable clock gate (spi5_enable: AppSub domain + img_acquire + gear M=4).
@@ -286,7 +320,7 @@ impl<'clk, S: SpiPeriph> Spi<'clk, S> {
         let cr1 = if config.loopback { 0b0011u32 } else { 0b0010u32 };
         spi.sspcr1().write(|w| unsafe { w.bits(cr1) });
 
-        Ok(S::wrap(spi))
+        Ok(S::wrap(spi, pins))
     }
 
     // One full-duplex 16-bit word exchange:
@@ -309,6 +343,26 @@ impl<'clk, S: SpiPeriph> Spi<'clk, S> {
         }
         // Read and return the received word.
         Ok(self.spi.sspdr().read().data().bits())
+    }
+
+    /// Disable the SPI bus, restore the pads to GPIO (Func0), and return the
+    /// consumed PAC token and GPIO pin bundle.
+    ///
+    /// The returned [`S::Pins`](SpiPeriph::Pins) can be passed to
+    /// [`gpio::pins::Parts`](crate::gpio::pins::Parts) methods or used directly
+    /// as [`GpioPin`] tokens again.
+    pub fn free(self) -> (S, S::Pins) {
+        // Mirror Drop: disable SSP then gate clock.
+        self.spi.sspcr1().write(|w| unsafe { w.bits(0) });
+        S::ID.disable().ok();
+        S::unpinmux();
+        let md = core::mem::ManuallyDrop::new(self);
+        // SAFETY: Each field is moved out exactly once through a raw pointer.
+        // ManuallyDrop prevents the struct-level Drop (which would call
+        // disable() a second time) from running.
+        let spi = unsafe { core::ptr::read(&md.spi) };
+        let pins = unsafe { core::ptr::read(&md.pins) };
+        (spi, pins)
     }
 }
 
@@ -389,6 +443,12 @@ impl<S: SpiPeriph> SpiBus<u8> for Spi<'_, S> {
 // ============================================================================
 // SPI5 pinmux helper
 // ============================================================================
+
+fn spi5_unpinmux() {
+    topreg()
+        .iocapp_iomd()
+        .modify(|_, w| unsafe { w.emmca().bits(0) });
+}
 
 // Route EMMC_CLK/CMD/DATA0/DATA1 → SPI5 SCK/CS_X/MOSI/MISO (Func2).
 //

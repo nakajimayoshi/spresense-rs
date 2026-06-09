@@ -15,16 +15,16 @@
 //! SCL frequency remains correct across HP↔LP transitions, so there is no need
 //! to hold a `&Clock` borrow after construction.
 //!
-//! # Zero-sized driver
+//! # Driver size
 //!
-//! [`I2c<T>`] holds only the consumed PAC token. `pac::Periph` is
-//! `PhantomData`-only, so `size_of::<I2c<pac::I2c0>>() == 0`. The SCL
+//! [`I2c<T>`] holds the consumed PAC token and the GPIO pin bundle. The SCL
 //! timing registers (`*_SCL_HCNT`/`LCNT`) persist across the
 //! disable/enable cycle inside [`begin_transfer`], so the frequency need only be
 //! applied once in [`I2c::new`] rather than per-transaction (mirroring
 //! `cxd56_i2c_setfrequency` caching behaviour in the NuttX driver).
 
 use crate::clocks::{Clock, ClockError, PeripheralId};
+use crate::gpio::GpioPin;
 use crate::i2c::I2cConfig;
 use crate::pac;
 use crate::regs::topreg;
@@ -83,6 +83,9 @@ mod sealed {
         /// Route this port's pads to the I2C function.
         fn pinmux();
 
+        /// Restore this port's pads to Func0 (GPIO).
+        fn unpinmux();
+
         /// Sample this port's base clock from `clock`.
         ///
         /// All I2C clocks are [`Fixed`](crate::clocks::Fixed) and therefore
@@ -92,11 +95,29 @@ mod sealed {
     }
 }
 
+/// GPIO tokens for the I2C0 pads.
+///
+/// Consumed by [`I2c::new`] to enforce at the type level that no other code
+/// can drive these pads as GPIO while the I2C bus is live. Returned by
+/// [`I2c::free`] with the pads restored to Func0 (GPIO).
+///
+/// | Field | Spresense pad | Arduino | Header  |
+/// |-------|--------------|---------|---------|
+/// | `scl` | I2C0_BCK     | D15     | JP2-11  |
+/// | `sda` | I2C0_BDT     | D14     | JP2-12  |
+pub struct I2c0Pins {
+    pub scl: GpioPin<pac::topreg::GpI2c0Bck>,
+    pub sda: GpioPin<pac::topreg::GpI2c0Bdt>,
+}
+
 /// Maps a PAC I2C token to its clock-gate, pin-mux, and base clock.
 ///
 /// Sealed — implemented only for [`pac::I2c0`] today (and future
 /// `pac::I2c1`/`pac::I2c2` once those tokens are added to the PAC).
-pub trait I2cPeriph: sealed::Sealed {}
+pub trait I2cPeriph: sealed::Sealed {
+    /// GPIO pin bundle consumed at construction and returned by [`I2c::free`].
+    type Pins;
+}
 
 // ----------------------------------------------------------------------------
 // pac::I2c0 — SCU_I2C0 (SCU clock, base 0x0418_D400, IRQ 17)
@@ -109,17 +130,29 @@ impl sealed::Sealed for pac::I2c0 {
         i2c0_pinmux();
     }
 
+    fn unpinmux() {
+        i2c0_unpinmux();
+    }
+
     fn base_hz(clock: &Clock) -> Hertz<u32> {
         // SCU clock is Fixed — never changes with request_perf.
         clock.scu.hz()
     }
 }
 
-impl I2cPeriph for pac::I2c0 {}
+impl I2cPeriph for pac::I2c0 {
+    type Pins = I2c0Pins;
+}
 
 // ============================================================================
 // Private register helpers (adapted from i2c.rs — private there, so copied)
 // ============================================================================
+
+fn i2c0_unpinmux() {
+    topreg()
+        .iocsys_iomd1()
+        .modify(|_, w| unsafe { w.i2c0().bits(0) });
+}
 
 // I2C0_BCK = SCL, I2C0_BDT = SDA — TOPREG offsets 0x8b0/0x8b4.
 // Both pads: 2 mA drive (LOWEMI=1), pull-up (PUN=1), input enabled (ENZI=1)
@@ -180,24 +213,27 @@ fn set_frequency(i2c: &pac::i2c0::RegisterBlock, base_hz: u32, target: Hertz<u32
 // I2c<T> driver struct
 // ============================================================================
 
-/// Generic, zero-sized DW_apb_i2c master driver.
+/// Generic DW_apb_i2c master driver.
 ///
-/// `T` is a PAC I2C token (currently only [`pac::I2c0`]). The token is a ZST
-/// (`PhantomData`-only), so `size_of::<I2c<pac::I2c0>>() == 0`.
+/// `T` is a PAC I2C token (currently only [`pac::I2c0`]).
 ///
 /// Constructed via [`I2c::new`]; implements [`embedded_hal::i2c::I2c`].
 pub struct I2c<T: I2cPeriph> {
     i2c: T,
+    pins: T::Pins,
 }
 
 impl<T: I2cPeriph> I2c<T> {
     /// Enable the peripheral, set up pin-mux, program SCL timing, and return
     /// the driver.
     ///
+    /// `pins` enforces at the type level that no other code can use these pads
+    /// as GPIO while the bus is live. Call [`I2c::free`] to release them.
+    ///
     /// `clock` is borrowed only to read `T::base_hz` — a [`Fixed`](crate::clocks::Fixed)
     /// value that does not change with [`Clock::request_perf`]. The borrow ends
     /// at this call; calling `request_perf` later is always allowed.
-    pub fn new(i2c: T, clock: &Clock, config: I2cConfig) -> Result<Self, I2cError> {
+    pub fn new(i2c: T, pins: T::Pins, clock: &Clock, config: I2cConfig) -> Result<Self, I2cError> {
         T::ID.enable()?;
         T::pinmux();
 
@@ -229,7 +265,21 @@ impl<T: I2cPeriph> I2c<T> {
         let base_hz = T::base_hz(clock).to_Hz();
         set_frequency(&i2c, base_hz, config.freq);
 
-        Ok(Self { i2c })
+        Ok(Self { i2c, pins })
+    }
+
+    /// Disable the I2C controller, restore the pads to GPIO (Func0), and return
+    /// the consumed PAC token and GPIO pin bundle.
+    pub fn free(self) -> (T, T::Pins) {
+        T::ID.disable().ok();
+        T::unpinmux();
+        let md = core::mem::ManuallyDrop::new(self);
+        // SAFETY: Each field is moved out exactly once through a raw pointer.
+        // ManuallyDrop prevents the struct-level Drop (which would call
+        // disable() a second time) from running.
+        let i2c = unsafe { core::ptr::read(&md.i2c) };
+        let pins = unsafe { core::ptr::read(&md.pins) };
+        (i2c, pins)
     }
 
     // Prepare the controller for a transaction: disable, set target address,
@@ -336,8 +386,3 @@ impl<T: I2cPeriph> embedded_hal::i2c::I2c for I2c<T> {
     }
 }
 
-// Compile-time ZST assertion (optimised away; zero runtime cost).
-const _: () = assert!(
-    core::mem::size_of::<I2c<pac::I2c0>>() == 0,
-    "I2c<pac::I2c0> must be zero-sized"
-);

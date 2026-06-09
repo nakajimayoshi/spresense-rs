@@ -9,8 +9,20 @@ use fugit::Hertz;
 use thiserror::Error;
 
 use crate::clocks::{Clock, ClockError, PeripheralId};
+use crate::gpio::GpioPin;
 use crate::pac;
+use crate::regs::topreg;
 use crate::uart::{Parity, StopBits, UartConfig, WordLength, uart1_pinmux, uart2_pinmux};
+
+/// Restore SPI0A mux to Func0 (GPIO) — undoes `uart1_pinmux()`.
+fn uart1_unpinmux() {
+    topreg().iocsys_iomd0().modify(|_, w| unsafe { w.spi0a().bits(0) });
+}
+
+/// Restore UART2 mux to Func0 (GPIO) — undoes `uart2_pinmux()`.
+fn uart2_unpinmux() {
+    topreg().iocapp_iomd().modify(|_, w| unsafe { w.uart2().bits(0) });
+}
 
 // Map our config types to the external driver's LineConfig.
 fn line_config(config: &UartConfig) -> pl011::LineConfig {
@@ -43,6 +55,8 @@ mod sealed {
         const ID: PeripheralId;
         /// Route this UART's signals to the board pins.
         fn pinmux();
+        /// Restore the pin-mux back to Func0 (GPIO) — called by [`Uart::free`].
+        fn unpinmux();
         /// Register base, type-erased to `uart1::RegisterBlock`.
         ///
         /// Used to derive the `PL011Registers` pointer for the external driver.
@@ -57,8 +71,32 @@ mod sealed {
     }
 }
 
+/// TX/RX GPIO tokens for UART1 (SPI0_CS_X / SPI0_SCK pads, Func1 = UART1).
+///
+/// Constructed from [`gpio::pins::Parts`](crate::gpio::pins::Parts):
+/// ```ignore
+/// let parts = cxd56_hal::gpio::pins::Parts::new(pac.topreg);
+/// let pins = Uart1Pins { tx: parts.gp_spi0_cs_x, rx: parts.gp_spi0_sck };
+/// ```
+pub struct Uart1Pins {
+    pub tx: GpioPin<pac::topreg::GpSpi0CsX>,
+    pub rx: GpioPin<pac::topreg::GpSpi0Sck>,
+}
+
+/// TX/RX GPIO tokens for UART2 (P1n_00 / P1n_01 pads, Func1 = UART2).
+///
+/// Constructed from [`gpio::pins::Parts`](crate::gpio::pins::Parts):
+/// ```ignore
+/// let parts = cxd56_hal::gpio::pins::Parts::new(pac.topreg);
+/// let pins = Uart2Pins { tx: parts.gp_uart2_txd, rx: parts.gp_uart2_rxd };
+/// ```
+pub struct Uart2Pins {
+    pub tx: GpioPin<pac::topreg::GpUart2Txd>,
+    pub rx: GpioPin<pac::topreg::GpUart2Rxd>,
+}
+
 /// Maps a PAC UART token to its HAL wiring: clock-gate id, register base,
-/// and pin-mux routine.
+/// pin-mux routine, and the associated GPIO pin token types.
 ///
 /// Sealed — implemented only for [`pac::Uart1`] and [`pac::Uart2`] within
 /// this crate. Downstream code cannot add new implementors.
@@ -73,11 +111,15 @@ pub trait UartPeriph: sealed::Sealed {
     ///   [`Clock::request_perf`] until dropped.
     type Output<'clk>;
 
+    /// The TX/RX GPIO pin tokens consumed by [`Uart::new`] and returned by
+    /// [`Uart::free`]. [`Uart1Pins`] for UART1, [`Uart2Pins`] for UART2.
+    type Pins;
+
     /// Wrap an initialised inner driver in the correctly-lifetimed driver
     /// struct. Bodies are textually identical across impls; only the return
     /// *type* (and therefore the `'clk` propagation) differs.
     #[doc(hidden)]
-    fn wrap<'clk>(inner: pl011::Uart<'static>) -> Self::Output<'clk>;
+    fn wrap<'clk>(inner: pl011::Uart<'static>, uart: Self, pins: Self::Pins) -> Self::Output<'clk>;
 }
 
 impl sealed::Sealed for pac::Uart1 {
@@ -85,6 +127,10 @@ impl sealed::Sealed for pac::Uart1 {
 
     fn pinmux() {
         uart1_pinmux()
+    }
+
+    fn unpinmux() {
+        uart1_unpinmux()
     }
 
     fn regs() -> *const pac::uart1::RegisterBlock {
@@ -100,11 +146,13 @@ impl UartPeriph for pac::Uart1 {
     // the returned value (the PhantomData marker is 'static). The Clock borrow
     // ends at the call site, pinning nothing.
     type Output<'clk> = Uart<'static, pac::Uart1>;
+    type Pins = Uart1Pins;
 
-    fn wrap<'clk>(inner: pl011::Uart<'static>) -> Self::Output<'clk> {
+    fn wrap<'clk>(inner: pl011::Uart<'static>, uart: Self, pins: Self::Pins) -> Self::Output<'clk> {
         Uart {
             inner,
-            _uart: PhantomData,
+            uart,
+            pins,
             _life: PhantomData,
         }
     }
@@ -114,6 +162,9 @@ impl sealed::Sealed for pac::Uart2 {
     const ID: PeripheralId = PeripheralId::ImgUart;
     fn pinmux() {
         uart2_pinmux()
+    }
+    fn unpinmux() {
+        uart2_unpinmux()
     }
     fn regs() -> *const pac::uart1::RegisterBlock {
         pac::Uart2::PTR as *const _
@@ -126,11 +177,13 @@ impl UartPeriph for pac::Uart2 {
     // IMG_UART is Dyn — Output<'clk> = Uart<'clk, _>; the returned Uart
     // borrows the Clock for 'clk, blocking Clock::request_perf until dropped.
     type Output<'clk> = Uart<'clk, pac::Uart2>;
+    type Pins = Uart2Pins;
 
-    fn wrap<'clk>(inner: pl011::Uart<'static>) -> Self::Output<'clk> {
+    fn wrap<'clk>(inner: pl011::Uart<'static>, uart: Self, pins: Self::Pins) -> Self::Output<'clk> {
         Uart {
             inner,
-            _uart: PhantomData,
+            uart,
+            pins,
             _life: PhantomData,
         }
     }
@@ -172,7 +225,9 @@ impl embedded_io::Error for UartError {
 /// Generic, profile-aware PL011 UART driver backed by [`arm_pl011_uart::Uart`].
 ///
 /// `U` is the PAC UART token (`pac::Uart1` or `pac::Uart2`). Consuming the
-/// token at construction ensures exclusive hardware ownership.
+/// token at construction ensures exclusive hardware ownership. The TX/RX
+/// [`GpioPin`] tokens (`U::Pins`) are also consumed, making it a compile-time
+/// error to use the same pads as GPIO while the UART is active.
 ///
 /// The lifetime `'clk` is:
 /// - `'static` when built from [`pac::Uart1`] — UART1 uses the fixed COM
@@ -184,33 +239,46 @@ impl embedded_io::Error for UartError {
 ///
 /// Use [`Uart::new`] to construct the driver — `U` is inferred from the PAC
 /// token you pass. The return type and its lifetime are determined by `U` via
-/// [`UartPeriph::Output`].
+/// [`UartPeriph::Output`]. To reclaim the GPIO pins, call [`Uart::free`].
 pub struct Uart<'clk, U: UartPeriph> {
     inner: pl011::Uart<'static>,
-    _uart: PhantomData<U>,
+    uart: U,
+    pins: U::Pins,
     _life: PhantomData<&'clk ()>,
 }
 
 // Exclusive peripheral ownership — the PAC token was consumed at construction,
-// matching the PAC `Periph` Send impl.
+// matching the PAC `Periph` Send impl. Both concrete `U::Pins` types
+// (`Uart1Pins`, `Uart2Pins`) are Send; the sealed trait prevents other impls.
 unsafe impl<U: UartPeriph> Send for Uart<'_, U> {}
 
 impl<'clk, U: UartPeriph> Uart<'clk, U> {
-    /// Enable the peripheral, run the PL011 init sequence, and return the
+    /// Enable the peripheral, route its pads to UART function, and return the
     /// correctly-lifetimed driver.
     ///
-    /// Consumes `uart` (the PAC ownership token, a ZST) for exclusive hardware
-    /// access. The return type is resolved per token via [`UartPeriph::Output`]:
+    /// Consumes both the PAC token `uart` (exclusive hardware ownership) and
+    /// the `pins` GPIO tokens (`U::Pins`) to prevent using the same pads as
+    /// GPIO while the UART is active. Pin-mux is applied **internally** —
+    /// callers do not need to configure the pads. To reclaim the GPIO tokens
+    /// and restore the pads to GPIO function, call [`Uart::free`].
+    ///
+    /// The return type is resolved per token via [`UartPeriph::Output`]:
     ///
     /// - `U = pac::Uart1` → [`Uart<'static, pac::Uart1>`]: COM is Fixed/Copy;
     ///   the borrow of `clock` ends here, pinning nothing.
     /// - `U = pac::Uart2` → [`Uart<'a, pac::Uart2>`]: IMG_UART is Dyn; the
     ///   returned `Uart` borrows `clock` for `'a`, preventing
     ///   [`Clock::request_perf`] (needs `&mut Clock`) until dropped.
+    ///
+    /// # Example
+    /// ```ignore
+    /// let parts = cxd56_hal::gpio::pins::Parts::new(pac.topreg);
+    /// let pins = Uart1Pins { tx: parts.gp_spi0_cs_x, rx: parts.gp_spi0_sck };
+    /// let uart = Uart::new(pac.uart1, pins, Default::default(), &clock)?;
+    /// ```
     #[allow(clippy::new_ret_no_self)] // intentional: returns U::Output<'a> (branded by the clock-lifetime GAT)
-    pub fn new<'a>(uart: U, config: UartConfig, clock: &'a Clock) -> Result<U::Output<'a>, UartError> {
+    pub fn new<'a>(uart: U, pins: U::Pins, config: UartConfig, clock: &'a Clock) -> Result<U::Output<'a>, UartError> {
         let hz = U::base_hz(clock);
-        let _ = uart; // ZST ownership token; no destructor to run
         U::ID.enable()?;
         U::pinmux();
         // SAFETY: `U::regs()` returns the fixed, properly-aligned base address of
@@ -225,7 +293,7 @@ impl<'clk, U: UartPeriph> Uart<'clk, U> {
             .expect("PL011 base address is null");
         let mut inner = pl011::Uart::new(unsafe { pl011::UniqueMmioPointer::new(ptr) });
         inner.enable(line_config(&config), config.baud_rate, hz.to_Hz())?;
-        Ok(U::wrap(inner))
+        Ok(U::wrap(inner, uart, pins))
     }
 
     /// Transmit one byte, blocking until the TX FIFO has room.
@@ -249,6 +317,37 @@ impl<'clk, U: UartPeriph> Uart<'clk, U> {
     #[inline]
     pub fn flush(&mut self) {
         while self.inner.is_busy() {}
+    }
+
+    /// Disable the UART, restore the TX/RX pads to GPIO function (Func0), and
+    /// return the consumed GPIO pin tokens so they can be used by other code.
+    ///
+    /// The returned `U` is the (zero-sized) PAC peripheral token; the returned
+    /// `U::Pins` contains the TX and RX [`GpioPin`] tokens in their
+    /// unconfigured state, ready to be passed to [`GpioPin::into_output`] /
+    /// [`GpioPin::into_input`] or to another peripheral driver.
+    ///
+    /// # Note on `Drop`
+    ///
+    /// Calling `free` consumes `self` and prevents [`Drop`] from running — the
+    /// clock is gated off here before the struct is dismantled.
+    pub fn free(self) -> (U, U::Pins) {
+        // Disable the peripheral and restore pads before dismantling the struct.
+        // ManuallyDrop prevents Drop from running a second disable().
+        U::ID.disable().ok();
+        U::unpinmux();
+        let mut md = core::mem::ManuallyDrop::new(self);
+        // SAFETY: Each field is read exactly once through a raw pointer and
+        // `md` is never used again after this point, so there is no
+        // double-move or use-after-read. `inner` is explicitly dropped via
+        // drop_in_place to run its destructor (mirroring normal field-drop
+        // order); `uart` and `pins` are moved out by value. ManuallyDrop
+        // ensures the struct-level Drop (which would call `disable()` again)
+        // does not run.
+        let uart = unsafe { core::ptr::read(&md.uart) };
+        let pins = unsafe { core::ptr::read(&md.pins) };
+        unsafe { core::ptr::drop_in_place(&mut md.inner) };
+        (uart, pins)
     }
 }
 
