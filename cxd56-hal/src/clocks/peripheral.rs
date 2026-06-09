@@ -22,15 +22,28 @@ pub enum ClockError {
     Unimplemented,
 }
 
-/// Errors from [`PeripheralId::set_spi_gear`].
-#[derive(Debug)]
+/// Errors from the gear-divider methods
+/// ([`PeripheralId::set_gear`], [`PeripheralId::set_spi_gear`]).
+#[derive(Debug, thiserror::Error)]
 pub enum GearError {
-    /// Called on a peripheral that doesn't have a gear divider.
+    /// [`set_spi_gear`](PeripheralId::set_spi_gear) was called on a peripheral
+    /// that is not an SPI port (only `Spi4`/`Spi5` take a max-frequency gear).
+    #[error("peripheral is not an SPI port (use set_gear)")]
     NotASpi,
+    /// [`set_gear`](PeripheralId::set_gear) was called on a peripheral that has
+    /// no APP-local M/N gear divider.
+    #[error("peripheral has no APP-local gear divider")]
+    NoGearDivider,
     /// `maxfreq` was zero.
+    #[error("requested frequency was zero")]
     ZeroFreq,
     /// `appsmp` parent clock is zero (clock tree mis-sampled).
+    #[error("parent (APPSMP) clock sampled as zero")]
     ParentClockZero,
+    /// Divisor passed to [`set_gear`](PeripheralId::set_gear) is outside the
+    /// register's `1..=max` range.
+    #[error("gear divisor {divisor} out of range 1..={max}")]
+    DivisorOutOfRange { divisor: u32, max: u32 },
 }
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
@@ -150,10 +163,65 @@ impl PeripheralId {
         }
     }
 
+    /// Set the APP-local **gear divider** directly, producing a peripheral base
+    /// clock of `appsmp / divisor`.
+    ///
+    /// Valid for every peripheral that owns an M/N gear on the APP-local CRG:
+    /// [`ImgUart`](Self::ImgUart) (UART2), [`Spi4`](Self::Spi4),
+    /// [`Spi5`](Self::Spi5), [`Usb`](Self::Usb), and [`Sdio`](Self::Sdio).
+    /// `divisor` is the M field and must lie in `1..=max`, where `max` is
+    /// `0x7f` for `ImgUart`/`Spi4`, `0xf` for `Spi5`, and `0x3` for
+    /// `Usb`/`Sdio`. The N numerator is set to 1 (clock un-gated).
+    ///
+    /// This is the low-level escape hatch behind the higher-level helpers:
+    /// `Spi4`/`Spi5` also accept [`set_spi_gear`](Self::set_spi_gear) (target a
+    /// maximum SPI-clock frequency). Re-sample with
+    /// [`Crg::freeze`](super::Crg::freeze) to observe the new rate.
+    ///
+    /// # When to call it
+    /// For [`ImgUart`](Self::ImgUart), [`enable`](Self::enable) **preserves** a
+    /// divisor set here, so UART2's base clock can be chosen *before* the driver
+    /// brings the port up (and computes its baud divisor). For
+    /// `Spi4`/`Spi5`/`Usb`/`Sdio`, [`enable`](Self::enable) programs the default
+    /// divider unconditionally, so call this (or [`set_spi_gear`](Self::set_spi_gear))
+    /// *after* enabling to retune a running peripheral.
+    ///
+    /// # Caveats
+    /// `Usb` requires a specific base clock (≈48 MHz) to function and `Sdio`'s
+    /// divider bounds the card clock — override their defaults only if you know
+    /// the resulting rate is valid. A later [`disable`](Self::disable) clears
+    /// the divider, so a re-`enable` falls back to the default M.
+    pub fn set_gear(self, divisor: u32) -> Result<(), GearError> {
+        let spec = self.gear_spec().ok_or(GearError::NoGearDivider)?;
+        if divisor == 0 || divisor > spec.max_divisor {
+            return Err(GearError::DivisorOutOfRange {
+                divisor,
+                max: spec.max_divisor,
+            });
+        }
+        (spec.write)(0x0001_0000 | divisor);
+        Ok(())
+    }
+
+    /// Read back the current gear divisor (the M field), or `None` if this
+    /// peripheral has no gear divider or its divider is currently gated
+    /// (`M == 0`). The base clock is `appsmp / divisor`.
+    pub fn gear_divisor(self) -> Option<u32> {
+        let spec = self.gear_spec()?;
+        let m = (spec.read)() & spec.max_divisor;
+        (m != 0).then_some(m)
+    }
+
     /// Set a SPI port's clock gear so the resulting frequency is **at most**
     /// `maxfreq`. Valid for [`PeripheralId::Spi4`] and [`PeripheralId::Spi5`].
     /// Mirrors `cxd56_spi_clock_gear_adjust` (cxd56_clock.c:1133).
+    ///
+    /// For a direct divisor (or for the UART2/USB/SDIO gears) use
+    /// [`set_gear`](Self::set_gear) instead.
     pub fn set_spi_gear(self, appsmp: Hertz<u32>, maxfreq: Hertz<u32>) -> Result<(), GearError> {
+        if !matches!(self, PeripheralId::Spi4 | PeripheralId::Spi5) {
+            return Err(GearError::NotASpi);
+        }
         if maxfreq.to_Hz() == 0 {
             return Err(GearError::ZeroFreq);
         }
@@ -161,20 +229,100 @@ impl PeripheralId {
         if baseclk == 0 {
             return Err(GearError::ParentClockZero);
         }
-        let (max_divisor, write_gear): (u32, fn(u32)) = match self {
-            PeripheralId::Spi4 => (0x7f, |gear| {
-                crg().gear_img_spi().write(|w| unsafe { w.bits(gear) });
-            }),
-            PeripheralId::Spi5 => (0xf, |gear| {
-                crg().gear_img_wspi().write(|w| unsafe { w.bits(gear) });
-            }),
-            _ => return Err(GearError::NotASpi),
-        };
+        let spec = self.gear_spec().ok_or(GearError::NotASpi)?;
         // Ceiling-divide by (2 * maxfreq) — SPI hardware does an internal /2.
         let denom = maxfreq.to_Hz().saturating_mul(2);
-        let divisor = baseclk.div_ceil(denom).min(max_divisor);
-        write_gear(0x0001_0000 | divisor);
+        let divisor = baseclk.div_ceil(denom).clamp(1, spec.max_divisor);
+        (spec.write)(0x0001_0000 | divisor);
         Ok(())
+    }
+
+    /// Static description of this peripheral's APP-local gear divider, or
+    /// `None` if it has none. Single source of truth for the per-peripheral
+    /// register and divisor-field width shared by [`set_gear`](Self::set_gear),
+    /// [`set_spi_gear`](Self::set_spi_gear), [`gear_divisor`](Self::gear_divisor),
+    /// and the enable sequences.
+    fn gear_spec(self) -> Option<GearSpec> {
+        let spec = match self {
+            PeripheralId::ImgUart => GearSpec {
+                max_divisor: 0x7f,
+                write: |v| {
+                    crg().gear_img_uart().write(|w| unsafe { w.bits(v) });
+                },
+                read: || crg().gear_img_uart().read().bits(),
+            },
+            PeripheralId::Spi4 => GearSpec {
+                max_divisor: 0x7f,
+                write: |v| {
+                    crg().gear_img_spi().write(|w| unsafe { w.bits(v) });
+                },
+                read: || crg().gear_img_spi().read().bits(),
+            },
+            PeripheralId::Spi5 => GearSpec {
+                max_divisor: 0xf,
+                write: |v| {
+                    crg().gear_img_wspi().write(|w| unsafe { w.bits(v) });
+                },
+                read: || crg().gear_img_wspi().read().bits(),
+            },
+            PeripheralId::Usb => GearSpec {
+                max_divisor: 0x3,
+                write: |v| {
+                    crg().gear_per_usb().write(|w| unsafe { w.bits(v) });
+                },
+                read: || crg().gear_per_usb().read().bits(),
+            },
+            PeripheralId::Sdio => GearSpec {
+                max_divisor: 0x3,
+                write: |v| {
+                    crg().gear_per_sdio().write(|w| unsafe { w.bits(v) });
+                },
+                read: || crg().gear_per_sdio().read().bits(),
+            },
+            _ => return None,
+        };
+        Some(spec)
+    }
+}
+
+/// Static description of a peripheral's APP-local M/N gear divider.
+///
+/// For all gear peripherals the output is `appsmp * N / M` with the N field a
+/// single bit (0 = gated, 1 = passthrough), so the divider reduces to
+/// `appsmp / M`.
+struct GearSpec {
+    /// Largest value the M (divisor) field can hold (its bit-mask).
+    max_divisor: u32,
+    /// Write a raw `(N << 16) | M` word into the gear register.
+    write: fn(u32),
+    /// Read the raw gear register.
+    read: fn() -> u32,
+}
+
+/// Assert a gear's N (enable) bit during bring-up while **preserving** any
+/// divisor the caller already programmed via [`PeripheralId::set_gear`]; fall
+/// back to `default_m` only when the divider is still gated (`M == 0`).
+///
+/// Used for `ImgUart` (UART2), whose base clock is most useful to pick before
+/// the driver computes its baud divisor. Mirrors NuttX's UART read-modify-write
+/// (OR in N, keep M unless overridden). The SPI4 hardware reset value (M=4)
+/// differs from its intended default (M=2), so the SPI/USB/SDIO gears use
+/// [`enable_gear_force`] instead of preserving a possibly-stale boot value.
+fn enable_gear_preserve(id: PeripheralId, default_m: u32) {
+    if let Some(spec) = id.gear_spec() {
+        let m = (spec.read)() & spec.max_divisor;
+        let m = if m == 0 { default_m } else { m };
+        (spec.write)(0x0001_0000 | m);
+    }
+}
+
+/// Unconditionally program a gear's divider during bring-up (assert N, set
+/// M=`m`), matching NuttX's `putreg32(0x0001_00MM, …)` for SPI4/SPI5/USB/SDIO.
+/// Any prior [`set_gear`](PeripheralId::set_gear) is overwritten — retune these
+/// ports *after* [`enable`](PeripheralId::enable).
+fn enable_gear_force(id: PeripheralId, m: u32) {
+    if let Some(spec) = id.gear_spec() {
+        (spec.write)(0x0001_0000 | m);
     }
 }
 
@@ -185,9 +333,8 @@ impl PeripheralId {
 fn spi4_enable() -> Result<(), ClockError> {
     pmu::enable_domain(PmuDomain::AppSub)?;
     gate::img_acquire(ImgClient::Spi4);
-    crg()
-        .gear_img_spi()
-        .write(|w| unsafe { w.bits(0x0001_0002) });
+    // Force M=2 (appsmp/2); SPI's reset value is M=4, so don't preserve it.
+    enable_gear_force(PeripheralId::Spi4, 2);
     Ok(())
 }
 
@@ -201,9 +348,8 @@ fn spi4_disable() -> Result<(), ClockError> {
 fn spi5_enable() -> Result<(), ClockError> {
     pmu::enable_domain(PmuDomain::AppSub)?;
     gate::img_acquire(ImgClient::Spi5);
-    crg()
-        .gear_img_wspi()
-        .write(|w| unsafe { w.bits(0x0001_0004) });
+    // Force M=4 (appsmp/4), matching NuttX's unconditional write.
+    enable_gear_force(PeripheralId::Spi5, 4);
     Ok(())
 }
 
@@ -218,9 +364,8 @@ fn img_uart_enable() -> Result<(), ClockError> {
     pmu::enable_domain(PmuDomain::AppSub)?;
     gate::img_acquire(ImgClient::Uart2);
     // Default M=4 (apportions 156 MHz/4 ≈ 39 MHz, matches NuttX default).
-    crg()
-        .gear_img_uart()
-        .write(|w| unsafe { w.bits(0x0001_0004) });
+    // Preserved if the caller pre-set the base clock via `set_gear`.
+    enable_gear_preserve(PeripheralId::ImgUart, 4);
     Ok(())
 }
 
@@ -247,9 +392,8 @@ fn usb_enable() -> Result<(), ClockError> {
     pmu::busy_wait(10);
     crg().reset().write(|w| unsafe { w.bits(r | (1 << 8)) });
     topreg().usbphy_cken().write(|w| unsafe { w.bits(1) });
-    crg()
-        .gear_per_usb()
-        .write(|w| unsafe { w.bits(0x0001_0002) });
+    // Force M=2 (appsmp/2); USB needs a fixed clock, so don't preserve.
+    enable_gear_force(PeripheralId::Usb, 2);
     Ok(())
 }
 
@@ -279,9 +423,8 @@ fn sdio_enable() -> Result<(), ClockError> {
     crg()
         .ck_gate_ahb()
         .write(|w| unsafe { w.bits(c | (1 << 9)) });
-    crg()
-        .gear_per_sdio()
-        .write(|w| unsafe { w.bits(0x0001_0002) });
+    // Force M=2 (appsmp/2), matching NuttX's unconditional write.
+    enable_gear_force(PeripheralId::Sdio, 2);
     pmu::busy_wait(10);
     crg().reset().write(|w| unsafe { w.bits(r | (1 << 9)) });
     Ok(())

@@ -7,9 +7,12 @@
 //! registers are "controlled by the API — use as RO registers."  User code:
 //!
 //! - **Reads** clock rates via [`Crg::freeze`] (a re-samplable snapshot).
-//! - **Controls** per-peripheral gates, software resets, and a small set of
-//!   APP-local M/N "gear" dividers (USB, SDIO, SPI4/5, audio, ADCs) directly
-//!   via the APP-local CRG at `0x0201_1000`.
+//! - **Controls** per-peripheral gates, software resets, and the APP-local M/N
+//!   "gear" dividers (UART2, USB, SDIO, SPI4/5) directly via the APP-local CRG
+//!   at `0x0201_1000`. The gear divider sets a peripheral's base clock to
+//!   `appsmp / M`; adjust it with [`PeripheralId::set_gear`] (raw divisor) or
+//!   [`PeripheralId::set_spi_gear`] (target a max SPI frequency), and read it
+//!   back with [`PeripheralId::gear_divisor`].
 //! - **Requests** CPU/bus operating-point changes (HP ≈ 156 MHz / LP ≈ 39 MHz)
 //!   from the SYSIOP over the ICC CPU-FIFO protocol via [`Clock::request_perf`].
 //!
@@ -20,6 +23,10 @@
 //! let mut crg = dp.crg.constrain(Config::default());
 //! let clocks = crg.freeze();
 //! PeripheralId::Uart1.enable()?;
+//!
+//! // Pick UART2's base clock before the driver brings the port up: appsmp/2
+//! // (≈78 MHz at HP) instead of the default appsmp/4 (≈39 MHz).
+//! PeripheralId::ImgUart.set_gear(2)?;
 //! ```
 
 use crate::pac;
