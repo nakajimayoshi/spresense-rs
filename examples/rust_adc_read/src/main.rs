@@ -37,8 +37,9 @@ use panic_halt as _;
 
 use cxd56_hal::adc::{Adc, AdcConfig, LpAdc, LpAdcChannel};
 use cxd56_hal::clocks::{Config, RccExt};
+use cxd56_hal::gpio::pins::Parts;
 use cxd56_hal::pac;
-use cxd56_hal::uart_alt::Uart;
+use cxd56_hal::uart_alt::{Uart, Uart1Pins};
 
 #[entry]
 fn main() -> ! {
@@ -48,7 +49,9 @@ fn main() -> ! {
     let clock = crg.into_clock();
 
     // UART1 for console output. COM clock is Fixed → Uart<'static, Uart1>.
-    let mut uart = Uart::new(dp.uart1, Default::default(), &clock)
+    let parts = Parts::new(dp.topreg);
+    let uart1_pins = Uart1Pins { tx: parts.gp_spi0_cs_x, rx: parts.gp_spi0_sck };
+    let mut uart = Uart::new(dp.uart1, uart1_pins, Default::default(), &clock)
         .expect("uart1 init failed");
 
     // Bring up LPADC (channels 2 and 3). The iSoP firmware is never released

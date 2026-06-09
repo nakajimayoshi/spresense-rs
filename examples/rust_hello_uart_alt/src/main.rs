@@ -9,8 +9,10 @@ use embedded_hal::delay::DelayNs;
 use panic_halt as _;
 
 use cxd56_hal::clocks::{Config, RccExt};
+use cxd56_hal::gpio::pins::Parts;
 use cxd56_hal::pac;
-use cxd56_hal::{delay_alt::Delay, uart_alt::Uart};
+use cxd56_hal::uart_alt::{Uart, Uart1Pins};
+use cxd56_hal::{delay_alt::Delay};
 
 #[entry]
 fn main() -> ! {
@@ -22,7 +24,9 @@ fn main() -> ! {
 
     let mut delay = Delay::new(core.SYST, &clocks);
 
-    let mut uart = Uart::new(pac.uart1, Default::default(), &clocks).unwrap();
+    let parts = Parts::new(pac.topreg);
+    let uart1_pins = Uart1Pins { tx: parts.gp_spi0_cs_x, rx: parts.gp_spi0_sck };
+    let mut uart = Uart::new(pac.uart1, uart1_pins, Default::default(), &clocks).unwrap();
 
     let mut n: u32 = 0;
     loop {

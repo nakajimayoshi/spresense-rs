@@ -44,8 +44,9 @@ mod tests {
     use embedded_hal::spi::SpiBus;
 
     use cxd56_hal::clocks::{Config, RccExt};
+    use cxd56_hal::gpio::pins::Parts;
     use cxd56_hal::pac;
-    use cxd56_hal::spi_alt::{Spi, SpiConfig};
+    use cxd56_hal::spi_alt::{Spi, Spi5Pins, SpiConfig};
     use cxd56_hal::uart::{Uart1, UartConfig};
 
     struct State {
@@ -71,9 +72,11 @@ mod tests {
     /// [1/2] Internal LBM — SSPCR1.LBM = 1, no external wiring required.
     #[test]
     fn internal_lbm(state: &mut State) {
-        let spi5 = unsafe { pac::Peripherals::steal() }.spi5;
+        let stolen = unsafe { pac::Peripherals::steal() };
+        let parts = Parts::new(stolen.topreg);
+        let pins = Spi5Pins { sck: parts.gp_emmc_clk, csn: parts.gp_emmc_cmd, mosi: parts.gp_emmc_data0, miso: parts.gp_emmc_data1 };
         let mut spi =
-            Spi::new(spi5, SpiConfig { loopback: true, ..SpiConfig::default() }, state.clock)
+            Spi::new(stolen.spi5, pins, SpiConfig { loopback: true, ..SpiConfig::default() }, state.clock)
                 .expect("Spi::new failed");
 
         let tx = crate::PATTERN;
@@ -90,9 +93,11 @@ mod tests {
     #[cfg(feature = "external-loopback")]
     #[test]
     fn external_loopback(state: &mut State) {
-        let spi5 = unsafe { pac::Peripherals::steal() }.spi5;
+        let stolen = unsafe { pac::Peripherals::steal() };
+        let parts = Parts::new(stolen.topreg);
+        let pins = Spi5Pins { sck: parts.gp_emmc_clk, csn: parts.gp_emmc_cmd, mosi: parts.gp_emmc_data0, miso: parts.gp_emmc_data1 };
         let mut spi =
-            Spi::new(spi5, SpiConfig { loopback: false, ..SpiConfig::default() }, state.clock)
+            Spi::new(stolen.spi5, pins, SpiConfig { loopback: false, ..SpiConfig::default() }, state.clock)
                 .expect("Spi::new failed");
 
         let tx = crate::PATTERN;
