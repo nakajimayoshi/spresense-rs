@@ -23,7 +23,11 @@ chiptool: _svdtools
 # Regenerate and update svd2rust PAC
 svd2rust: _svdtools
     mkdir -p svd-out
-    svd2rust -i svd/cxd5602.svd.patched -o svd-out
+    svd2rust \
+        --edition 2024 \
+        --reexport-interrupt \
+        -i svd/cxd5602.svd.patched \
+        -o svd-out
     just _generate_pac cxd56-pac-svd2rust
 
 _svdtools:
