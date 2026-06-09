@@ -30,9 +30,13 @@ embassy_hal_internal::peripherals! {
     P1v_01,
     P1v_02,
     P1v_03,
+    /// LED0, I2S1 BCK
     P1w_00,
+    /// LED1
     P1w_01,
+    /// LED2
     P1w_02,
+    /// LED3
     P1w_03,
 }
 

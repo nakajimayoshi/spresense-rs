@@ -416,6 +416,8 @@ pub(crate) trait SealedPin {
         self.pin()
     }
 
+    fn read(&self) -> u32;
+
     // #[inline]
     // fn block(&self) -> gpio::Gpio {
     //     match self.pin_port() / 32 {
@@ -502,6 +504,10 @@ impl SealedPin for AnyPin {
     fn pin(&self) -> u8 {
         self.pin
     }
+    
+    fn read(&self) -> u32 {
+        todo!()
+    }
 }
 
 // // ====================
@@ -538,13 +544,20 @@ impl SealedPin for AnyPin {
 
 // // ====================
 
+fn test() {
+}
+
 macro_rules! impl_pin {
-    ($type:ident, $pin_num:expr) => {
+    ($type:ident, $svd:ident, $pin_num:expr) => {
         impl crate::gpio::Pin for peripherals::$type {}
         impl crate::gpio::SealedPin for peripherals::$type {
             #[inline]
             fn pin(&self) -> u8 {
                 $pin_num
+            }
+
+            fn read(&self) -> u32 {
+                pac::TOPREG.$svd().read().0
             }
         }
 
@@ -556,7 +569,7 @@ macro_rules! impl_pin {
     };
 }
 
-impl_pin!(P1w_00, 97);
+impl_pin!(P1w_00, GP_I2S1_BCK, 97);
 
 // // ====================
 
