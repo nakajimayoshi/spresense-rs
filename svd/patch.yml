@@ -2925,6 +2925,86 @@ _add:
               - name: High
                 description: ""
                 value: 1
+      # GP_SPI0_CS_X / GP_SPI0_SCK: these pads also support GPIO (Func0), so we
+      # expose their data/dir registers.  SDK: cxd5602_topreg.h lines 282-283.
+      GP_SPI0_CS_X:
+        description: "GPIO SYS pin 17 — SPI0_CS_X / UART1_TX (on-board console)"
+        addressOffset: 0x2040
+        access: read-write
+        resetValue: 0x00010000
+        fields:
+          DIR:
+            description: "Output enable, active-low (0 = drive output, 1 = high-Z input)"
+            bitOffset: 16
+            bitWidth: 1
+            enumeratedValues:
+              - name: Enable
+                description: "Drive output"
+                value: 0
+              - name: Disable
+                description: "High-impedance input"
+                value: 1
+          OUT:
+            description: "Output data"
+            bitOffset: 8
+            bitWidth: 1
+            enumeratedValues:
+              - name: Low
+                description: ""
+                value: 0
+              - name: High
+                description: ""
+                value: 1
+          IN:
+            description: "Sampled pin level (read)"
+            bitOffset: 0
+            bitWidth: 1
+            enumeratedValues:
+              - name: Low
+                description: ""
+                value: 0
+              - name: High
+                description: ""
+                value: 1
+      GP_SPI0_SCK:
+        description: "GPIO SYS pin 18 — SPI0_SCK / UART1_RX (on-board console)"
+        addressOffset: 0x2044
+        access: read-write
+        resetValue: 0x00010000
+        fields:
+          DIR:
+            description: "Output enable, active-low (0 = drive output, 1 = high-Z input)"
+            bitOffset: 16
+            bitWidth: 1
+            enumeratedValues:
+              - name: Enable
+                description: "Drive output"
+                value: 0
+              - name: Disable
+                description: "High-impedance input"
+                value: 1
+          OUT:
+            description: "Output data"
+            bitOffset: 8
+            bitWidth: 1
+            enumeratedValues:
+              - name: Low
+                description: ""
+                value: 0
+              - name: High
+                description: ""
+                value: 1
+          IN:
+            description: "Sampled pin level (read)"
+            bitOffset: 0
+            bitWidth: 1
+            enumeratedValues:
+              - name: Low
+                description: ""
+                value: 0
+              - name: High
+                description: ""
+                value: 1
       GP_I2S1_BCK:
         description: "GPIO APP pin 97 — I2S1_BCK / LED0 on Spresense main board"
         addressOffset: 0x2168
