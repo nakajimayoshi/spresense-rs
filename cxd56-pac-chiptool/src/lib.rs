@@ -78,6 +78,10 @@ pub enum Interrupt {
     SPH14 = 94,
     ///95 - Hardware semaphore 15 released-to-reserver wake
     SPH15 = 95,
+    ///97 - TIMER0 interrupt
+    TIMER0 = 97,
+    ///98 - TIMER1 interrupt
+    TIMER1 = 98,
     ///106 - 2D interrupt
     GE2D = 106,
     ///107 - Rotation interrupt

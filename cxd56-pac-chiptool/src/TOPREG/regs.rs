@@ -2201,6 +2201,144 @@ impl defmt::Format for GP_SEN_IRQ_IN {
         )
     }
 }
+///GPIO SYS pin 17 — SPI0_CS_X / UART1_TX (on-board console).
+#[repr(transparent)]
+#[derive(Copy, Clone, Eq, PartialEq)]
+pub struct GP_SPI0_CS_X(pub u32);
+impl GP_SPI0_CS_X {
+    ///Sampled pin level (read).
+    #[must_use]
+    #[inline(always)]
+    pub const fn IN(&self) -> bool {
+        let val = (self.0 >> 0usize) & 0x01;
+        val != 0
+    }
+    ///Sampled pin level (read).
+    #[inline(always)]
+    pub const fn set_IN(&mut self, val: bool) {
+        self.0 = (self.0 & !(0x01 << 0usize)) | (((val as u32) & 0x01) << 0usize);
+    }
+    ///Output data.
+    #[must_use]
+    #[inline(always)]
+    pub const fn OUT(&self) -> bool {
+        let val = (self.0 >> 8usize) & 0x01;
+        val != 0
+    }
+    ///Output data.
+    #[inline(always)]
+    pub const fn set_OUT(&mut self, val: bool) {
+        self.0 = (self.0 & !(0x01 << 8usize)) | (((val as u32) & 0x01) << 8usize);
+    }
+    ///Output enable, active-low (0 = drive output, 1 = high-Z input).
+    #[must_use]
+    #[inline(always)]
+    pub const fn DIR(&self) -> bool {
+        let val = (self.0 >> 16usize) & 0x01;
+        val != 0
+    }
+    ///Output enable, active-low (0 = drive output, 1 = high-Z input).
+    #[inline(always)]
+    pub const fn set_DIR(&mut self, val: bool) {
+        self.0 = (self.0 & !(0x01 << 16usize)) | (((val as u32) & 0x01) << 16usize);
+    }
+}
+impl Default for GP_SPI0_CS_X {
+    #[inline(always)]
+    fn default() -> GP_SPI0_CS_X {
+        GP_SPI0_CS_X(0)
+    }
+}
+impl core::fmt::Debug for GP_SPI0_CS_X {
+    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+        f.debug_struct("GP_SPI0_CS_X")
+            .field("IN", &self.IN())
+            .field("OUT", &self.OUT())
+            .field("DIR", &self.DIR())
+            .finish()
+    }
+}
+#[cfg(feature = "defmt")]
+impl defmt::Format for GP_SPI0_CS_X {
+    fn format(&self, f: defmt::Formatter) {
+        defmt::write!(
+            f,
+            "GP_SPI0_CS_X {{ IN: {=bool:?}, OUT: {=bool:?}, DIR: {=bool:?} }}",
+            self.IN(),
+            self.OUT(),
+            self.DIR()
+        )
+    }
+}
+///GPIO SYS pin 18 — SPI0_SCK / UART1_RX (on-board console).
+#[repr(transparent)]
+#[derive(Copy, Clone, Eq, PartialEq)]
+pub struct GP_SPI0_SCK(pub u32);
+impl GP_SPI0_SCK {
+    ///Sampled pin level (read).
+    #[must_use]
+    #[inline(always)]
+    pub const fn IN(&self) -> bool {
+        let val = (self.0 >> 0usize) & 0x01;
+        val != 0
+    }
+    ///Sampled pin level (read).
+    #[inline(always)]
+    pub const fn set_IN(&mut self, val: bool) {
+        self.0 = (self.0 & !(0x01 << 0usize)) | (((val as u32) & 0x01) << 0usize);
+    }
+    ///Output data.
+    #[must_use]
+    #[inline(always)]
+    pub const fn OUT(&self) -> bool {
+        let val = (self.0 >> 8usize) & 0x01;
+        val != 0
+    }
+    ///Output data.
+    #[inline(always)]
+    pub const fn set_OUT(&mut self, val: bool) {
+        self.0 = (self.0 & !(0x01 << 8usize)) | (((val as u32) & 0x01) << 8usize);
+    }
+    ///Output enable, active-low (0 = drive output, 1 = high-Z input).
+    #[must_use]
+    #[inline(always)]
+    pub const fn DIR(&self) -> bool {
+        let val = (self.0 >> 16usize) & 0x01;
+        val != 0
+    }
+    ///Output enable, active-low (0 = drive output, 1 = high-Z input).
+    #[inline(always)]
+    pub const fn set_DIR(&mut self, val: bool) {
+        self.0 = (self.0 & !(0x01 << 16usize)) | (((val as u32) & 0x01) << 16usize);
+    }
+}
+impl Default for GP_SPI0_SCK {
+    #[inline(always)]
+    fn default() -> GP_SPI0_SCK {
+        GP_SPI0_SCK(0)
+    }
+}
+impl core::fmt::Debug for GP_SPI0_SCK {
+    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+        f.debug_struct("GP_SPI0_SCK")
+            .field("IN", &self.IN())
+            .field("OUT", &self.OUT())
+            .field("DIR", &self.DIR())
+            .finish()
+    }
+}
+#[cfg(feature = "defmt")]
+impl defmt::Format for GP_SPI0_SCK {
+    fn format(&self, f: defmt::Formatter) {
+        defmt::write!(
+            f,
+            "GP_SPI0_SCK {{ IN: {=bool:?}, OUT: {=bool:?}, DIR: {=bool:?} }}",
+            self.IN(),
+            self.OUT(),
+            self.DIR()
+        )
+    }
+}
 ///GPIO APP pin 69 — UART2_CTS / Arduino D27 (JP1).
 #[repr(transparent)]
 #[derive(Copy, Clone, Eq, PartialEq)]

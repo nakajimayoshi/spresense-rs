@@ -35,6 +35,8 @@ unsafe extern "C" {
     fn SPH13();
     fn SPH14();
     fn SPH15();
+    fn TIMER0();
+    fn TIMER1();
     fn GE2D();
     fn ROT();
     fn CISIF();
@@ -174,8 +176,8 @@ pub static __INTERRUPTS: [Vector; 119] = [
     Vector { _handler: SPH14 },
     Vector { _handler: SPH15 },
     Vector { _reserved: 0 },
-    Vector { _reserved: 0 },
-    Vector { _reserved: 0 },
+    Vector { _handler: TIMER0 },
+    Vector { _handler: TIMER1 },
     Vector { _reserved: 0 },
     Vector { _reserved: 0 },
     Vector { _reserved: 0 },

@@ -470,6 +470,16 @@ impl TOPREG {
     pub const fn GP_I2C4_BCK(self) -> crate::common::Reg<regs::GP_I2C4_BCK, crate::common::RW> {
         unsafe { crate::common::Reg::from_ptr(self.ptr.wrapping_add(0x2000usize) as _) }
     }
+    ///GPIO SYS pin 17 — SPI0_CS_X / UART1_TX (on-board console).
+    #[inline(always)]
+    pub const fn GP_SPI0_CS_X(self) -> crate::common::Reg<regs::GP_SPI0_CS_X, crate::common::RW> {
+        unsafe { crate::common::Reg::from_ptr(self.ptr.wrapping_add(0x2040usize) as _) }
+    }
+    ///GPIO SYS pin 18 — SPI0_SCK / UART1_RX (on-board console).
+    #[inline(always)]
+    pub const fn GP_SPI0_SCK(self) -> crate::common::Reg<regs::GP_SPI0_SCK, crate::common::RW> {
+        unsafe { crate::common::Reg::from_ptr(self.ptr.wrapping_add(0x2044usize) as _) }
+    }
     ///GPIO SYS pin 37 — SEN_IRQ / Arduino D22 (JP1).
     #[inline(always)]
     pub const fn GP_SEN_IRQ_IN(self) -> crate::common::Reg<regs::GP_SEN_IRQ_IN, crate::common::RW> {
