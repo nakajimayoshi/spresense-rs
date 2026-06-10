@@ -120,6 +120,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "arm-sp805"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8dc3f6873cd65bb78ce3a1dac3aebf1cd323d96f396f9ac28bf454ae58195e63"
+dependencies = [
+ "bitflags 2.11.1",
+ "safe-mmio",
+ "zerocopy",
+]
+
+[[package]]
 name = "autocfg"
 version = "1.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -424,6 +435,7 @@ name = "cxd56-hal"
 version = "0.1.0"
 dependencies = [
  "arm-pl011-uart",
+ "arm-sp805",
  "cortex-m",
  "critical-section",
  "cxd56-pac-svd2rust",
