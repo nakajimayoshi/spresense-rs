@@ -1643,6 +1643,11 @@
         <size>0x20</size>
         <usage>registers</usage>
       </addressBlock>
+      <interrupt>
+        <name>TIMER0</name>
+        <description>TIMER0 interrupt</description>
+        <value>97</value>
+      </interrupt>
       <registers>
         <register>
           <name>LOAD</name>
@@ -1753,6 +1758,11 @@
       <name>TIMER1</name>
       <description>ARM PrimeCell SP804 dual-input timer 1</description>
       <baseAddress>0xE0043020</baseAddress>
+      <interrupt>
+        <name>TIMER1</name>
+        <description>TIMER1 interrupt</description>
+        <value>98</value>
+      </interrupt>
     </peripheral>
     <peripheral>
       <name>WDOG</name>

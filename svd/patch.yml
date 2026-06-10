@@ -4276,6 +4276,11 @@ _add:
   # TIMER0/TIMER1: ARM PrimeCell SP804 dual-input timers.
   # Base: CXD56_TIMER_BASE = 0xE0043000 (TIMER0), +0x0020 (TIMER1).
   # Source: nuttx/arch/arm/src/cxd56xx/hardware/cxd56_timer.h
+  # Interrupts = 97/98 (see convention header):
+  #   NuttX CXD56_IRQ_TIMER0 = EXTINT+97 (irq.h:162), CXD56_IRQ_TIMER1 =
+  #   EXTINT+98 (irq.h:163); Manual Table Interrupt-33 INT_CAUSE3[3:1] TIMER
+  #   "Interrupt request from TIMER (APP)" = 96+1..3 (p.124). Bit 3 is TIMER2
+  #   (irq.h:164, EXTINT+99), a third channel not modeled here.
   TIMER0:
     description: "ARM PrimeCell SP804 dual-input timer 0"
     baseAddress: 0xE0043000
@@ -4283,6 +4288,10 @@ _add:
       offset: 0x0
       size: 0x20
       usage: "registers"
+    interrupts:
+      TIMER0:
+        description: "TIMER0 interrupt"
+        value: 97
     registers:
       LOAD:
         description: "Counter reload value"
@@ -4404,6 +4413,10 @@ _add:
     description: "ARM PrimeCell SP804 dual-input timer 1"
     baseAddress: 0xE0043020
     derivedFrom: TIMER0
+    interrupts:
+      TIMER1:
+        description: "TIMER1 interrupt"
+        value: 98
 
   # WDOG: ARM PrimeCell SP805 watchdog.
   # Base: CXD56_WDOG_BASE = 0xE0044000.
