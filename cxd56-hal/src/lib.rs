@@ -14,3 +14,4 @@ pub mod spi_alt;
 pub(crate) mod regs;
 pub mod uart;
 pub mod uart_alt;
+pub mod watchdog;

@@ -134,6 +134,18 @@ impl Clock {
     pub fn appsmp(&self) -> &Dyn {
         &self.appsmp
     }
+
+    /// CPU/AHB base clock — the watchdog (SP805) timer's clock source.
+    ///
+    /// Derived from the perf-dependent [`appsmp`](Self::appsmp) clock via the
+    /// AHB gear ratio (mirrors `cxd56_get_cpu_baseclk`). Returns a `Copy`
+    /// [`Hertz`]; callers that need this value to stay valid across an
+    /// operating-point change should hold the `Clock` borrow — see
+    /// [`watchdog::Watchdog`](crate::watchdog::Watchdog).
+    pub fn cpu_baseclk(&self) -> Hertz<u32> {
+        Hertz::<u32>::Hz(super::buses::cpu_baseclk_hz(self.appsmp.hz().to_Hz()))
+    }
+
     pub fn usb(&self) -> &Dyn {
         &self.usb
     }

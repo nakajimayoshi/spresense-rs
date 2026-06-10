@@ -183,6 +183,16 @@ pub fn img_vsync_hz(appsmp: u32) -> u32 {
     }
 }
 
+/// CPU/AHB base clock — the watchdog (SP805) timer clock.
+/// Mirrors `cxd56_get_cpu_baseclk` (`cxd56_clock.c:506`): `appsmp * n / m`
+/// where `n`/`m` are the AHB gear ratio in `CRG.GEAR_AHB` (offset 0x00).
+pub fn cpu_baseclk_hz(appsmp: u32) -> u32 {
+    let val = crg().gear_ahb().read().bits();
+    let n = (val >> 16) & 0x7f;
+    let m = val & 0x7f;
+    gear_apply(appsmp, n, m)
+}
+
 /// HPADC clock. `cxd56_clock.c:2318`.
 pub fn hpadc_hz(rcosc: u32, rtc: u32) -> u32 {
     let scu_src = suc32k_hz(rcosc, rtc);
