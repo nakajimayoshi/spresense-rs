@@ -59,6 +59,8 @@ unsafe extern "C" {
     fn SPH13();
     fn SPH14();
     fn SPH15();
+    fn TIMER0();
+    fn TIMER1();
     fn GE2D();
     fn ROT();
     fn CISIF();
@@ -202,8 +204,8 @@ pub static __INTERRUPTS: [Vector; 119] = [
     Vector { _handler: SPH14 },
     Vector { _handler: SPH15 },
     Vector { _reserved: 0 },
-    Vector { _reserved: 0 },
-    Vector { _reserved: 0 },
+    Vector { _handler: TIMER0 },
+    Vector { _handler: TIMER1 },
     Vector { _reserved: 0 },
     Vector { _reserved: 0 },
     Vector { _reserved: 0 },
@@ -301,6 +303,10 @@ pub enum Interrupt {
     SPH14 = 94,
     ///95 - Hardware semaphore 15 released-to-reserver wake
     SPH15 = 95,
+    ///97 - TIMER0 interrupt
+    TIMER0 = 97,
+    ///98 - TIMER1 interrupt
+    TIMER1 = 98,
     ///106 - 2D interrupt
     GE2D = 106,
     ///107 - Rotation interrupt
