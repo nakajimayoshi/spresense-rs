@@ -12,6 +12,7 @@ pub mod i2c_alt;
 pub mod multicore;
 pub mod spi_alt;
 pub(crate) mod regs;
+pub mod timer;
 pub mod uart;
 pub mod uart_alt;
 pub mod watchdog;
