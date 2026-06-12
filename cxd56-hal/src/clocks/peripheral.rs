@@ -103,6 +103,10 @@ impl PeripheralId {
             PeripheralId::I2cm => i2cm_enable(),
             PeripheralId::I2c0 => scu_i2c0_enable(),
             PeripheralId::LpAdc => scu_lpadc_enable(),
+            // Audio MCLK from the external audio crystal (Spresense main-board
+            // default). Callers needing a specific source/divider should call
+            // [`super::audio::audio_clock_enable`] directly instead.
+            PeripheralId::Audio => super::audio::audio_clock_enable(super::audio::AudMclk::Ext, 0),
             _ => Err(ClockError::Unimplemented),
         }
     }
@@ -120,6 +124,7 @@ impl PeripheralId {
             PeripheralId::I2cm => i2cm_disable(),
             PeripheralId::I2c0 => scu_i2c0_disable(),
             PeripheralId::LpAdc => scu_lpadc_disable(),
+            PeripheralId::Audio => super::audio::audio_clock_disable(),
             _ => Err(ClockError::Unimplemented),
         }
     }

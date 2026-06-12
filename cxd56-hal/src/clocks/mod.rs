@@ -25,6 +25,7 @@
 use crate::pac;
 use fugit::Hertz;
 
+pub mod audio;
 pub mod buses;
 pub mod gate;
 pub mod peripheral;
@@ -34,6 +35,7 @@ pub mod pmu;
 pub mod reset;
 pub mod sources;
 
+pub use audio::{AudMclk, audio_clock_disable, audio_clock_enable};
 pub use peripheral::{ClockError, GearError, I2cPort, PeripheralId, SpiPort};
 pub use pm::{PmError, Perf};
 pub use profile::{Clock, Dyn, Fixed};

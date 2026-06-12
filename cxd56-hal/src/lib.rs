@@ -9,6 +9,7 @@ pub mod gpio;
 pub mod i2c;
 pub mod adc;
 pub mod i2c_alt;
+pub mod i2s_alt;
 pub mod multicore;
 pub mod spi_alt;
 pub(crate) mod regs;

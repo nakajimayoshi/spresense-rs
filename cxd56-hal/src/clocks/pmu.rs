@@ -15,7 +15,11 @@ use core::sync::atomic::{AtomicU32, Ordering};
 use super::peripheral::ClockError;
 
 /// Digital power domains. Bit positions in `PWD_CTL` / `PWD_STAT`.
-/// Mirrors the PDID_* enum in `cxd56_clock.c`.
+///
+/// Values are the `PWD_CTL` bit indices, validated against the CXD5602 User
+/// Manual `PWD_CTL` table (`0x04100000`) and the NuttX SDK header
+/// `cxd5602_topreg.h` (`PWD_*` macros). Note bits `[7]` and `[11]` are
+/// Reserved, so the Gnss/Audio domains are *not* contiguous with the App ones.
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 #[repr(u8)]
 pub enum PmuDomain {
@@ -26,9 +30,9 @@ pub enum PmuDomain {
     App = 8,
     AppDsp = 9,
     AppSub = 10,
-    GnssItp = 11,
-    Gnss = 12,
-    AppAudio = 13,
+    GnssItp = 12,
+    Gnss = 13,
+    AppAudio = 14,
 }
 
 /// Analog power domains. Bit positions in `ANA_PW_CTL` / `ANA_PW_STAT`.
@@ -50,8 +54,8 @@ const POWER_CONTROL_RETRY: u32 = 20_000;
 const KICK_DELAY_US: u32 = 100;
 const SETTLE_DELAY_US: u32 = 400;
 
-/// Refcounts indexed by `PmuDomain as u8`. Length matches the highest enum
-/// discriminant (`AppAudio` = 13) plus a small margin.
+/// Refcounts indexed by `PmuDomain as u8`. Length covers the highest enum
+/// discriminant (`AppAudio` = 14) plus a small margin.
 static DIGITAL_REFS: [AtomicU32; 16] = [
     AtomicU32::new(0),
     AtomicU32::new(0),
