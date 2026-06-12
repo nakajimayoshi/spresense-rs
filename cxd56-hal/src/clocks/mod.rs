@@ -10,9 +10,10 @@
 //! - **Controls** per-peripheral gates, software resets, and the APP-local M/N
 //!   "gear" dividers (UART2, USB, SDIO, SPI4/5) directly via the APP-local CRG
 //!   at `0x0201_1000`. The gear divider sets a peripheral's base clock to
-//!   `appsmp / M`; adjust it with [`PeripheralId::set_gear`] (raw divisor) or
-//!   [`PeripheralId::set_spi_gear`] (target a max SPI frequency), and read it
-//!   back with [`PeripheralId::gear_divisor`].
+//!   `appsmp / M`; choose the divisors in [`Config::gear`] at constrain time,
+//!   retune at runtime with [`Clock::set_gear`] (raw divisor) or
+//!   [`Clock::set_spi_gear`] (target a max SPI frequency), and read the live
+//!   register back with [`PeripheralId::gear_divisor`].
 //! - **Requests** CPU/bus operating-point changes (HP ≈ 156 MHz / LP ≈ 39 MHz)
 //!   from the SYSIOP over the ICC CPU-FIFO protocol via [`Clock::request_perf`].
 //!
@@ -20,13 +21,17 @@
 //!
 //! ```ignore
 //! let dp = pac::Peripherals::take().unwrap();
-//! let mut crg = dp.crg.constrain(Config::default());
+//!
+//! // Pick UART2's base clock: appsmp/2 (≈78 MHz at HP) instead of the
+//! // default appsmp/4 (≈39 MHz). The divisor is programmed into hardware
+//! // when the peripheral is enabled; the snapshot reflects it from the start.
+//! let cfg = Config {
+//!     gear: GearConfig { img_uart: 2, ..Default::default() },
+//!     ..Default::default()
+//! };
+//! let mut crg = dp.crg.constrain(cfg);
 //! let clocks = crg.freeze();
 //! PeripheralId::Uart1.enable()?;
-//!
-//! // Pick UART2's base clock before the driver brings the port up: appsmp/2
-//! // (≈78 MHz at HP) instead of the default appsmp/4 (≈39 MHz).
-//! PeripheralId::ImgUart.set_gear(2)?;
 //! ```
 
 use crate::pac;
@@ -49,18 +54,60 @@ pub use profile::{Clock, Dyn, Fixed};
 
 /// Board-level clock configuration.
 ///
-/// Only the XOSC frequency is configurable today — the rest of the clock
-/// tree is set by boot ROM. Spresense main board uses a 26 MHz crystal.
+/// The XOSC frequency and the APP-local gear dividers are configurable —
+/// the rest of the clock tree is set by boot ROM. Spresense main board uses
+/// a 26 MHz crystal.
 #[derive(Copy, Clone, Debug)]
 pub struct Config {
     /// XOSC frequency. Spresense main = 26 MHz.
     pub xosc: Hertz<u32>,
+    /// APP-local M/N gear divisors for the gear-divided peripherals.
+    pub gear: GearConfig,
 }
 
 impl Default for Config {
     fn default() -> Self {
         Self {
             xosc: Hertz::<u32>::MHz(26),
+            gear: GearConfig::default(),
+        }
+    }
+}
+
+/// APP-local gear divisors (the M field; base clock = `appsmp / M`).
+///
+/// Programmed into hardware when the peripheral is enabled
+/// ([`PeripheralId::enable`]), and used to compute the gear-divided fields of
+/// every [`Clocks`]/[`Clock`] snapshot — so a driver's baud/divisor math and
+/// the hardware always agree. Defaults match NuttX's bring-up values.
+/// Retune at runtime with [`Clock::set_gear`] / [`Clock::set_spi_gear`].
+///
+/// [`Crg::constrain`](RccExt::constrain) **panics** if a divisor is outside
+/// its register range (listed per field).
+#[derive(Copy, Clone, Debug)]
+pub struct GearConfig {
+    /// UART2 (IMG_UART) divisor, `1..=0x7f`. Default 4 (≈39 MHz at HP).
+    /// PL011 max baud = base / 16.
+    pub img_uart: u32,
+    /// SPI4 (IMG_SPI) divisor, `1..=0x7f`. Default 2.
+    pub img_spi: u32,
+    /// SPI5 (IMG_WSPI) divisor, `1..=0xf`. Default 4.
+    pub img_wspi: u32,
+    /// USB divisor, `1..=0x3`. Default 2. USB requires a specific base clock
+    /// to function — override only if you know the resulting rate is valid.
+    pub usb: u32,
+    /// SDIO divisor, `1..=0x3`. Default 2 — bounds the card clock.
+    pub sdio: u32,
+}
+
+impl Default for GearConfig {
+    fn default() -> Self {
+        Self {
+            img_uart: 4,
+            img_spi: 2,
+            img_wspi: 4,
+            usb: 2,
+            sdio: 2,
         }
     }
 }
@@ -85,6 +132,7 @@ pub struct Crg {
 impl Crg {
     pub(crate) fn new(crg: pac::Crg, cfg: Config) -> Self {
         sources::init_rcosc_cache();
+        peripheral::seed_gear_config(cfg.gear);
         let appsmp = buses::appsmp_hz(cfg.xosc.to_Hz());
         pmu::set_appsmp_hz(appsmp);
         Self { _crg: crg, cfg }
@@ -113,8 +161,13 @@ impl Crg {
 
 /// Snapshot of every readable clock on the chip.
 ///
-/// All fields are derived from the current register state — caller can re-call
-/// [`Crg::freeze`] after any operation that mutates a divider.
+/// Most fields are derived from the current register state — caller can
+/// re-call [`Crg::freeze`] after any operation that mutates a divider. The
+/// gear-divided fields (`usb`, `sdio`, `img_uart`, `img_spi`, `img_wspi`)
+/// are computed from the *configured* divisors ([`Config::gear`]) rather
+/// than the live gear registers, so they report the rate the peripheral
+/// runs at once enabled — even when sampled before
+/// [`PeripheralId::enable`] programs the hardware.
 #[derive(Copy, Clone, Debug)]
 pub struct Clocks {
     pub xosc: Hertz<u32>,

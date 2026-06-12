@@ -1,3 +1,4 @@
+use super::peripheral::{GearError, PeripheralId};
 use super::pm::{self, Perf, PmError};
 use super::{Clocks, Crg, pmu};
 use fugit::Hertz;
@@ -110,6 +111,53 @@ impl Clock {
     /// requires `&mut self`).
     pub fn request_perf(&mut self, perf: Perf) -> Result<(), PmError> {
         pm::request_perf(perf)?;
+        self.resample_dyn();
+        Ok(())
+    }
+
+    /// Set the APP-local gear divider for `id`, making its base clock
+    /// `appsmp / divisor`, and re-sample the dynamic clock fields.
+    ///
+    /// Valid for [`PeripheralId::ImgUart`] (UART2), [`PeripheralId::Spi4`],
+    /// [`PeripheralId::Spi5`], [`PeripheralId::Usb`], and
+    /// [`PeripheralId::Sdio`]; `divisor` must lie in `1..=max` (`0x7f` for
+    /// `ImgUart`/`Spi4`, `0xf` for `Spi5`, `0x3` for `Usb`/`Sdio`). The
+    /// initial divisors come from [`Config::gear`](super::Config::gear).
+    ///
+    /// Requires `&mut self`: while any peripheral driver borrows a [`Dyn`]
+    /// field from this `Clock` (e.g. a live UART2 or SPI5), the borrow
+    /// checker rejects this call — the same protection that keeps
+    /// [`request_perf`](Clock::request_perf) from invalidating a driver's
+    /// baud/divisor math. Reconstruct the driver afterwards so it computes
+    /// its divisors from the new rate.
+    ///
+    /// # Caveats
+    /// `Usb` requires a specific base clock to function and `Sdio`'s divider
+    /// bounds the card clock — override their defaults only if you know the
+    /// resulting rate is valid.
+    pub fn set_gear(&mut self, id: PeripheralId, divisor: u32) -> Result<(), GearError> {
+        id.set_gear(divisor)?;
+        self.resample_dyn();
+        Ok(())
+    }
+
+    /// Set an SPI port's gear divider so the resulting SCK frequency is **at
+    /// most** `maxfreq`, and re-sample the dynamic clock fields. Valid for
+    /// [`PeripheralId::Spi4`] and [`PeripheralId::Spi5`]. Mirrors NuttX's
+    /// `cxd56_spi_clock_gear_adjust`.
+    ///
+    /// Requires `&mut self` — see [`set_gear`](Clock::set_gear) for the
+    /// borrow-checker protection this provides.
+    pub fn set_spi_gear(&mut self, port: PeripheralId, maxfreq: Hertz<u32>) -> Result<(), GearError> {
+        let appsmp = self.appsmp.hz();
+        port.set_spi_gear(appsmp, maxfreq)?;
+        self.resample_dyn();
+        Ok(())
+    }
+
+    /// Re-sample the perf-dependent fields after an operation that changes
+    /// them (operating-point change, gear rewrite).
+    fn resample_dyn(&mut self) {
         let c = Clocks::sample(self.crg.cfg);
         self.appsmp    = Dyn(c.appsmp);
         self.usb       = Dyn(c.usb);
@@ -118,7 +166,6 @@ impl Clock {
         self.img_spi   = Dyn(c.img_spi);
         self.img_wspi  = Dyn(c.img_wspi);
         self.img_vsync = Dyn(c.img_vsync);
-        Ok(())
     }
 
     /// Snapshot every readable clock. Cheap; delegates to the owned `Crg`.

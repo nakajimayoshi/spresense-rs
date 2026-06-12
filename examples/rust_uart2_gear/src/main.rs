@@ -2,9 +2,11 @@
 //!
 //! UART2 (IMG_UART) lives in the APP_SUB domain and derives its base clock
 //! from the APP CPU clock through an M/N "gear" divider: base = appsmp / M.
-//! The HAL default is M=4 (≈39 MHz at HP); this example sets M=2 (≈78 MHz)
-//! with [`PeripheralId::set_gear`] before bringing the port up, doubling the
-//! maximum reachable baud rate (PL011 max baud = base / 16).
+//! The HAL default is M=4 (≈39 MHz at HP); this example selects M=2 (≈78 MHz)
+//! via [`Config::gear`], doubling the maximum reachable baud rate (PL011 max
+//! baud = base / 16). The configured divisor is programmed into hardware when
+//! `Uart::new` enables the peripheral, and the `Clock` snapshot reflects it
+//! from the start — no set-before-snapshot ordering to get wrong.
 //!
 //! Wiring: UART2 is on the JP1 extension header — TXD = P1n_00 (JP1 pin 2),
 //! RXD = P1n_01 (JP1 pin 3). Attach a 3.3 V serial adapter at 921 600 baud to
@@ -21,7 +23,7 @@ use cortex_m_rt::entry;
 use embedded_hal::delay::DelayNs;
 use panic_halt as _;
 
-use cxd56_hal::clocks::{Config, PeripheralId, RccExt};
+use cxd56_hal::clocks::{Config, GearConfig, PeripheralId, RccExt};
 use cxd56_hal::delay_alt::Delay;
 use cxd56_hal::gpio::pins::Parts;
 use cxd56_hal::pac;
@@ -33,15 +35,16 @@ fn main() -> ! {
     let pac = pac::Peripherals::take().unwrap();
     let core = Peripherals::take().unwrap();
 
-    let crg = pac.crg.constrain(Config::default());
+    let gear_reset = PeripheralId::ImgUart.gear_divisor();
 
-    let gear_before = PeripheralId::ImgUart.gear_divisor();
-
-    // Reconfigure the gear *before* `into_clock()`: the Uart2 driver computes
-    // its baud divisor from the Clock snapshot taken there. `enable()` inside
-    // `Uart::new` preserves a user-set IMG_UART divisor, so M=2 survives
-    // peripheral bring-up.
-    PeripheralId::ImgUart.set_gear(2).unwrap();
+    // UART2 base clock = appsmp / 2 (≈78 MHz at HP) instead of the default
+    // appsmp / 4. The divisor is written to hardware when the driver enables
+    // the peripheral; the Clock snapshot below already reflects it.
+    let cfg = Config {
+        gear: GearConfig { img_uart: 2, ..Default::default() },
+        ..Default::default()
+    };
+    let crg = pac.crg.constrain(cfg);
 
     let clocks = crg.into_clock();
 
@@ -57,18 +60,21 @@ fn main() -> ! {
     let appsmp = clocks.appsmp().hz().to_Hz();
     let img_uart = clocks.img_uart().hz().to_Hz();
     let _ = writeln!(console, "appsmp:        {appsmp} Hz");
-    let _ = writeln!(console, "gear at reset: {gear_before:?}");
-    let _ = writeln!(
-        console,
-        "gear now:      {:?} (img_uart = appsmp / M)",
-        PeripheralId::ImgUart.gear_divisor()
-    );
-    let _ = writeln!(console, "img_uart:      {img_uart} Hz");
+    let _ = writeln!(console, "gear at reset: {gear_reset:?}");
+    let _ = writeln!(console, "img_uart:      {img_uart} Hz (appsmp / 2, from Config::gear)");
     let _ = writeln!(console, "max baud:      {} (img_uart / 16)", img_uart / 16);
 
     // UART2 on JP1 at 921 600 baud, clocked from the reconfigured base.
     let config = UartConfig { baud_rate: 921_600, ..Default::default() };
     let mut uart2 = Uart::new(pac.uart2, uart2_pins, config, &clocks).unwrap();
+
+    // enable() inside Uart::new programmed the configured divisor — read the
+    // live register back to show hardware now matches the configuration.
+    let _ = writeln!(
+        console,
+        "gear in hw:    {:?} (programmed at enable)",
+        PeripheralId::ImgUart.gear_divisor()
+    );
 
     let mut n: u32 = 0;
     loop {

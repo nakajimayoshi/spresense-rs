@@ -1,4 +1,4 @@
-use crate::clocks::{ClockError, Clocks, PeripheralId, buses};
+use crate::clocks::{ClockError, Clocks, PeripheralId};
 use crate::pac;
 use crate::regs::topreg;
 use core::fmt;
@@ -337,10 +337,10 @@ impl Uart2 {
         PeripheralId::ImgUart.enable()?;
         uart2_pinmux();
 
-        // img_uart_enable() just programmed GEAR_IMG_UART = 0x0001_0004.
-        // clocks.img_uart was snapshotted at freeze() time, before that write,
-        // so re-derive from the live gear register using the stable APPSMP value.
-        let f_uart = buses::img_uart_hz(clocks.appsmp.to_Hz());
+        // clocks.img_uart is computed from the configured gear divisor
+        // (Config::gear) — the same value enable() just programmed into
+        // GEAR_IMG_UART — so the snapshot needs no re-derivation here.
+        let f_uart = clocks.img_uart.to_Hz();
         let (ibrd, fbrd) = brd(f_uart, config.baud_rate)?;
 
         // Disable UART before reconfiguring (PL011 spec §3.3.4).

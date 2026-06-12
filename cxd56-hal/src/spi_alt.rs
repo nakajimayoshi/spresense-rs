@@ -55,7 +55,7 @@ use embedded_hal::spi::{ErrorType, Mode, SpiBus, MODE_0};
 use fugit::Hertz;
 use thiserror::Error;
 
-use crate::clocks::{Clock, ClockError, PeripheralId, SpiPort};
+use crate::clocks::{Clock, ClockError, PeripheralId};
 use crate::gpio::GpioPin;
 use crate::pac;
 use crate::regs::topreg;
@@ -153,11 +153,9 @@ mod sealed {
         /// Restore this SPI's pads to Func0 (GPIO).
         fn unpinmux();
 
-        /// Read the current base clock for this SPI block from hardware.
-        ///
-        /// Called *after* [`PeripheralId::enable`] has programmed the gear
-        /// register, so [`Clock::freeze`] returns the freshly-set value rather
-        /// than the potentially-stale cached [`crate::clocks::Dyn`] field.
+        /// Sample this peripheral's base clock from the [`Clock`] snapshot.
+        /// Returns a `Copy` [`Hertz`] so the borrow of `clock` ends here; the
+        /// lifetime tie lives in `Output` (same shape as `uart_alt`).
         fn base_hz(clock: &Clock) -> Hertz<u32>;
     }
 }
@@ -217,11 +215,10 @@ impl sealed::Sealed for pac::Spi5 {
     }
 
     fn base_hz(clock: &Clock) -> Hertz<u32> {
-        // img_wspi is Dyn. spi5_enable() (called just before base_hz) writes
-        // GEAR_IMG_WSPI = 0x0001_0004 (N=1, M=4). freeze() re-reads the gear
-        // from hardware to get the post-enable value rather than relying on the
-        // stale cached Clock field.
-        clock.freeze().spi(SpiPort::Spi5)
+        // img_wspi is Dyn, computed from the configured gear divisor
+        // (Config::gear) — the same value spi5_enable() programs — so the
+        // snapshot is correct without re-reading hardware.
+        clock.img_wspi().hz()
     }
 }
 
@@ -271,8 +268,6 @@ impl<'clk, S: SpiPeriph> Spi<'clk, S> {
     /// - `S = pac::Spi5` → [`Spi<'a, pac::Spi5>`]: `img_wspi` is Dyn; the
     ///   returned `Spi` borrows `clock` for `'a`, preventing
     ///   [`Clock::request_perf`] until dropped.
-    /// Consume the SPI peripheral and its GPIO pin tokens, configure the
-    /// PL022, and return the driver.
     ///
     /// `pins` enforces at the type level that no other code can use these pads
     /// as GPIO while the bus is live. Call [`Spi::free`] to release them.
@@ -280,11 +275,12 @@ impl<'clk, S: SpiPeriph> Spi<'clk, S> {
     pub fn new<'a>(spi: S, pins: S::Pins, config: SpiConfig, clock: &'a Clock)
         -> Result<S::Output<'a>, SpiError>
     {
-        // Enable clock gate (spi5_enable: AppSub domain + img_acquire + gear M=4).
+        // Enable clock gate (spi5_enable: AppSub domain + img_acquire +
+        // configured gear).
         S::ID.enable()?;
         // Configure IO-mux to route the SPI signals to the board pads.
         S::pinmux();
-        // Re-read img_wspi from hardware registers (post-enable, so the gear is set).
+        // Base clock from the Clock snapshot (configured gear divisor).
         let base = S::base_hz(clock).to_Hz();
 
         // Disable SSP before (re)configuration. PL022 requires SSE=0 to safely

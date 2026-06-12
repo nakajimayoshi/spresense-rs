@@ -132,44 +132,42 @@ fn gear_apply(appsmp: u32, n: u32, m: u32) -> u32 {
     }
 }
 
-/// USB clock. `cxd56_clock.c:2372`.
+/// `appsmp` divided by a peripheral's **configured** gear divisor
+/// ([`Config::gear`](super::Config::gear), possibly retuned via
+/// [`Clock::set_gear`](super::Clock::set_gear)).
+///
+/// Unlike NuttX's `cxd56_get_*_baseclock` register reads, this reports the
+/// rate the peripheral runs at once enabled — `PeripheralId::enable`
+/// programs the same configured value into the gear register — so a snapshot
+/// taken before bring-up already carries the correct frequency.
+#[inline]
+fn gear_configured(appsmp: u32, id: super::PeripheralId) -> u32 {
+    gear_apply(appsmp, 1, id.configured_gear().unwrap_or(0))
+}
+
+/// USB clock (configured rate; cf. `cxd56_clock.c:2372`).
 pub fn usb_hz(appsmp: u32) -> u32 {
-    let val = crg().gear_per_usb().read().bits();
-    let n = (val >> 16) & 1;
-    let m = val & 0x3;
-    gear_apply(appsmp, n, m)
+    gear_configured(appsmp, super::PeripheralId::Usb)
 }
 
-/// SDIO clock. `cxd56_clock.c:1673`.
+/// SDIO clock (configured rate; cf. `cxd56_clock.c:1673`).
 pub fn sdio_hz(appsmp: u32) -> u32 {
-    let val = crg().gear_per_sdio().read().bits();
-    let n = (val >> 16) & 1;
-    let m = val & 0x3;
-    gear_apply(appsmp, n, m)
+    gear_configured(appsmp, super::PeripheralId::Sdio)
 }
 
-/// IMG-SPI clock (SPI4). `cxd56_clock.c:1693`.
+/// IMG-SPI clock (SPI4) (configured rate; cf. `cxd56_clock.c:1693`).
 pub fn img_spi_hz(appsmp: u32) -> u32 {
-    let val = crg().gear_img_spi().read().bits();
-    let n = (val >> 16) & 1;
-    let m = val & 0x7f;
-    gear_apply(appsmp, n, m)
+    gear_configured(appsmp, super::PeripheralId::Spi4)
 }
 
-/// IMG-WSPI clock (SPI5). `cxd56_clock.c:1713`.
+/// IMG-WSPI clock (SPI5) (configured rate; cf. `cxd56_clock.c:1713`).
 pub fn img_wspi_hz(appsmp: u32) -> u32 {
-    let val = crg().gear_img_wspi().read().bits();
-    let n = (val >> 16) & 1;
-    let m = val & 0xf;
-    gear_apply(appsmp, n, m)
+    gear_configured(appsmp, super::PeripheralId::Spi5)
 }
 
-/// IMG-UART clock (UART2). `cxd56_clock.c:1365`.
+/// IMG-UART clock (UART2) (configured rate; cf. `cxd56_clock.c:1365`).
 pub fn img_uart_hz(appsmp: u32) -> u32 {
-    let val = crg().gear_img_uart().read().bits();
-    let n = (val >> 16) & 1;
-    let m = val & 0x7f;
-    gear_apply(appsmp, n, m)
+    gear_configured(appsmp, super::PeripheralId::ImgUart)
 }
 
 /// IMG VSYNC clock. `cxd56_clock.c:2392`.
