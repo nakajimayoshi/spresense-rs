@@ -61,6 +61,10 @@ unsafe extern "C" {
     fn SPH15();
     fn TIMER0();
     fn TIMER1();
+    fn AUDIO_0();
+    fn AUDIO_1();
+    fn AUDIO_2();
+    fn AUDIO_3();
     fn GE2D();
     fn ROT();
     fn CISIF();
@@ -209,10 +213,10 @@ pub static __INTERRUPTS: [Vector; 119] = [
     Vector { _reserved: 0 },
     Vector { _reserved: 0 },
     Vector { _reserved: 0 },
-    Vector { _reserved: 0 },
-    Vector { _reserved: 0 },
-    Vector { _reserved: 0 },
-    Vector { _reserved: 0 },
+    Vector { _handler: AUDIO_0 },
+    Vector { _handler: AUDIO_1 },
+    Vector { _handler: AUDIO_2 },
+    Vector { _handler: AUDIO_3 },
     Vector { _handler: GE2D },
     Vector { _handler: ROT },
     Vector { _handler: CISIF },
@@ -307,6 +311,14 @@ pub enum Interrupt {
     TIMER0 = 97,
     ///98 - TIMER1 interrupt
     TIMER1 = 98,
+    ///102 - Audio DMA interrupt 0 (MIC)
+    AUDIO_0 = 102,
+    ///103 - Audio DMA interrupt 1 (BCA I2S1 = I2S0 pin port)
+    AUDIO_1 = 103,
+    ///104 - Audio DMA interrupt 2 (BCA I2S2 = I2S1 pin port)
+    AUDIO_2 = 104,
+    ///105 - Audio interrupt 3 (CODEC)
+    AUDIO_3 = 105,
     ///106 - 2D interrupt
     GE2D = 106,
     ///107 - Rotation interrupt
@@ -429,6 +441,15 @@ impl core::fmt::Debug for Uart1 {
 }
 ///UART
 pub mod uart1;
+///Audio subsystem — I2S ports, SRC, and audio DMA (BCA)
+pub type Audio = crate::Periph<audio::RegisterBlock, 0x0e30_0000>;
+impl core::fmt::Debug for Audio {
+    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+        f.debug_struct("Audio").finish()
+    }
+}
+///Audio subsystem — I2S ports, SRC, and audio DMA (BCA)
+pub mod audio;
 ///UART
 pub type Uart2 = crate::Periph<uart2::RegisterBlock, 0x0210_3000>;
 impl core::fmt::Debug for Uart2 {
@@ -591,6 +612,8 @@ pub struct Peripherals {
     pub wdog: Wdog,
     ///UART1
     pub uart1: Uart1,
+    ///AUDIO
+    pub audio: Audio,
     ///UART2
     pub uart2: Uart2,
     ///DMAC1
@@ -654,6 +677,7 @@ impl Peripherals {
             timer1: unsafe { Timer1::steal() },
             wdog: unsafe { Wdog::steal() },
             uart1: unsafe { Uart1::steal() },
+            audio: unsafe { Audio::steal() },
             uart2: unsafe { Uart2::steal() },
             dmac1: unsafe { Dmac1::steal() },
             dmac3: unsafe { Dmac3::steal() },

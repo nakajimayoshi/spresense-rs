@@ -2765,6 +2765,33 @@ _add:
             bitOffset: 0
             bitWidth: 1
 
+      # Pad-level output enable for the I2S master clocks (active-low). Required
+      # in I2S master mode — without clearing these bits BCK/LRCK never drive the
+      # pins. Source: User Manual §3.1.4.2.4 "I2S Output Control Register";
+      # CXD56_TOPREG_IOOEN_APP = BASE + 0x1474. Reset = all disabled (0x33).
+      IOOEN_APP:
+        description: "I2S BCK/LRCK pad output enable (active-low: 0=enable, 1=disable)"
+        addressOffset: 0x1474
+        access: read-write
+        resetValue: 0x00000033
+        fields:
+          I2S0_BCK:
+            description: "I2S0_BCK pad output (0=enable, 1=disable)"
+            bitOffset: 0
+            bitWidth: 1
+          I2S0_LRCK:
+            description: "I2S0_LRCK pad output (0=enable, 1=disable)"
+            bitOffset: 1
+            bitWidth: 1
+          I2S1_BCK:
+            description: "I2S1_BCK pad output (0=enable, 1=disable)"
+            bitOffset: 4
+            bitWidth: 1
+          I2S1_LRCK:
+            description: "I2S1_LRCK pad output (0=enable, 1=disable)"
+            bitOffset: 5
+            bitWidth: 1
+
       # GPIO interrupt slot mux — APP domain (IMG pins, slots 6–11 → EXDEVICE_6..11).
       # Same byte-per-slot layout as IOCSYS_INTSEL; APP slot local index 0 = global slot 6.
       # Source: cxd56_gpioint.c; CXD56_TOPREG_IOCAPP_INTSEL0/1 = BASE+0x1490/0x1494.
@@ -5913,3 +5940,573 @@ _add:
             description: "Clock/power control bits"
             bitOffset: 0
             bitWidth: 32
+
+  # ===========================================================================
+  # AUDIO: CXD5602 audio subsystem (APP domain).
+  # Base: APP AHB mirror 0x0c000000 + 0x02300000 = 0x0e300000.
+  #
+  # Two register groups share this block:
+  #   * AC (audio codec) registers at 0x000-0xfff — power-down bits, clock
+  #     enables, signal routing, the SRC1/SRC2 sample-rate converters and the
+  #     I2S port controls. "Channel 1" names (SD1/SDIN1/SDOUT1/SRC1) are the
+  #     I2S0 *pins* on the Spresense main board.
+  #   * BCA (bus channel adapter — the audio DMA) registers at 0x1000+ — the
+  #     I2S is DMA-only (no CPU PCM FIFO); "I2S1" in BCA names is again the
+  #     I2S0 pin port (NuttX CXD56_AUDIO_DMAC_I2S0_* maps to BCA I2s1_*).
+  #
+  # Only the registers used by the HAL I2S0 driver and its DMA path are
+  # modelled. Sources (cross-checked): CXD5602 User Manual audio chapter;
+  # NuttX arch cxd56_audio_regdef.h (AUREGDEF ofs/len/pos table); NuttX boards
+  # cxd56_audio_ac_reg.c / cxd56_audio_bca_reg.c register tables.
+  # IRQs: NuttX CXD56_IRQ_AUDIO_0..3 = EXTINT+102..105 (irq.h:167-170).
+  # ===========================================================================
+  AUDIO:
+    description: "Audio subsystem — I2S ports, SRC, and audio DMA (BCA)"
+    baseAddress: 0x0e300000
+    addressBlock:
+      offset: 0x0
+      size: 0x1200
+      usage: "registers"
+    interrupts:
+      AUDIO_0:
+        description: "Audio DMA interrupt 0 (MIC)"
+        value: 102
+      AUDIO_1:
+        description: "Audio DMA interrupt 1 (BCA I2S1 = I2S0 pin port)"
+        value: 103
+      AUDIO_2:
+        description: "Audio DMA interrupt 2 (BCA I2S2 = I2S1 pin port)"
+        value: 104
+      AUDIO_3:
+        description: "Audio interrupt 3 (CODEC)"
+        value: 105
+    registers:
+      # ----------------------------------------------------------------------
+      # AC (audio codec) registers
+      # ----------------------------------------------------------------------
+      # NuttX ac_reg table: PDN_* fields @0x100; reset = all powered down.
+      AC_PDN:
+        description: "Audio block power-down control (1 = powered down)"
+        addressOffset: 0x100
+        access: read-write
+        resetValue: 0x00FF8770
+        fields:
+          PDN_AMICEXT:
+            description: "Analog mic ext power-down"
+            bitOffset: 4
+            bitWidth: 1
+          PDN_AMIC1:
+            description: "Analog mic 1 power-down"
+            bitOffset: 5
+            bitWidth: 1
+          PDN_AMIC2:
+            description: "Analog mic 2 power-down"
+            bitOffset: 6
+            bitWidth: 1
+          PDN_DAC:
+            description: "DAC power-down"
+            bitOffset: 8
+            bitWidth: 1
+          PDN_LINEIN:
+            description: "Line-in power-down"
+            bitOffset: 9
+            bitWidth: 1
+          PDN_MIC:
+            description: "Mic block power-down"
+            bitOffset: 10
+            bitWidth: 1
+          PDN_DMIC:
+            description: "Digital mic power-down"
+            bitOffset: 15
+            bitWidth: 1
+          PDN_DSPB:
+            description: "Output filter (DSP B) power-down"
+            bitOffset: 16
+            bitWidth: 1
+          PDN_ANC:
+            description: "ANC power-down"
+            bitOffset: 17
+            bitWidth: 1
+          PDN_DNC1:
+            description: "DNC1 power-down"
+            bitOffset: 18
+            bitWidth: 1
+          PDN_DNC2:
+            description: "DNC2 power-down"
+            bitOffset: 19
+            bitWidth: 1
+          PDN_SMSTR:
+            description: "S-Master power-down"
+            bitOffset: 20
+            bitWidth: 1
+          PDN_DSPS2:
+            description: "SRC2 (I2S1 pin port) power-down"
+            bitOffset: 21
+            bitWidth: 1
+          PDN_DSPS1:
+            description: "SRC1 (I2S0 pin port) power-down"
+            bitOffset: 22
+            bitWidth: 1
+          PDN_DSPC:
+            description: "Codec DSP power-down"
+            bitOffset: 23
+            bitWidth: 1
+      AC_CLKEN:
+        description: "Audio block clock enables"
+        addressOffset: 0x104
+        access: read-write
+        resetValue: 0x00000000
+        fields:
+          FS_FS:
+            description: "FS mode (mic decimation)"
+            bitOffset: 0
+            bitWidth: 1
+          DECIM0_EN:
+            description: "Decimation filter 0 enable"
+            bitOffset: 16
+            bitWidth: 1
+          DECIM1_EN:
+            description: "Decimation filter 1 enable"
+            bitOffset: 17
+            bitWidth: 1
+          SDES_EN:
+            description: "SDES enable"
+            bitOffset: 18
+            bitWidth: 1
+          MCK_AHBMSTR_EN:
+            description: "AHB-master (audio DMA) clock enable"
+            bitOffset: 19
+            bitWidth: 1
+      AC_DAT_SEL:
+        description: "Audio data routing — AU_DAT_SEL / COD_INSEL muxes"
+        addressOffset: 0x108
+        access: read-write
+        resetValue: 0x00000000
+        fields:
+          AU_DAT_SEL2:
+            description: "AU_DAT_SEL2 source (0-3=MIC1-4, 4=BUSIF2 DMA out)"
+            bitOffset: 16
+            bitWidth: 3
+          AU_DAT_SEL1:
+            description: "AU_DAT_SEL1 source (0-3=MIC1-4, 4=BUSIF1 DMA out)"
+            bitOffset: 20
+            bitWidth: 3
+          COD_INSEL3:
+            description: "Codec DSP input 3 select"
+            bitOffset: 24
+            bitWidth: 2
+          COD_INSEL2:
+            description: "Codec DSP input 2 select (0=SRC1, 1=SRC2, 2=AU_DAT_SEL1, 3=AU_DAT_SEL2)"
+            bitOffset: 26
+            bitWidth: 2
+          COD_INSEL1:
+            description: "Codec DSP input 1 select (0=SRC1, 1=SRC2, 2=AU_DAT_SEL1, 3=AU_DAT_SEL2)"
+            bitOffset: 28
+            bitWidth: 2
+      # DSR_RATE/DIGSFT/SRC/I2S port mode+format. Reset per NuttX ac_reg init
+      # column: DIGSFT=1, SRC1=1, SRC1IN_SEL=2, SRC2=1, SRC2IN_SEL=2, DIF2=1,
+      # DIF1=1 -> 0x0C991000.
+      I2S_CTRL:
+        description: "Audio Control Register 0 — I2S0 (SD1) master/slave, format and SRC routing"
+        addressOffset: 0x200
+        access: read-write
+        resetValue: 0x0C991000
+        fields:
+          DSR_RATE:
+            description: "Codec DSP downsampling rate"
+            bitOffset: 0
+            bitWidth: 3
+          DIGSFT:
+            description: "Digital soft-ramp enable"
+            bitOffset: 12
+            bitWidth: 1
+          SRC1:
+            description: "I2S0 SRC frequency band: 0=prohibited, 1=8-48kHz, 2=48-96kHz, 3=96-192kHz"
+            bitOffset: 16
+            bitWidth: 2
+          SRC1IN_SEL:
+            description: "I2S0 SRC input source select (0=I2S0 DMA via AU_DAT_SEL1)"
+            bitOffset: 18
+            bitWidth: 2
+          I2S0_FMT:
+            description: "I2S0 data format (DIF1): 0=I2S, 1=Left-justified"
+            bitOffset: 27
+            bitWidth: 1
+          SD1MASTER:
+            description: "I2S0 clock mode: 0=slave, 1=master"
+            bitOffset: 29
+            bitWidth: 1
+          SDCK_OUTENX:
+            description: "Master BCK/LRCK pad output (active-low): 0=output enable, 1=output disable"
+            bitOffset: 30
+            bitWidth: 1
+          HI_RES_MODE:
+            description: "Resolution: 0=normal (up to 48kHz), 1=hi-res (192kHz)"
+            bitOffset: 31
+            bitWidth: 1
+      # Reset: DAC_VOL=0x33, LINEIN_VOL=0x33 (volume fields not modelled).
+      I2S_DATA_EN:
+        description: "Audio output control — I2S0 (SD1) serial data path enables (this register also holds line-in/DAC volume; only the I2S-relevant bits are modelled)"
+        addressOffset: 0x22c
+        access: read-write
+        resetValue: 0x00333300
+        fields:
+          SDIN1_EN:
+            description: "I2S0 serial data input enable"
+            bitOffset: 0
+            bitWidth: 1
+          SDOUT1_EN:
+            description: "I2S0 serial data output enable"
+            bitOffset: 2
+            bitWidth: 1
+          BLF_EN:
+            description: "BLF (output filter) enable"
+            bitOffset: 5
+            bitWidth: 1
+      I2S_SPCLKERR:
+        description: "I2S BCK/LRCK error interrupt mask"
+        addressOffset: 0x234
+        access: read-write
+        resetValue: 0x00000000
+        fields:
+          M_SPCLKERR1:
+            description: "Mask I2S0 BCK/LRCK error interrupt (1=masked)"
+            bitOffset: 0
+            bitWidth: 1
+          M_SPCLKERR2:
+            description: "Mask I2S1 BCK/LRCK error interrupt (1=masked)"
+            bitOffset: 1
+            bitWidth: 1
+      # NuttX names bit6/7 RI_TEST_OUT_SEL0/1 and writes them as the SRC1/SRC2
+      # filter ("bypass mode of SRC"). HALT_INHIBIT reset = 1.
+      TEST_CTRL:
+        description: "Audio test/control — SRC filter bypass, soft reset, SRC clock-halt inhibit"
+        addressOffset: 0x400
+        access: read-write
+        resetValue: 0x00080000
+        fields:
+          TEST_OUT_SEL0:
+            description: "SRC1 (I2S0 path) filter bypass (1=bypass)"
+            bitOffset: 6
+            bitWidth: 1
+          TEST_OUT_SEL1:
+            description: "SRC2 (I2S1 path) filter bypass (1=bypass)"
+            bitOffset: 7
+            bitWidth: 1
+          S_RESET:
+            description: "Audio codec soft reset"
+            bitOffset: 16
+            bitWidth: 1
+          HALT_INHIBIT:
+            description: "Inhibit SRC clock halt (0=allow SRC clock halt)"
+            bitOffset: 19
+            bitWidth: 1
+          ARWPHSET:
+            description: "SRC auto mute (0=disable)"
+            bitOffset: 23
+            bitWidth: 1
+      LR_SWAP:
+        description: "I2S L/R channel swap (set together with left-justified format)"
+        addressOffset: 0x678
+        access: read-write
+        resetValue: 0x00000000
+        fields:
+          LR_SWAP1:
+            description: "I2S0 (SD1) L/R swap"
+            bitOffset: 0
+            bitWidth: 1
+          LR_SWAP2:
+            description: "I2S1 (SD2) L/R swap"
+            bitOffset: 1
+            bitWidth: 1
+      # ----------------------------------------------------------------------
+      # BCA (audio DMA) registers. "I2S1" = the I2S0 pin port (channel 1).
+      # IN = receive (SDIN1 -> SRC1 -> RAM), OUT = transmit (RAM -> SRC1 -> SDOUT1).
+      # ----------------------------------------------------------------------
+      I2S1_IN_START_ADR:
+        description: "I2S0 RX DMA buffer start address (word-aligned; byte address >> 2)"
+        addressOffset: 0x1080
+        access: read-write
+        resetValue: 0x00000000
+        fields:
+          START_ADR:
+            description: "Buffer byte address >> 2 (must be 4-byte aligned)"
+            bitOffset: 2
+            bitWidth: 30
+      I2S1_IN_SAMPLE_NO:
+        description: "I2S0 RX DMA transfer length (samples - 1)"
+        addressOffset: 0x1084
+        access: read-write
+        resetValue: 0x00000000
+        fields:
+          SAMPLE_NO:
+            description: "Number of samples to transfer, minus one"
+            bitOffset: 0
+            bitWidth: 32
+      I2S1_IN_RTD_TRG:
+        description: "I2S0 RX DMA trigger"
+        addressOffset: 0x1088
+        access: read-write
+        resetValue: 0x00000000
+        fields:
+          RTD_TRG:
+            description: "DMA trigger: 1=start, 0=idle (NuttX stop writes 0)"
+            bitOffset: 0
+            bitWidth: 2
+          NOINTR:
+            description: "Suppress per-buffer done interrupt"
+            bitOffset: 2
+            bitWidth: 1
+      I2S1_IN_BITWT:
+        description: "I2S0 RX DMA sample width"
+        addressOffset: 0x108c
+        access: read-write
+        resetValue: 0x00000000
+        fields:
+          BITWT:
+            description: "0=24-bit (one channel per word), 1=16-bit (L/R packed per word)"
+            bitOffset: 0
+            bitWidth: 1
+      I2S1_IN_CH_SEL:
+        description: "I2S0 RX DMA channel select"
+        addressOffset: 0x1090
+        access: read-write
+        resetValue: 0x00000000
+        fields:
+          CH2_SEL:
+            description: "DMA channel 2 source: 0=SRC1L, 1=SRC1R, 2=unused"
+            bitOffset: 0
+            bitWidth: 2
+          CH1_SEL:
+            description: "DMA channel 1 source: 0=SRC1L, 1=SRC1R, 2=unused"
+            bitOffset: 4
+            bitWidth: 2
+      I2S1_IN_MON:
+        description: "I2S0 RX DMA monitor (read-only)"
+        addressOffset: 0x1094
+        access: read-only
+        resetValue: 0x00000000
+        fields:
+          MON_START:
+            description: "DMA running"
+            bitOffset: 0
+            bitWidth: 1
+          MON_ERROR_SETTING:
+            description: "Channel-setting error code"
+            bitOffset: 8
+            bitWidth: 8
+          MON_MONBUF:
+            description: "Internal buffer state (0=empty)"
+            bitOffset: 16
+            bitWidth: 4
+      I2S1_OUT_START_ADR:
+        description: "I2S0 TX DMA buffer start address (word-aligned; byte address >> 2)"
+        addressOffset: 0x10c0
+        access: read-write
+        resetValue: 0x00000000
+        fields:
+          START_ADR:
+            description: "Buffer byte address >> 2 (must be 4-byte aligned)"
+            bitOffset: 2
+            bitWidth: 30
+      I2S1_OUT_SAMPLE_NO:
+        description: "I2S0 TX DMA transfer length (samples - 1)"
+        addressOffset: 0x10c4
+        access: read-write
+        resetValue: 0x00000000
+        fields:
+          SAMPLE_NO:
+            description: "Number of samples to transfer, minus one"
+            bitOffset: 0
+            bitWidth: 32
+      I2S1_OUT_RTD_TRG:
+        description: "I2S0 TX DMA trigger"
+        addressOffset: 0x10c8
+        access: read-write
+        resetValue: 0x00000000
+        fields:
+          RTD_TRG:
+            description: "DMA trigger: 1=start, 0=idle (NuttX stop writes 0)"
+            bitOffset: 0
+            bitWidth: 2
+          NOINTR:
+            description: "Suppress per-buffer done interrupt"
+            bitOffset: 2
+            bitWidth: 1
+      I2S1_OUT_BITWT:
+        description: "I2S0 TX DMA sample width"
+        addressOffset: 0x10cc
+        access: read-write
+        resetValue: 0x00000000
+        fields:
+          BITWT:
+            description: "0=24-bit (one channel per word), 1=16-bit (L/R packed per word)"
+            bitOffset: 0
+            bitWidth: 1
+      I2S1_OUT_SD_SEL:
+        description: "I2S0 TX DMA output channel routing"
+        addressOffset: 0x10d0
+        access: read-write
+        resetValue: 0x00000000
+        fields:
+          SD1_R_SEL:
+            description: "SD1 right source: 0=DMA ch L, 1=DMA ch R, 2=unused"
+            bitOffset: 0
+            bitWidth: 2
+          SD1_L_SEL:
+            description: "SD1 left source: 0=DMA ch L, 1=DMA ch R, 2=unused"
+            bitOffset: 4
+            bitWidth: 2
+      I2S1_OUT_MON:
+        description: "I2S0 TX DMA monitor (read-only)"
+        addressOffset: 0x10d4
+        access: read-only
+        resetValue: 0x00000000
+        fields:
+          MON_START:
+            description: "DMA running"
+            bitOffset: 0
+            bitWidth: 1
+          MON_ERROR_SETTING:
+            description: "Channel-setting error code"
+            bitOffset: 8
+            bitWidth: 8
+          MON_MONBUF:
+            description: "Internal buffer state (0=empty)"
+            bitOffset: 16
+            bitWidth: 4
+      I2S_DATARATE:
+        description: "I2S sample-rate class select"
+        addressOffset: 0x1110
+        access: read-write
+        resetValue: 0x00000000
+        fields:
+          I2SALL_DATARATE:
+            description: "I2S data rate: 0=48kHz, 1=192kHz"
+            bitOffset: 0
+            bitWidth: 1
+      # Write-1-to-clear status; bits assert regardless of I2S1_INT_MASK.
+      I2S1_INT_CTRL:
+        description: "I2S0 DMA interrupt status (write 1 to clear)"
+        addressOffset: 0x1144
+        access: read-write
+        resetValue: 0x00000000
+        fields:
+          DONE_I2SO:
+            description: "TX (out) DMA done"
+            bitOffset: 0
+            bitWidth: 1
+          ERR_I2SO:
+            description: "TX (out) DMA error"
+            bitOffset: 1
+            bitWidth: 1
+          DONE_I2SI:
+            description: "RX (in) DMA done"
+            bitOffset: 2
+            bitWidth: 1
+          ERR_I2SI:
+            description: "RX (in) DMA error"
+            bitOffset: 3
+            bitWidth: 1
+          SMP_I2S:
+            description: "Sample timing tick"
+            bitOffset: 4
+            bitWidth: 1
+          CMB_I2S:
+            description: "Command buffer event"
+            bitOffset: 5
+            bitWidth: 1
+      I2S1_INT_MASK:
+        description: "I2S0 DMA interrupt mask (1=masked)"
+        addressOffset: 0x1150
+        access: read-write
+        resetValue: 0x0000003F
+        fields:
+          DONE_I2SO:
+            description: "Mask TX (out) DMA done interrupt"
+            bitOffset: 0
+            bitWidth: 1
+          ERR_I2SO:
+            description: "Mask TX (out) DMA error interrupt"
+            bitOffset: 1
+            bitWidth: 1
+          DONE_I2SI:
+            description: "Mask RX (in) DMA done interrupt"
+            bitOffset: 2
+            bitWidth: 1
+          ERR_I2SI:
+            description: "Mask RX (in) DMA error interrupt"
+            bitOffset: 3
+            bitWidth: 1
+          SMP_I2S:
+            description: "Mask sample timing tick interrupt"
+            bitOffset: 4
+            bitWidth: 1
+          CMB_I2S:
+            description: "Mask command buffer interrupt"
+            bitOffset: 5
+            bitWidth: 1
+          NOSTPMSK_I2S:
+            description: "No-stop mask"
+            bitOffset: 30
+            bitWidth: 1
+          SRST_I2S:
+            description: "I2S0 DMA soft reset"
+            bitOffset: 31
+            bitWidth: 1
+      # Reset reflects the full hardware register (unmodelled OVF/ANC mask bits
+      # also reset to 1).
+      INT_M:
+        description: "Audio bus/BCK error interrupt mask (1=masked)"
+        addressOffset: 0x1158
+        access: read-write
+        resetValue: 0x01E60701
+        fields:
+          HRESP_ERR:
+            description: "Mask AHB bus (HRESP) error interrupt"
+            bitOffset: 0
+            bitWidth: 1
+          I2S1_BCK_ERR1:
+            description: "Mask I2S0 BCK error 1 interrupt"
+            bitOffset: 8
+            bitWidth: 1
+          I2S1_BCK_ERR2:
+            description: "Mask I2S0 BCK error 2 interrupt"
+            bitOffset: 9
+            bitWidth: 1
+      INT_CLR:
+        description: "Audio bus/BCK error interrupt clear"
+        addressOffset: 0x115c
+        access: read-write
+        resetValue: 0x00000000
+        fields:
+          HRESP_ERR:
+            description: "Clear AHB bus (HRESP) error interrupt"
+            bitOffset: 0
+            bitWidth: 1
+          I2S1_BCK_ERR1:
+            description: "Clear I2S0 BCK error 1 interrupt"
+            bitOffset: 8
+            bitWidth: 1
+          I2S1_BCK_ERR2:
+            description: "Clear I2S0 BCK error 2 interrupt"
+            bitOffset: 9
+            bitWidth: 1
+      AHB_I2S_CLKEN:
+        description: "AHB interface clock enable for the audio DMA masters"
+        addressOffset: 0x11f0
+        access: read-write
+        resetValue: 0x00000000
+        fields:
+          AHBMIC_CLKEN:
+            description: "MIC DMA AHB clock enable (1=enable)"
+            bitOffset: 0
+            bitWidth: 1
+          AHBI2S1_CLKEN:
+            description: "I2S0 AHB clock enable (1=enable)"
+            bitOffset: 1
+            bitWidth: 1
+          AHBI2S2_CLKEN:
+            description: "I2S1 AHB clock enable (1=enable)"
+            bitOffset: 2
+            bitWidth: 1

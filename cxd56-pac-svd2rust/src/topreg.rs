@@ -105,34 +105,36 @@ pub struct RegisterBlock {
     io_i2s0_lrck: IoI2s0Lrck,
     io_i2s0_data_in: IoI2s0DataIn,
     io_i2s0_data_out: IoI2s0DataOut,
-    _reserved82: [u8; 0x0b0c],
+    _reserved82: [u8; 0x0af0],
+    iooen_app: IooenApp,
+    _reserved83: [u8; 0x18],
     iocapp_intsel0: IocappIntsel0,
     iocapp_intsel1: IocappIntsel1,
-    _reserved84: [u8; 0x08],
+    _reserved85: [u8; 0x08],
     iocapp_iomd: IocappIomd,
-    _reserved85: [u8; 0x0b5c],
+    _reserved86: [u8; 0x0b5c],
     gp_i2c4_bck: GpI2c4Bck,
-    _reserved86: [u8; 0x3c],
+    _reserved87: [u8; 0x3c],
     gp_spi0_cs_x: GpSpi0CsX,
     gp_spi0_sck: GpSpi0Sck,
-    _reserved88: [u8; 0x48],
+    _reserved89: [u8; 0x48],
     gp_sen_irq_in: GpSenIrqIn,
-    _reserved89: [u8; 0x18],
+    _reserved90: [u8; 0x18],
     gp_i2c0_bck: GpI2c0Bck,
     gp_i2c0_bdt: GpI2c0Bdt,
-    _reserved91: [u8; 0x3c],
+    _reserved92: [u8; 0x3c],
     gp_uart2_txd: GpUart2Txd,
     gp_uart2_rxd: GpUart2Rxd,
     gp_uart2_cts: GpUart2Cts,
     gp_uart2_rts: GpUart2Rts,
-    _reserved95: [u8; 0x10],
+    _reserved96: [u8; 0x10],
     gp_emmc_clk: GpEmmcClk,
     gp_emmc_cmd: GpEmmcCmd,
     gp_emmc_data0: GpEmmcData0,
     gp_emmc_data1: GpEmmcData1,
     gp_emmc_data2: GpEmmcData2,
     gp_emmc_data3: GpEmmcData3,
-    _reserved101: [u8; 0x30],
+    _reserved102: [u8; 0x30],
     gp_i2s0_bck: GpI2s0Bck,
     gp_i2s0_lrck: GpI2s0Lrck,
     gp_i2s0_data_in: GpI2s0DataIn,
@@ -552,6 +554,11 @@ impl RegisterBlock {
     #[inline(always)]
     pub const fn io_i2s0_data_out(&self) -> &IoI2s0DataOut {
         &self.io_i2s0_data_out
+    }
+    ///0x1474 - I2S BCK/LRCK pad output enable (active-low: 0=enable, 1=disable)
+    #[inline(always)]
+    pub const fn iooen_app(&self) -> &IooenApp {
+        &self.iooen_app
     }
     ///0x1490 - APP-domain GPIO interrupt slot mux, slots 6–9 (1 byte per slot, pin index 0–63)
     #[inline(always)]
@@ -1427,6 +1434,15 @@ For information about available fields see [`mod@io_sen_irq_in`] module*/
 pub type IoSenIrqIn = crate::Reg<io_sen_irq_in::IoSenIrqInSpec>;
 ///IOCELL control for SEN_IRQ_IN pin
 pub mod io_sen_irq_in;
+/**IOOEN_APP (rw) register accessor: I2S BCK/LRCK pad output enable (active-low: 0=enable, 1=disable)
+
+You can [`read`](crate::Reg::read) this register and get [`iooen_app::R`]. You can [`reset`](crate::Reg::reset), [`write`](crate::Reg::write), [`write_with_zero`](crate::Reg::write_with_zero) this register using [`iooen_app::W`]. You can also [`modify`](crate::Reg::modify) this register. See [API](https://docs.rs/svd2rust/#read--modify--write-api).
+
+For information about available fields see [`mod@iooen_app`] module*/
+#[doc(alias = "IOOEN_APP")]
+pub type IooenApp = crate::Reg<iooen_app::IooenAppSpec>;
+///I2S BCK/LRCK pad output enable (active-low: 0=enable, 1=disable)
+pub mod iooen_app;
 /**IOCAPP_INTSEL0 (rw) register accessor: APP-domain GPIO interrupt slot mux, slots 6–9 (1 byte per slot, pin index 0–63)
 
 You can [`read`](crate::Reg::read) this register and get [`iocapp_intsel0::R`]. You can [`reset`](crate::Reg::reset), [`write`](crate::Reg::write), [`write_with_zero`](crate::Reg::write_with_zero) this register using [`iocapp_intsel0::W`]. You can also [`modify`](crate::Reg::modify) this register. See [API](https://docs.rs/svd2rust/#read--modify--write-api).

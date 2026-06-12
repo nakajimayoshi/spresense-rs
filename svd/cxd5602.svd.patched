@@ -2871,6 +2871,806 @@
       </registers>
     </peripheral>
     <peripheral>
+      <name>AUDIO</name>
+      <description>Audio subsystem — I2S ports, SRC, and audio DMA (BCA)</description>
+      <baseAddress>0x0E300000</baseAddress>
+      <addressBlock>
+        <offset>0x0</offset>
+        <size>0x1200</size>
+        <usage>registers</usage>
+      </addressBlock>
+      <interrupt>
+        <name>AUDIO_0</name>
+        <description>Audio DMA interrupt 0 (MIC)</description>
+        <value>102</value>
+      </interrupt>
+      <interrupt>
+        <name>AUDIO_1</name>
+        <description>Audio DMA interrupt 1 (BCA I2S1 = I2S0 pin port)</description>
+        <value>103</value>
+      </interrupt>
+      <interrupt>
+        <name>AUDIO_2</name>
+        <description>Audio DMA interrupt 2 (BCA I2S2 = I2S1 pin port)</description>
+        <value>104</value>
+      </interrupt>
+      <interrupt>
+        <name>AUDIO_3</name>
+        <description>Audio interrupt 3 (CODEC)</description>
+        <value>105</value>
+      </interrupt>
+      <registers>
+        <register>
+          <name>AC_PDN</name>
+          <description>Audio block power-down control (1 = powered down)</description>
+          <addressOffset>0x100</addressOffset>
+          <access>read-write</access>
+          <resetValue>0x00FF8770</resetValue>
+          <fields>
+            <field>
+              <name>PDN_AMICEXT</name>
+              <description>Analog mic ext power-down</description>
+              <bitOffset>4</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>PDN_AMIC1</name>
+              <description>Analog mic 1 power-down</description>
+              <bitOffset>5</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>PDN_AMIC2</name>
+              <description>Analog mic 2 power-down</description>
+              <bitOffset>6</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>PDN_DAC</name>
+              <description>DAC power-down</description>
+              <bitOffset>8</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>PDN_LINEIN</name>
+              <description>Line-in power-down</description>
+              <bitOffset>9</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>PDN_MIC</name>
+              <description>Mic block power-down</description>
+              <bitOffset>10</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>PDN_DMIC</name>
+              <description>Digital mic power-down</description>
+              <bitOffset>15</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>PDN_DSPB</name>
+              <description>Output filter (DSP B) power-down</description>
+              <bitOffset>16</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>PDN_ANC</name>
+              <description>ANC power-down</description>
+              <bitOffset>17</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>PDN_DNC1</name>
+              <description>DNC1 power-down</description>
+              <bitOffset>18</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>PDN_DNC2</name>
+              <description>DNC2 power-down</description>
+              <bitOffset>19</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>PDN_SMSTR</name>
+              <description>S-Master power-down</description>
+              <bitOffset>20</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>PDN_DSPS2</name>
+              <description>SRC2 (I2S1 pin port) power-down</description>
+              <bitOffset>21</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>PDN_DSPS1</name>
+              <description>SRC1 (I2S0 pin port) power-down</description>
+              <bitOffset>22</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>PDN_DSPC</name>
+              <description>Codec DSP power-down</description>
+              <bitOffset>23</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+          </fields>
+        </register>
+        <register>
+          <name>AC_CLKEN</name>
+          <description>Audio block clock enables</description>
+          <addressOffset>0x104</addressOffset>
+          <access>read-write</access>
+          <resetValue>0x00000000</resetValue>
+          <fields>
+            <field>
+              <name>FS_FS</name>
+              <description>FS mode (mic decimation)</description>
+              <bitOffset>0</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>DECIM0_EN</name>
+              <description>Decimation filter 0 enable</description>
+              <bitOffset>16</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>DECIM1_EN</name>
+              <description>Decimation filter 1 enable</description>
+              <bitOffset>17</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>SDES_EN</name>
+              <description>SDES enable</description>
+              <bitOffset>18</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>MCK_AHBMSTR_EN</name>
+              <description>AHB-master (audio DMA) clock enable</description>
+              <bitOffset>19</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+          </fields>
+        </register>
+        <register>
+          <name>AC_DAT_SEL</name>
+          <description>Audio data routing — AU_DAT_SEL / COD_INSEL muxes</description>
+          <addressOffset>0x108</addressOffset>
+          <access>read-write</access>
+          <resetValue>0x00000000</resetValue>
+          <fields>
+            <field>
+              <name>AU_DAT_SEL2</name>
+              <description>AU_DAT_SEL2 source (0-3=MIC1-4, 4=BUSIF2 DMA out)</description>
+              <bitOffset>16</bitOffset>
+              <bitWidth>3</bitWidth>
+            </field>
+            <field>
+              <name>AU_DAT_SEL1</name>
+              <description>AU_DAT_SEL1 source (0-3=MIC1-4, 4=BUSIF1 DMA out)</description>
+              <bitOffset>20</bitOffset>
+              <bitWidth>3</bitWidth>
+            </field>
+            <field>
+              <name>COD_INSEL3</name>
+              <description>Codec DSP input 3 select</description>
+              <bitOffset>24</bitOffset>
+              <bitWidth>2</bitWidth>
+            </field>
+            <field>
+              <name>COD_INSEL2</name>
+              <description>Codec DSP input 2 select (0=SRC1, 1=SRC2, 2=AU_DAT_SEL1, 3=AU_DAT_SEL2)</description>
+              <bitOffset>26</bitOffset>
+              <bitWidth>2</bitWidth>
+            </field>
+            <field>
+              <name>COD_INSEL1</name>
+              <description>Codec DSP input 1 select (0=SRC1, 1=SRC2, 2=AU_DAT_SEL1, 3=AU_DAT_SEL2)</description>
+              <bitOffset>28</bitOffset>
+              <bitWidth>2</bitWidth>
+            </field>
+          </fields>
+        </register>
+        <register>
+          <name>I2S_CTRL</name>
+          <description>Audio Control Register 0 — I2S0 (SD1) master/slave, format and SRC routing</description>
+          <addressOffset>0x200</addressOffset>
+          <access>read-write</access>
+          <resetValue>0x0C991000</resetValue>
+          <fields>
+            <field>
+              <name>DSR_RATE</name>
+              <description>Codec DSP downsampling rate</description>
+              <bitOffset>0</bitOffset>
+              <bitWidth>3</bitWidth>
+            </field>
+            <field>
+              <name>DIGSFT</name>
+              <description>Digital soft-ramp enable</description>
+              <bitOffset>12</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>SRC1</name>
+              <description>I2S0 SRC frequency band: 0=prohibited, 1=8-48kHz, 2=48-96kHz, 3=96-192kHz</description>
+              <bitOffset>16</bitOffset>
+              <bitWidth>2</bitWidth>
+            </field>
+            <field>
+              <name>SRC1IN_SEL</name>
+              <description>I2S0 SRC input source select (0=I2S0 DMA via AU_DAT_SEL1)</description>
+              <bitOffset>18</bitOffset>
+              <bitWidth>2</bitWidth>
+            </field>
+            <field>
+              <name>I2S0_FMT</name>
+              <description>I2S0 data format (DIF1): 0=I2S, 1=Left-justified</description>
+              <bitOffset>27</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>SD1MASTER</name>
+              <description>I2S0 clock mode: 0=slave, 1=master</description>
+              <bitOffset>29</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>SDCK_OUTENX</name>
+              <description>Master BCK/LRCK pad output (active-low): 0=output enable, 1=output disable</description>
+              <bitOffset>30</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>HI_RES_MODE</name>
+              <description>Resolution: 0=normal (up to 48kHz), 1=hi-res (192kHz)</description>
+              <bitOffset>31</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+          </fields>
+        </register>
+        <register>
+          <name>I2S_DATA_EN</name>
+          <description>Audio output control — I2S0 (SD1) serial data path enables (this register also holds line-in/DAC volume; only the I2S-relevant bits are modelled)</description>
+          <addressOffset>0x22C</addressOffset>
+          <access>read-write</access>
+          <resetValue>0x00333300</resetValue>
+          <fields>
+            <field>
+              <name>SDIN1_EN</name>
+              <description>I2S0 serial data input enable</description>
+              <bitOffset>0</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>SDOUT1_EN</name>
+              <description>I2S0 serial data output enable</description>
+              <bitOffset>2</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>BLF_EN</name>
+              <description>BLF (output filter) enable</description>
+              <bitOffset>5</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+          </fields>
+        </register>
+        <register>
+          <name>I2S_SPCLKERR</name>
+          <description>I2S BCK/LRCK error interrupt mask</description>
+          <addressOffset>0x234</addressOffset>
+          <access>read-write</access>
+          <resetValue>0x00000000</resetValue>
+          <fields>
+            <field>
+              <name>M_SPCLKERR1</name>
+              <description>Mask I2S0 BCK/LRCK error interrupt (1=masked)</description>
+              <bitOffset>0</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>M_SPCLKERR2</name>
+              <description>Mask I2S1 BCK/LRCK error interrupt (1=masked)</description>
+              <bitOffset>1</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+          </fields>
+        </register>
+        <register>
+          <name>TEST_CTRL</name>
+          <description>Audio test/control — SRC filter bypass, soft reset, SRC clock-halt inhibit</description>
+          <addressOffset>0x400</addressOffset>
+          <access>read-write</access>
+          <resetValue>0x00080000</resetValue>
+          <fields>
+            <field>
+              <name>TEST_OUT_SEL0</name>
+              <description>SRC1 (I2S0 path) filter bypass (1=bypass)</description>
+              <bitOffset>6</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>TEST_OUT_SEL1</name>
+              <description>SRC2 (I2S1 path) filter bypass (1=bypass)</description>
+              <bitOffset>7</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>S_RESET</name>
+              <description>Audio codec soft reset</description>
+              <bitOffset>16</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>HALT_INHIBIT</name>
+              <description>Inhibit SRC clock halt (0=allow SRC clock halt)</description>
+              <bitOffset>19</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>ARWPHSET</name>
+              <description>SRC auto mute (0=disable)</description>
+              <bitOffset>23</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+          </fields>
+        </register>
+        <register>
+          <name>LR_SWAP</name>
+          <description>I2S L/R channel swap (set together with left-justified format)</description>
+          <addressOffset>0x678</addressOffset>
+          <access>read-write</access>
+          <resetValue>0x00000000</resetValue>
+          <fields>
+            <field>
+              <name>LR_SWAP1</name>
+              <description>I2S0 (SD1) L/R swap</description>
+              <bitOffset>0</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>LR_SWAP2</name>
+              <description>I2S1 (SD2) L/R swap</description>
+              <bitOffset>1</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+          </fields>
+        </register>
+        <register>
+          <name>I2S1_IN_START_ADR</name>
+          <description>I2S0 RX DMA buffer start address (word-aligned; byte address &gt;&gt; 2)</description>
+          <addressOffset>0x1080</addressOffset>
+          <access>read-write</access>
+          <resetValue>0x00000000</resetValue>
+          <fields>
+            <field>
+              <name>START_ADR</name>
+              <description>Buffer byte address &gt;&gt; 2 (must be 4-byte aligned)</description>
+              <bitOffset>2</bitOffset>
+              <bitWidth>30</bitWidth>
+            </field>
+          </fields>
+        </register>
+        <register>
+          <name>I2S1_IN_SAMPLE_NO</name>
+          <description>I2S0 RX DMA transfer length (samples - 1)</description>
+          <addressOffset>0x1084</addressOffset>
+          <access>read-write</access>
+          <resetValue>0x00000000</resetValue>
+          <fields>
+            <field>
+              <name>SAMPLE_NO</name>
+              <description>Number of samples to transfer, minus one</description>
+              <bitOffset>0</bitOffset>
+              <bitWidth>32</bitWidth>
+            </field>
+          </fields>
+        </register>
+        <register>
+          <name>I2S1_IN_RTD_TRG</name>
+          <description>I2S0 RX DMA trigger</description>
+          <addressOffset>0x1088</addressOffset>
+          <access>read-write</access>
+          <resetValue>0x00000000</resetValue>
+          <fields>
+            <field>
+              <name>RTD_TRG</name>
+              <description>DMA trigger: 1=start, 0=idle (NuttX stop writes 0)</description>
+              <bitOffset>0</bitOffset>
+              <bitWidth>2</bitWidth>
+            </field>
+            <field>
+              <name>NOINTR</name>
+              <description>Suppress per-buffer done interrupt</description>
+              <bitOffset>2</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+          </fields>
+        </register>
+        <register>
+          <name>I2S1_IN_BITWT</name>
+          <description>I2S0 RX DMA sample width</description>
+          <addressOffset>0x108C</addressOffset>
+          <access>read-write</access>
+          <resetValue>0x00000000</resetValue>
+          <fields>
+            <field>
+              <name>BITWT</name>
+              <description>0=24-bit (one channel per word), 1=16-bit (L/R packed per word)</description>
+              <bitOffset>0</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+          </fields>
+        </register>
+        <register>
+          <name>I2S1_IN_CH_SEL</name>
+          <description>I2S0 RX DMA channel select</description>
+          <addressOffset>0x1090</addressOffset>
+          <access>read-write</access>
+          <resetValue>0x00000000</resetValue>
+          <fields>
+            <field>
+              <name>CH2_SEL</name>
+              <description>DMA channel 2 source: 0=SRC1L, 1=SRC1R, 2=unused</description>
+              <bitOffset>0</bitOffset>
+              <bitWidth>2</bitWidth>
+            </field>
+            <field>
+              <name>CH1_SEL</name>
+              <description>DMA channel 1 source: 0=SRC1L, 1=SRC1R, 2=unused</description>
+              <bitOffset>4</bitOffset>
+              <bitWidth>2</bitWidth>
+            </field>
+          </fields>
+        </register>
+        <register>
+          <name>I2S1_IN_MON</name>
+          <description>I2S0 RX DMA monitor (read-only)</description>
+          <addressOffset>0x1094</addressOffset>
+          <access>read-only</access>
+          <resetValue>0x00000000</resetValue>
+          <fields>
+            <field>
+              <name>MON_START</name>
+              <description>DMA running</description>
+              <bitOffset>0</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>MON_ERROR_SETTING</name>
+              <description>Channel-setting error code</description>
+              <bitOffset>8</bitOffset>
+              <bitWidth>8</bitWidth>
+            </field>
+            <field>
+              <name>MON_MONBUF</name>
+              <description>Internal buffer state (0=empty)</description>
+              <bitOffset>16</bitOffset>
+              <bitWidth>4</bitWidth>
+            </field>
+          </fields>
+        </register>
+        <register>
+          <name>I2S1_OUT_START_ADR</name>
+          <description>I2S0 TX DMA buffer start address (word-aligned; byte address &gt;&gt; 2)</description>
+          <addressOffset>0x10C0</addressOffset>
+          <access>read-write</access>
+          <resetValue>0x00000000</resetValue>
+          <fields>
+            <field>
+              <name>START_ADR</name>
+              <description>Buffer byte address &gt;&gt; 2 (must be 4-byte aligned)</description>
+              <bitOffset>2</bitOffset>
+              <bitWidth>30</bitWidth>
+            </field>
+          </fields>
+        </register>
+        <register>
+          <name>I2S1_OUT_SAMPLE_NO</name>
+          <description>I2S0 TX DMA transfer length (samples - 1)</description>
+          <addressOffset>0x10C4</addressOffset>
+          <access>read-write</access>
+          <resetValue>0x00000000</resetValue>
+          <fields>
+            <field>
+              <name>SAMPLE_NO</name>
+              <description>Number of samples to transfer, minus one</description>
+              <bitOffset>0</bitOffset>
+              <bitWidth>32</bitWidth>
+            </field>
+          </fields>
+        </register>
+        <register>
+          <name>I2S1_OUT_RTD_TRG</name>
+          <description>I2S0 TX DMA trigger</description>
+          <addressOffset>0x10C8</addressOffset>
+          <access>read-write</access>
+          <resetValue>0x00000000</resetValue>
+          <fields>
+            <field>
+              <name>RTD_TRG</name>
+              <description>DMA trigger: 1=start, 0=idle (NuttX stop writes 0)</description>
+              <bitOffset>0</bitOffset>
+              <bitWidth>2</bitWidth>
+            </field>
+            <field>
+              <name>NOINTR</name>
+              <description>Suppress per-buffer done interrupt</description>
+              <bitOffset>2</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+          </fields>
+        </register>
+        <register>
+          <name>I2S1_OUT_BITWT</name>
+          <description>I2S0 TX DMA sample width</description>
+          <addressOffset>0x10CC</addressOffset>
+          <access>read-write</access>
+          <resetValue>0x00000000</resetValue>
+          <fields>
+            <field>
+              <name>BITWT</name>
+              <description>0=24-bit (one channel per word), 1=16-bit (L/R packed per word)</description>
+              <bitOffset>0</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+          </fields>
+        </register>
+        <register>
+          <name>I2S1_OUT_SD_SEL</name>
+          <description>I2S0 TX DMA output channel routing</description>
+          <addressOffset>0x10D0</addressOffset>
+          <access>read-write</access>
+          <resetValue>0x00000000</resetValue>
+          <fields>
+            <field>
+              <name>SD1_R_SEL</name>
+              <description>SD1 right source: 0=DMA ch L, 1=DMA ch R, 2=unused</description>
+              <bitOffset>0</bitOffset>
+              <bitWidth>2</bitWidth>
+            </field>
+            <field>
+              <name>SD1_L_SEL</name>
+              <description>SD1 left source: 0=DMA ch L, 1=DMA ch R, 2=unused</description>
+              <bitOffset>4</bitOffset>
+              <bitWidth>2</bitWidth>
+            </field>
+          </fields>
+        </register>
+        <register>
+          <name>I2S1_OUT_MON</name>
+          <description>I2S0 TX DMA monitor (read-only)</description>
+          <addressOffset>0x10D4</addressOffset>
+          <access>read-only</access>
+          <resetValue>0x00000000</resetValue>
+          <fields>
+            <field>
+              <name>MON_START</name>
+              <description>DMA running</description>
+              <bitOffset>0</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>MON_ERROR_SETTING</name>
+              <description>Channel-setting error code</description>
+              <bitOffset>8</bitOffset>
+              <bitWidth>8</bitWidth>
+            </field>
+            <field>
+              <name>MON_MONBUF</name>
+              <description>Internal buffer state (0=empty)</description>
+              <bitOffset>16</bitOffset>
+              <bitWidth>4</bitWidth>
+            </field>
+          </fields>
+        </register>
+        <register>
+          <name>I2S_DATARATE</name>
+          <description>I2S sample-rate class select</description>
+          <addressOffset>0x1110</addressOffset>
+          <access>read-write</access>
+          <resetValue>0x00000000</resetValue>
+          <fields>
+            <field>
+              <name>I2SALL_DATARATE</name>
+              <description>I2S data rate: 0=48kHz, 1=192kHz</description>
+              <bitOffset>0</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+          </fields>
+        </register>
+        <register>
+          <name>I2S1_INT_CTRL</name>
+          <description>I2S0 DMA interrupt status (write 1 to clear)</description>
+          <addressOffset>0x1144</addressOffset>
+          <access>read-write</access>
+          <resetValue>0x00000000</resetValue>
+          <fields>
+            <field>
+              <name>DONE_I2SO</name>
+              <description>TX (out) DMA done</description>
+              <bitOffset>0</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>ERR_I2SO</name>
+              <description>TX (out) DMA error</description>
+              <bitOffset>1</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>DONE_I2SI</name>
+              <description>RX (in) DMA done</description>
+              <bitOffset>2</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>ERR_I2SI</name>
+              <description>RX (in) DMA error</description>
+              <bitOffset>3</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>SMP_I2S</name>
+              <description>Sample timing tick</description>
+              <bitOffset>4</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>CMB_I2S</name>
+              <description>Command buffer event</description>
+              <bitOffset>5</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+          </fields>
+        </register>
+        <register>
+          <name>I2S1_INT_MASK</name>
+          <description>I2S0 DMA interrupt mask (1=masked)</description>
+          <addressOffset>0x1150</addressOffset>
+          <access>read-write</access>
+          <resetValue>0x0000003F</resetValue>
+          <fields>
+            <field>
+              <name>DONE_I2SO</name>
+              <description>Mask TX (out) DMA done interrupt</description>
+              <bitOffset>0</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>ERR_I2SO</name>
+              <description>Mask TX (out) DMA error interrupt</description>
+              <bitOffset>1</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>DONE_I2SI</name>
+              <description>Mask RX (in) DMA done interrupt</description>
+              <bitOffset>2</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>ERR_I2SI</name>
+              <description>Mask RX (in) DMA error interrupt</description>
+              <bitOffset>3</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>SMP_I2S</name>
+              <description>Mask sample timing tick interrupt</description>
+              <bitOffset>4</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>CMB_I2S</name>
+              <description>Mask command buffer interrupt</description>
+              <bitOffset>5</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>NOSTPMSK_I2S</name>
+              <description>No-stop mask</description>
+              <bitOffset>30</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>SRST_I2S</name>
+              <description>I2S0 DMA soft reset</description>
+              <bitOffset>31</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+          </fields>
+        </register>
+        <register>
+          <name>INT_M</name>
+          <description>Audio bus/BCK error interrupt mask (1=masked)</description>
+          <addressOffset>0x1158</addressOffset>
+          <access>read-write</access>
+          <resetValue>0x01E60701</resetValue>
+          <fields>
+            <field>
+              <name>HRESP_ERR</name>
+              <description>Mask AHB bus (HRESP) error interrupt</description>
+              <bitOffset>0</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>I2S1_BCK_ERR1</name>
+              <description>Mask I2S0 BCK error 1 interrupt</description>
+              <bitOffset>8</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>I2S1_BCK_ERR2</name>
+              <description>Mask I2S0 BCK error 2 interrupt</description>
+              <bitOffset>9</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+          </fields>
+        </register>
+        <register>
+          <name>INT_CLR</name>
+          <description>Audio bus/BCK error interrupt clear</description>
+          <addressOffset>0x115C</addressOffset>
+          <access>read-write</access>
+          <resetValue>0x00000000</resetValue>
+          <fields>
+            <field>
+              <name>HRESP_ERR</name>
+              <description>Clear AHB bus (HRESP) error interrupt</description>
+              <bitOffset>0</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>I2S1_BCK_ERR1</name>
+              <description>Clear I2S0 BCK error 1 interrupt</description>
+              <bitOffset>8</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>I2S1_BCK_ERR2</name>
+              <description>Clear I2S0 BCK error 2 interrupt</description>
+              <bitOffset>9</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+          </fields>
+        </register>
+        <register>
+          <name>AHB_I2S_CLKEN</name>
+          <description>AHB interface clock enable for the audio DMA masters</description>
+          <addressOffset>0x11F0</addressOffset>
+          <access>read-write</access>
+          <resetValue>0x00000000</resetValue>
+          <fields>
+            <field>
+              <name>AHBMIC_CLKEN</name>
+              <description>MIC DMA AHB clock enable (1=enable)</description>
+              <bitOffset>0</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>AHBI2S1_CLKEN</name>
+              <description>I2S0 AHB clock enable (1=enable)</description>
+              <bitOffset>1</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>AHBI2S2_CLKEN</name>
+              <description>I2S1 AHB clock enable (1=enable)</description>
+              <bitOffset>2</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+          </fields>
+        </register>
+      </registers>
+    </peripheral>
+    <peripheral>
       <name>UART2</name>
       <version>1.0</version>
       <description>UART</description>
@@ -10354,6 +11154,39 @@
               <name>ENZI</name>
               <description>Input enable: 0=disabled, 1=enabled</description>
               <bitOffset>0</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+          </fields>
+        </register>
+        <register>
+          <name>IOOEN_APP</name>
+          <description>I2S BCK/LRCK pad output enable (active-low: 0=enable, 1=disable)</description>
+          <addressOffset>0x1474</addressOffset>
+          <access>read-write</access>
+          <resetValue>0x00000033</resetValue>
+          <fields>
+            <field>
+              <name>I2S0_BCK</name>
+              <description>I2S0_BCK pad output (0=enable, 1=disable)</description>
+              <bitOffset>0</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>I2S0_LRCK</name>
+              <description>I2S0_LRCK pad output (0=enable, 1=disable)</description>
+              <bitOffset>1</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>I2S1_BCK</name>
+              <description>I2S1_BCK pad output (0=enable, 1=disable)</description>
+              <bitOffset>4</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>I2S1_LRCK</name>
+              <description>I2S1_LRCK pad output (0=enable, 1=disable)</description>
+              <bitOffset>5</bitOffset>
               <bitWidth>1</bitWidth>
             </field>
           </fields>
