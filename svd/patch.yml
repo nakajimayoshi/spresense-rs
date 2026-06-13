@@ -2416,6 +2416,32 @@ _add:
             bitOffset: 0
             bitWidth: 1
 
+      # IOCELL pin register for I2C4_BCK (I2C4 clock pad, main-board D14 group).
+      # CXD56_TOPREG_IO_I2C4_BCK = CXD56_TOPREG_BASE + 0x0804.
+      # Same field layout as IO_I2C0_BCK; reset 0x01010100.
+      IO_I2C4_BCK:
+        description: "IOCELL control for I2C4_BCK pad"
+        addressOffset: 0x804
+        access: read-write
+        resetValue: 0x01010100
+        fields:
+          LOWEMI:
+            description: "Output current: 0=4mA(max 64MHz), 1=2mA(max 32MHz)"
+            bitOffset: 24
+            bitWidth: 1
+          PDN:
+            description: "Pulldown: 0=pulldown enabled, 1=normal (off)"
+            bitOffset: 16
+            bitWidth: 1
+          PUN:
+            description: "Pullup: 0=pullup enabled, 1=normal (off)"
+            bitOffset: 8
+            bitWidth: 1
+          ENZI:
+            description: "Input enable: 0=disabled, 1=enabled"
+            bitOffset: 0
+            bitWidth: 1
+
       # IOCELL pin register for UART2_TXD.
       # CXD56_TOPREG_IO_UART2_TXD = CXD56_TOPREG_BASE + 0x090c.
       IO_UART2_TXD:
@@ -2584,6 +2610,98 @@ _add:
       IO_I2S0_DATA_OUT:
         description: "IOCELL control for I2S0_DATA_OUT pin"
         addressOffset: 0x980
+        access: read-write
+        resetValue: 0x01010100
+        fields:
+          LOWEMI:
+            description: "Output current: 0=4mA(max 64MHz), 1=2mA(max 32MHz)"
+            bitOffset: 24
+            bitWidth: 1
+          PDN:
+            description: "Pulldown: 0=pulldown enabled, 1=normal (off)"
+            bitOffset: 16
+            bitWidth: 1
+          PUN:
+            description: "Pullup: 0=pullup enabled, 1=normal (off)"
+            bitOffset: 8
+            bitWidth: 1
+          ENZI:
+            description: "Input enable: 0=disabled, 1=enabled"
+            bitOffset: 0
+            bitWidth: 1
+      # CXD56_TOPREG_IO_I2S1_BCK = CXD56_TOPREG_BASE + 0x0984.
+      IO_I2S1_BCK:
+        description: "IOCELL control for I2S1_BCK pin"
+        addressOffset: 0x984
+        access: read-write
+        resetValue: 0x01010100
+        fields:
+          LOWEMI:
+            description: "Output current: 0=4mA(max 64MHz), 1=2mA(max 32MHz)"
+            bitOffset: 24
+            bitWidth: 1
+          PDN:
+            description: "Pulldown: 0=pulldown enabled, 1=normal (off)"
+            bitOffset: 16
+            bitWidth: 1
+          PUN:
+            description: "Pullup: 0=pullup enabled, 1=normal (off)"
+            bitOffset: 8
+            bitWidth: 1
+          ENZI:
+            description: "Input enable: 0=disabled, 1=enabled"
+            bitOffset: 0
+            bitWidth: 1
+      # CXD56_TOPREG_IO_I2S1_LRCK = CXD56_TOPREG_BASE + 0x0988.
+      IO_I2S1_LRCK:
+        description: "IOCELL control for I2S1_LRCK pin"
+        addressOffset: 0x988
+        access: read-write
+        resetValue: 0x01010100
+        fields:
+          LOWEMI:
+            description: "Output current: 0=4mA(max 64MHz), 1=2mA(max 32MHz)"
+            bitOffset: 24
+            bitWidth: 1
+          PDN:
+            description: "Pulldown: 0=pulldown enabled, 1=normal (off)"
+            bitOffset: 16
+            bitWidth: 1
+          PUN:
+            description: "Pullup: 0=pullup enabled, 1=normal (off)"
+            bitOffset: 8
+            bitWidth: 1
+          ENZI:
+            description: "Input enable: 0=disabled, 1=enabled"
+            bitOffset: 0
+            bitWidth: 1
+      # CXD56_TOPREG_IO_I2S1_DATA_IN = CXD56_TOPREG_BASE + 0x098c.
+      IO_I2S1_DATA_IN:
+        description: "IOCELL control for I2S1_DATA_IN pin"
+        addressOffset: 0x98c
+        access: read-write
+        resetValue: 0x01010100
+        fields:
+          LOWEMI:
+            description: "Output current: 0=4mA(max 64MHz), 1=2mA(max 32MHz)"
+            bitOffset: 24
+            bitWidth: 1
+          PDN:
+            description: "Pulldown: 0=pulldown enabled, 1=normal (off)"
+            bitOffset: 16
+            bitWidth: 1
+          PUN:
+            description: "Pullup: 0=pullup enabled, 1=normal (off)"
+            bitOffset: 8
+            bitWidth: 1
+          ENZI:
+            description: "Input enable: 0=disabled, 1=enabled"
+            bitOffset: 0
+            bitWidth: 1
+      # CXD56_TOPREG_IO_I2S1_DATA_OUT = CXD56_TOPREG_BASE + 0x0990.
+      IO_I2S1_DATA_OUT:
+        description: "IOCELL control for I2S1_DATA_OUT pin"
+        addressOffset: 0x990
         access: read-write
         resetValue: 0x01010100
         fields:

@@ -10664,6 +10664,39 @@
           </fields>
         </register>
         <register>
+          <name>IO_I2C4_BCK</name>
+          <description>IOCELL control for I2C4_BCK pad</description>
+          <addressOffset>0x804</addressOffset>
+          <access>read-write</access>
+          <resetValue>0x01010100</resetValue>
+          <fields>
+            <field>
+              <name>LOWEMI</name>
+              <description>Output current: 0=4mA(max 64MHz), 1=2mA(max 32MHz)</description>
+              <bitOffset>24</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>PDN</name>
+              <description>Pulldown: 0=pulldown enabled, 1=normal (off)</description>
+              <bitOffset>16</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>PUN</name>
+              <description>Pullup: 0=pullup enabled, 1=normal (off)</description>
+              <bitOffset>8</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>ENZI</name>
+              <description>Input enable: 0=disabled, 1=enabled</description>
+              <bitOffset>0</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+          </fields>
+        </register>
+        <register>
           <name>IO_UART2_TXD</name>
           <description>IOCELL control for UART2 TXD pin</description>
           <addressOffset>0x90C</addressOffset>
@@ -10898,6 +10931,138 @@
           <name>IO_I2S0_DATA_OUT</name>
           <description>IOCELL control for I2S0_DATA_OUT pin</description>
           <addressOffset>0x980</addressOffset>
+          <access>read-write</access>
+          <resetValue>0x01010100</resetValue>
+          <fields>
+            <field>
+              <name>LOWEMI</name>
+              <description>Output current: 0=4mA(max 64MHz), 1=2mA(max 32MHz)</description>
+              <bitOffset>24</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>PDN</name>
+              <description>Pulldown: 0=pulldown enabled, 1=normal (off)</description>
+              <bitOffset>16</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>PUN</name>
+              <description>Pullup: 0=pullup enabled, 1=normal (off)</description>
+              <bitOffset>8</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>ENZI</name>
+              <description>Input enable: 0=disabled, 1=enabled</description>
+              <bitOffset>0</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+          </fields>
+        </register>
+        <register>
+          <name>IO_I2S1_BCK</name>
+          <description>IOCELL control for I2S1_BCK pin</description>
+          <addressOffset>0x984</addressOffset>
+          <access>read-write</access>
+          <resetValue>0x01010100</resetValue>
+          <fields>
+            <field>
+              <name>LOWEMI</name>
+              <description>Output current: 0=4mA(max 64MHz), 1=2mA(max 32MHz)</description>
+              <bitOffset>24</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>PDN</name>
+              <description>Pulldown: 0=pulldown enabled, 1=normal (off)</description>
+              <bitOffset>16</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>PUN</name>
+              <description>Pullup: 0=pullup enabled, 1=normal (off)</description>
+              <bitOffset>8</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>ENZI</name>
+              <description>Input enable: 0=disabled, 1=enabled</description>
+              <bitOffset>0</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+          </fields>
+        </register>
+        <register>
+          <name>IO_I2S1_LRCK</name>
+          <description>IOCELL control for I2S1_LRCK pin</description>
+          <addressOffset>0x988</addressOffset>
+          <access>read-write</access>
+          <resetValue>0x01010100</resetValue>
+          <fields>
+            <field>
+              <name>LOWEMI</name>
+              <description>Output current: 0=4mA(max 64MHz), 1=2mA(max 32MHz)</description>
+              <bitOffset>24</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>PDN</name>
+              <description>Pulldown: 0=pulldown enabled, 1=normal (off)</description>
+              <bitOffset>16</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>PUN</name>
+              <description>Pullup: 0=pullup enabled, 1=normal (off)</description>
+              <bitOffset>8</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>ENZI</name>
+              <description>Input enable: 0=disabled, 1=enabled</description>
+              <bitOffset>0</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+          </fields>
+        </register>
+        <register>
+          <name>IO_I2S1_DATA_IN</name>
+          <description>IOCELL control for I2S1_DATA_IN pin</description>
+          <addressOffset>0x98C</addressOffset>
+          <access>read-write</access>
+          <resetValue>0x01010100</resetValue>
+          <fields>
+            <field>
+              <name>LOWEMI</name>
+              <description>Output current: 0=4mA(max 64MHz), 1=2mA(max 32MHz)</description>
+              <bitOffset>24</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>PDN</name>
+              <description>Pulldown: 0=pulldown enabled, 1=normal (off)</description>
+              <bitOffset>16</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>PUN</name>
+              <description>Pullup: 0=pullup enabled, 1=normal (off)</description>
+              <bitOffset>8</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>ENZI</name>
+              <description>Input enable: 0=disabled, 1=enabled</description>
+              <bitOffset>0</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+          </fields>
+        </register>
+        <register>
+          <name>IO_I2S1_DATA_OUT</name>
+          <description>IOCELL control for I2S1_DATA_OUT pin</description>
+          <addressOffset>0x990</addressOffset>
           <access>read-write</access>
           <resetValue>0x01010100</resetValue>
           <fields>

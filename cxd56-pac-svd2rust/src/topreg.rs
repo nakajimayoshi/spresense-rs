@@ -80,61 +80,67 @@ pub struct RegisterBlock {
     _reserved61: [u8; 0x08],
     iocsys_iomd0: IocsysIomd0,
     iocsys_iomd1: IocsysIomd1,
-    _reserved63: [u8; 0x7c],
+    _reserved63: [u8; 0x3c],
+    io_i2c4_bck: IoI2c4Bck,
+    _reserved64: [u8; 0x3c],
     io_spi0_cs_x: IoSpi0CsX,
     io_spi0_sck: IoSpi0Sck,
-    _reserved65: [u8; 0x48],
+    _reserved66: [u8; 0x48],
     io_sen_irq_in: IoSenIrqIn,
-    _reserved66: [u8; 0x18],
+    _reserved67: [u8; 0x18],
     io_i2c0_bck: IoI2c0Bck,
     io_i2c0_bdt: IoI2c0Bdt,
-    _reserved68: [u8; 0x54],
+    _reserved69: [u8; 0x54],
     io_uart2_txd: IoUart2Txd,
     io_uart2_rxd: IoUart2Rxd,
     io_uart2_cts: IoUart2Cts,
     io_uart2_rts: IoUart2Rts,
-    _reserved72: [u8; 0x10],
+    _reserved73: [u8; 0x10],
     io_emmc_clk: IoEmmcClk,
     io_emmc_cmd: IoEmmcCmd,
     io_emmc_data0: IoEmmcData0,
     io_emmc_data1: IoEmmcData1,
     io_emmc_data2: IoEmmcData2,
     io_emmc_data3: IoEmmcData3,
-    _reserved78: [u8; 0x30],
+    _reserved79: [u8; 0x30],
     io_i2s0_bck: IoI2s0Bck,
     io_i2s0_lrck: IoI2s0Lrck,
     io_i2s0_data_in: IoI2s0DataIn,
     io_i2s0_data_out: IoI2s0DataOut,
-    _reserved82: [u8; 0x0af0],
+    io_i2s1_bck: IoI2s1Bck,
+    io_i2s1_lrck: IoI2s1Lrck,
+    io_i2s1_data_in: IoI2s1DataIn,
+    io_i2s1_data_out: IoI2s1DataOut,
+    _reserved87: [u8; 0x0ae0],
     iooen_app: IooenApp,
-    _reserved83: [u8; 0x18],
+    _reserved88: [u8; 0x18],
     iocapp_intsel0: IocappIntsel0,
     iocapp_intsel1: IocappIntsel1,
-    _reserved85: [u8; 0x08],
+    _reserved90: [u8; 0x08],
     iocapp_iomd: IocappIomd,
-    _reserved86: [u8; 0x0b5c],
+    _reserved91: [u8; 0x0b5c],
     gp_i2c4_bck: GpI2c4Bck,
-    _reserved87: [u8; 0x3c],
+    _reserved92: [u8; 0x3c],
     gp_spi0_cs_x: GpSpi0CsX,
     gp_spi0_sck: GpSpi0Sck,
-    _reserved89: [u8; 0x48],
+    _reserved94: [u8; 0x48],
     gp_sen_irq_in: GpSenIrqIn,
-    _reserved90: [u8; 0x18],
+    _reserved95: [u8; 0x18],
     gp_i2c0_bck: GpI2c0Bck,
     gp_i2c0_bdt: GpI2c0Bdt,
-    _reserved92: [u8; 0x3c],
+    _reserved97: [u8; 0x3c],
     gp_uart2_txd: GpUart2Txd,
     gp_uart2_rxd: GpUart2Rxd,
     gp_uart2_cts: GpUart2Cts,
     gp_uart2_rts: GpUart2Rts,
-    _reserved96: [u8; 0x10],
+    _reserved101: [u8; 0x10],
     gp_emmc_clk: GpEmmcClk,
     gp_emmc_cmd: GpEmmcCmd,
     gp_emmc_data0: GpEmmcData0,
     gp_emmc_data1: GpEmmcData1,
     gp_emmc_data2: GpEmmcData2,
     gp_emmc_data3: GpEmmcData3,
-    _reserved102: [u8; 0x30],
+    _reserved107: [u8; 0x30],
     gp_i2s0_bck: GpI2s0Bck,
     gp_i2s0_lrck: GpI2s0Lrck,
     gp_i2s0_data_in: GpI2s0DataIn,
@@ -460,6 +466,11 @@ impl RegisterBlock {
     pub const fn iocsys_iomd1(&self) -> &IocsysIomd1 {
         &self.iocsys_iomd1
     }
+    ///0x804 - IOCELL control for I2C4_BCK pad
+    #[inline(always)]
+    pub const fn io_i2c4_bck(&self) -> &IoI2c4Bck {
+        &self.io_i2c4_bck
+    }
     ///0x844 - IOCELL control for SPI0_CS_X / UART1-TXD
     #[inline(always)]
     pub const fn io_spi0_cs_x(&self) -> &IoSpi0CsX {
@@ -554,6 +565,26 @@ impl RegisterBlock {
     #[inline(always)]
     pub const fn io_i2s0_data_out(&self) -> &IoI2s0DataOut {
         &self.io_i2s0_data_out
+    }
+    ///0x984 - IOCELL control for I2S1_BCK pin
+    #[inline(always)]
+    pub const fn io_i2s1_bck(&self) -> &IoI2s1Bck {
+        &self.io_i2s1_bck
+    }
+    ///0x988 - IOCELL control for I2S1_LRCK pin
+    #[inline(always)]
+    pub const fn io_i2s1_lrck(&self) -> &IoI2s1Lrck {
+        &self.io_i2s1_lrck
+    }
+    ///0x98c - IOCELL control for I2S1_DATA_IN pin
+    #[inline(always)]
+    pub const fn io_i2s1_data_in(&self) -> &IoI2s1DataIn {
+        &self.io_i2s1_data_in
+    }
+    ///0x990 - IOCELL control for I2S1_DATA_OUT pin
+    #[inline(always)]
+    pub const fn io_i2s1_data_out(&self) -> &IoI2s1DataOut {
+        &self.io_i2s1_data_out
     }
     ///0x1474 - I2S BCK/LRCK pad output enable (active-low: 0=enable, 1=disable)
     #[inline(always)]
@@ -1299,6 +1330,15 @@ For information about available fields see [`mod@io_i2c0_bdt`] module*/
 pub type IoI2c0Bdt = crate::Reg<io_i2c0_bdt::IoI2c0BdtSpec>;
 ///IOCELL control for I2C0_BDT pad
 pub mod io_i2c0_bdt;
+/**IO_I2C4_BCK (rw) register accessor: IOCELL control for I2C4_BCK pad
+
+You can [`read`](crate::Reg::read) this register and get [`io_i2c4_bck::R`]. You can [`reset`](crate::Reg::reset), [`write`](crate::Reg::write), [`write_with_zero`](crate::Reg::write_with_zero) this register using [`io_i2c4_bck::W`]. You can also [`modify`](crate::Reg::modify) this register. See [API](https://docs.rs/svd2rust/#read--modify--write-api).
+
+For information about available fields see [`mod@io_i2c4_bck`] module*/
+#[doc(alias = "IO_I2C4_BCK")]
+pub type IoI2c4Bck = crate::Reg<io_i2c4_bck::IoI2c4BckSpec>;
+///IOCELL control for I2C4_BCK pad
+pub mod io_i2c4_bck;
 /**IO_UART2_TXD (rw) register accessor: IOCELL control for UART2 TXD pin
 
 You can [`read`](crate::Reg::read) this register and get [`io_uart2_txd::R`]. You can [`reset`](crate::Reg::reset), [`write`](crate::Reg::write), [`write_with_zero`](crate::Reg::write_with_zero) this register using [`io_uart2_txd::W`]. You can also [`modify`](crate::Reg::modify) this register. See [API](https://docs.rs/svd2rust/#read--modify--write-api).
@@ -1371,6 +1411,42 @@ For information about available fields see [`mod@io_i2s0_data_out`] module*/
 pub type IoI2s0DataOut = crate::Reg<io_i2s0_data_out::IoI2s0DataOutSpec>;
 ///IOCELL control for I2S0_DATA_OUT pin
 pub mod io_i2s0_data_out;
+/**IO_I2S1_BCK (rw) register accessor: IOCELL control for I2S1_BCK pin
+
+You can [`read`](crate::Reg::read) this register and get [`io_i2s1_bck::R`]. You can [`reset`](crate::Reg::reset), [`write`](crate::Reg::write), [`write_with_zero`](crate::Reg::write_with_zero) this register using [`io_i2s1_bck::W`]. You can also [`modify`](crate::Reg::modify) this register. See [API](https://docs.rs/svd2rust/#read--modify--write-api).
+
+For information about available fields see [`mod@io_i2s1_bck`] module*/
+#[doc(alias = "IO_I2S1_BCK")]
+pub type IoI2s1Bck = crate::Reg<io_i2s1_bck::IoI2s1BckSpec>;
+///IOCELL control for I2S1_BCK pin
+pub mod io_i2s1_bck;
+/**IO_I2S1_LRCK (rw) register accessor: IOCELL control for I2S1_LRCK pin
+
+You can [`read`](crate::Reg::read) this register and get [`io_i2s1_lrck::R`]. You can [`reset`](crate::Reg::reset), [`write`](crate::Reg::write), [`write_with_zero`](crate::Reg::write_with_zero) this register using [`io_i2s1_lrck::W`]. You can also [`modify`](crate::Reg::modify) this register. See [API](https://docs.rs/svd2rust/#read--modify--write-api).
+
+For information about available fields see [`mod@io_i2s1_lrck`] module*/
+#[doc(alias = "IO_I2S1_LRCK")]
+pub type IoI2s1Lrck = crate::Reg<io_i2s1_lrck::IoI2s1LrckSpec>;
+///IOCELL control for I2S1_LRCK pin
+pub mod io_i2s1_lrck;
+/**IO_I2S1_DATA_IN (rw) register accessor: IOCELL control for I2S1_DATA_IN pin
+
+You can [`read`](crate::Reg::read) this register and get [`io_i2s1_data_in::R`]. You can [`reset`](crate::Reg::reset), [`write`](crate::Reg::write), [`write_with_zero`](crate::Reg::write_with_zero) this register using [`io_i2s1_data_in::W`]. You can also [`modify`](crate::Reg::modify) this register. See [API](https://docs.rs/svd2rust/#read--modify--write-api).
+
+For information about available fields see [`mod@io_i2s1_data_in`] module*/
+#[doc(alias = "IO_I2S1_DATA_IN")]
+pub type IoI2s1DataIn = crate::Reg<io_i2s1_data_in::IoI2s1DataInSpec>;
+///IOCELL control for I2S1_DATA_IN pin
+pub mod io_i2s1_data_in;
+/**IO_I2S1_DATA_OUT (rw) register accessor: IOCELL control for I2S1_DATA_OUT pin
+
+You can [`read`](crate::Reg::read) this register and get [`io_i2s1_data_out::R`]. You can [`reset`](crate::Reg::reset), [`write`](crate::Reg::write), [`write_with_zero`](crate::Reg::write_with_zero) this register using [`io_i2s1_data_out::W`]. You can also [`modify`](crate::Reg::modify) this register. See [API](https://docs.rs/svd2rust/#read--modify--write-api).
+
+For information about available fields see [`mod@io_i2s1_data_out`] module*/
+#[doc(alias = "IO_I2S1_DATA_OUT")]
+pub type IoI2s1DataOut = crate::Reg<io_i2s1_data_out::IoI2s1DataOutSpec>;
+///IOCELL control for I2S1_DATA_OUT pin
+pub mod io_i2s1_data_out;
 /**IO_EMMC_CLK (rw) register accessor: IOCELL control for EMMC_CLK / SPI5_SCK pin
 
 You can [`read`](crate::Reg::read) this register and get [`io_emmc_clk::R`]. You can [`reset`](crate::Reg::reset), [`write`](crate::Reg::write), [`write_with_zero`](crate::Reg::write_with_zero) this register using [`io_emmc_clk::W`]. You can also [`modify`](crate::Reg::modify) this register. See [API](https://docs.rs/svd2rust/#read--modify--write-api).
