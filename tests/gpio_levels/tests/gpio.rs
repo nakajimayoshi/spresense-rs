@@ -10,8 +10,12 @@
 //!   * D28 / UART2_RTS (`gp_uart2_rts`) ↔ D27 / UART2_CTS (`gp_uart2_cts`) on JP1:
 //!     short the two pins together — D28 drives the line, D27 reads it back, so
 //!     driving D28 High/Low must make D27 read High/Low.
+//!   * D22 / SEN_IRQ (`gp_sen_irq_in`, JP1 pin 12) → leave **unconnected**:
+//!     the internal pull-up/pull-down tests drive this pin from its own pad
+//!     resistors, so any external connection (or an add-on board on JP1) would
+//!     fight the weak pull and is not allowed.
 //!
-//! `defmt-test` prints `(n/4) running ...` per test and `all tests passed!` on
+//! `defmt-test` prints `(n/6) running ...` per test and `all tests passed!` on
 //! success, which `cargo-spresense-flash --test` matches for the verdict. (On
 //! bare metal defmt-test's final semihosting exit faults harmlessly *after* that
 //! line has already been clocked out of the UART, so the host still sees it.)
@@ -37,7 +41,7 @@ mod tests {
     use defmt::assert;
 
     use cxd56_hal::clocks::{Config, RccExt};
-    use cxd56_hal::gpio::{pins, Input, Level, Output};
+    use cxd56_hal::gpio::{pins, Input, Level, Output, Pull};
     use cxd56_hal::pac;
     use cxd56_hal::uart::{Uart1, UartConfig};
 
@@ -48,6 +52,8 @@ mod tests {
         // Loopback pair on JP1, D27 ↔ D28 shorted together:
         out: Output<pac::topreg::GpUart2Rts>,  // D28 — drives the line
         sense: Input<pac::topreg::GpUart2Cts>, // D27 — floating, reads the line
+        // D22 — unconnected; driven only by its own internal pull resistors.
+        pull: Input<pac::topreg::GpSenIrqIn>,
     }
 
     #[init]
@@ -60,51 +66,18 @@ mod tests {
             Uart1::new(pac.uart1, &clocks, UartConfig::default()).expect("uart1 init failed");
         defmt_serial::defmt_serial(crate::SERIAL.init(uart));
 
-        // Reading a pin needs the pad's input buffer enabled (ENZI): `into_input()`
-        // only flips DIR on the GP_* register, while ENZI + the pull bits live on
-        // the separate IO_* pad register. Configure each input pad as a floating
-        // input (PDN=PUN=1 → no pull, ENZI=1 → input buffer on), mirroring the
-        // UART/I2C pinmux pattern in cxd56-hal::uart. The loopback output pad (D28)
-        // needs no IO_* config — `into_output()` drops DIR to 0, enabling its driver.
-        let topreg = pac.topreg;
-        topreg.io_emmc_data3().write(|w| {
-            w.lowemi()
-                .set_bit()
-                .pdn()
-                .set_bit()
-                .pun()
-                .set_bit()
-                .enzi()
-                .set_bit()
-        });
-        topreg.io_emmc_data2().write(|w| {
-            w.lowemi()
-                .set_bit()
-                .pdn()
-                .set_bit()
-                .pun()
-                .set_bit()
-                .enzi()
-                .set_bit()
-        });
-        // D27 / UART2_CTS — floating input sensing the D28 loopback driver.
-        topreg.io_uart2_cts().write(|w| {
-            w.lowemi()
-                .set_bit()
-                .pdn()
-                .set_bit()
-                .pun()
-                .set_bit()
-                .enzi()
-                .set_bit()
-        });
-
-        let pins = pins::Parts::new(topreg);
+        // `into_floating_input()` now enables the pad input buffer (ENZI) and
+        // sets the pull, so the inputs need no manual IO_* writes here. The
+        // loopback output pad (D28) needs none either — `into_output()` drops
+        // DIR to 0, enabling its driver. D22 starts floating; the pull tests
+        // switch it to pull-up / pull-down at runtime via `set_pull`.
+        let pins = pins::Parts::new(pac.topreg);
         State {
-            high: pins.gp_emmc_data3.into_input(),
-            low: pins.gp_emmc_data2.into_input(),
+            high: pins.gp_emmc_data3.into_floating_input(),
+            low: pins.gp_emmc_data2.into_floating_input(),
             out: pins.gp_uart2_rts.into_output(Level::Low),
-            sense: pins.gp_uart2_cts.into_input(),
+            sense: pins.gp_uart2_cts.into_floating_input(),
+            pull: pins.gp_sen_irq_in.into_floating_input(),
         }
     }
 
@@ -141,6 +114,32 @@ mod tests {
         assert!(
             state.sense.is_low(),
             "D28 (UART2_RTS) driven Low should make shorted D27 (UART2_CTS) read Low"
+        );
+    }
+
+    // The internal-pull tests drive the unconnected D22 pin from its own pad
+    // resistor. A weak (~100 kΩ) pull into the pin/trace capacitance settles far
+    // slower than the actively driven loopback above, so wait ~100k cycles
+    // (≈0.6 ms at 156 MHz, ≫ 5·RC) before sampling. Running pull-up then
+    // pull-down means the second test swings the full rail through the resistor —
+    // the worst case this delay must cover.
+    #[test]
+    fn pull_up_reads_high(state: &mut State) {
+        state.pull.set_pull(Pull::Up);
+        cortex_m::asm::delay(100_000);
+        assert!(
+            state.pull.is_high(),
+            "D22 (SEN_IRQ, unconnected) with internal pull-up should read High"
+        );
+    }
+
+    #[test]
+    fn pull_down_reads_low(state: &mut State) {
+        state.pull.set_pull(Pull::Down);
+        cortex_m::asm::delay(100_000);
+        assert!(
+            state.pull.is_low(),
+            "D22 (SEN_IRQ, unconnected) with internal pull-down should read Low"
         );
     }
 }
