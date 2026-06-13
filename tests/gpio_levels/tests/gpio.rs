@@ -15,7 +15,7 @@
 //!     resistors, so any external connection (or an add-on board on JP1) would
 //!     fight the weak pull and is not allowed.
 //!
-//! `defmt-test` prints `(n/6) running ...` per test and `all tests passed!` on
+//! `defmt-test` prints `(n/12) running ...` per test and `all tests passed!` on
 //! success, which `cargo-spresense-flash --test` matches for the verdict. (On
 //! bare metal defmt-test's final semihosting exit faults harmlessly *after* that
 //! line has already been clocked out of the UART, so the host still sees it.)
@@ -41,7 +41,7 @@ mod tests {
     use defmt::assert;
 
     use cxd56_hal::clocks::{Config, RccExt};
-    use cxd56_hal::gpio::{pins, Input, Level, Output, Pull};
+    use cxd56_hal::gpio::{pins, Input, InterruptInput, Level, Output, Pull, Trigger};
     use cxd56_hal::pac;
     use cxd56_hal::uart::{Uart1, UartConfig};
 
@@ -50,8 +50,9 @@ mod tests {
         high: Input<pac::topreg::GpEmmcData3>, // D21 — wired to 1.8V
         low: Input<pac::topreg::GpEmmcData2>,  // D20 — wired to GND
         // Loopback pair on JP1, D27 ↔ D28 shorted together:
-        out: Output<pac::topreg::GpUart2Rts>,  // D28 — drives the line
-        sense: Input<pac::topreg::GpUart2Cts>, // D27 — floating, reads the line
+        out: Output<pac::topreg::GpUart2Rts>, // D28 — drives the line
+        // D27 — floating, reads the line and is wired to an EXDEVICE interrupt.
+        sense: InterruptInput<pac::topreg::GpUart2Cts>,
         // D22 — unconnected; driven only by its own internal pull resistors.
         pull: Input<pac::topreg::GpSenIrqIn>,
     }
@@ -76,7 +77,12 @@ mod tests {
             high: pins.gp_emmc_data3.into_floating_input(),
             low: pins.gp_emmc_data2.into_floating_input(),
             out: pins.gp_uart2_rts.into_output(Level::Low),
-            sense: pins.gp_uart2_cts.into_floating_input(),
+            // D27 is pin 69 (APP domain) → first free APP slot 6 → EXDEVICE_6.
+            sense: pins
+                .gp_uart2_cts
+                .into_floating_input()
+                .into_interrupt(Trigger::RisingEdge, false)
+                .expect("no free EXDEVICE slot"),
             pull: pins.gp_sen_irq_in.into_floating_input(),
         }
     }
@@ -140,6 +146,119 @@ mod tests {
         assert!(
             state.pull.is_low(),
             "D22 (SEN_IRQ, unconnected) with internal pull-down should read Low"
+        );
+    }
+
+    // --- EXDEVICE interrupt tests (same D27↔D28 jumper) ---
+    //
+    // These are single-threaded, so they never depend on the WFE sleep actually
+    // firing: level waits use an already-true level and edge waits pre-latch the
+    // edge before calling `wait_*`, so each call's condition is met on entry and
+    // it returns at once. They exercise slot config, the PMU edge latch and the
+    // clear path — independent of the INTC/NVIC layer (`is_pending` reads the raw
+    // PMU latch). Each test sets its own trigger so order does not matter.
+
+    #[test]
+    fn wait_for_high_returns_when_high(state: &mut State) {
+        state.out.set_high();
+        cortex_m::asm::delay(1_000);
+        state.sense.wait_for_high(); // pin already high → returns immediately
+        assert!(state.sense.is_high(), "wait_for_high should leave D27 High");
+    }
+
+    #[test]
+    fn wait_for_low_returns_when_low(state: &mut State) {
+        state.out.set_low();
+        cortex_m::asm::delay(1_000);
+        state.sense.wait_for_low(); // pin already low → returns immediately
+        assert!(state.sense.is_low(), "wait_for_low should leave D27 Low");
+    }
+
+    #[test]
+    fn rising_edge_latches_and_waits(state: &mut State) {
+        state.out.set_low();
+        cortex_m::asm::delay(1_000);
+        state.sense.set_trigger(Trigger::RisingEdge);
+        state.sense.clear_pending();
+        assert!(
+            !state.sense.is_pending(),
+            "no edge should be latched while D28 holds Low"
+        );
+
+        state.out.set_high(); // rising edge on the shorted line
+        cortex_m::asm::delay(1_000);
+        assert!(
+            state.sense.is_pending(),
+            "the rising edge should be latched in the PMU"
+        );
+
+        state.sense.wait_for_rising_edge(); // already latched → returns at once
+        assert!(
+            !state.sense.is_pending(),
+            "the latch should be cleared after the wait"
+        );
+    }
+
+    #[test]
+    fn falling_edge_latches_and_waits(state: &mut State) {
+        state.out.set_high();
+        cortex_m::asm::delay(1_000);
+        state.sense.set_trigger(Trigger::FallingEdge);
+        state.sense.clear_pending();
+        assert!(
+            !state.sense.is_pending(),
+            "no edge should be latched while D28 holds High"
+        );
+
+        state.out.set_low(); // falling edge on the shorted line
+        cortex_m::asm::delay(1_000);
+        assert!(
+            state.sense.is_pending(),
+            "the falling edge should be latched in the PMU"
+        );
+
+        state.sense.wait_for_falling_edge();
+        assert!(
+            !state.sense.is_pending(),
+            "the latch should be cleared after the wait"
+        );
+    }
+
+    #[test]
+    fn any_edge_latches_and_waits(state: &mut State) {
+        state.out.set_low();
+        cortex_m::asm::delay(1_000);
+        state.sense.set_trigger(Trigger::AnyEdge);
+        state.sense.clear_pending();
+        assert!(!state.sense.is_pending(), "no edge latched on a stable level");
+
+        state.out.set_high(); // a transition (here, rising) under AnyEdge
+        cortex_m::asm::delay(1_000);
+        assert!(
+            state.sense.is_pending(),
+            "AnyEdge should latch either transition"
+        );
+
+        state.sense.wait_for_any_edge();
+        assert!(!state.sense.is_pending(), "latch cleared after the wait");
+    }
+
+    #[test]
+    fn is_pending_tracks_and_clears(state: &mut State) {
+        state.out.set_low();
+        cortex_m::asm::delay(1_000);
+        state.sense.set_trigger(Trigger::RisingEdge);
+        state.sense.clear_pending();
+        assert!(!state.sense.is_pending(), "cleared latch reads not-pending");
+
+        state.out.set_high();
+        cortex_m::asm::delay(1_000);
+        assert!(state.sense.is_pending(), "edge sets the latch");
+
+        state.sense.clear_pending();
+        assert!(
+            !state.sense.is_pending(),
+            "clear_pending re-arms (latch reads not-pending)"
         );
     }
 }
