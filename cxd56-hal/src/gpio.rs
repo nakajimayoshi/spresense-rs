@@ -1,4 +1,7 @@
 use crate::pac;
+use crate::regs;
+use cortex_m::peripheral::NVIC;
+use thiserror::Error;
 
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub enum Level {
@@ -47,7 +50,12 @@ mod sealed {
 /// Marker trait for svd2rust GPIO register accessors with the standard
 /// IN[0] / OUT[8] / DIR[16] (active-low) field layout, paired with the pin's
 /// `IO_*` (IOCELL) pad register for input-buffer and pull configuration.
-pub trait PinReg: sealed::Sealed + 'static {}
+///
+/// `PIN` is the CXD5602 pin number (the `PIN_*` numbering from NuttX
+/// `cxd56_pinconfig`), used to route the pad to an EXDEVICE interrupt slot.
+pub trait PinReg: sealed::Sealed + 'static {
+    const PIN: u8;
+}
 
 // Each pin has a GP_* data register (`$gp`, IN/OUT/DIR) and a matching IO_*
 // pad register (`$io`, ENZI/PUN/PDN/LOWEMI). The GP_* one is owned by the
@@ -56,7 +64,7 @@ pub trait PinReg: sealed::Sealed + 'static {}
 // owned. Macros cannot case-convert `GpFoo` → `io_foo`, so the pairs are
 // spelled out explicitly.
 macro_rules! impl_pinreg {
-    ($($gp:ident => $io:ident),+ $(,)?) => {$(
+    ($($gp:ident => $io:ident => $pin:literal),+ $(,)?) => {$(
         impl sealed::Sealed for pac::topreg::$gp {
             fn read_bits(&self) -> u32 {
                 self.read().bits()
@@ -71,39 +79,43 @@ macro_rules! impl_pinreg {
                 crate::regs::topreg().$io().modify(|_, w| unsafe { w.bits(val) });
             }
         }
-        impl PinReg for pac::topreg::$gp {}
+        impl PinReg for pac::topreg::$gp {
+            const PIN: u8 = $pin;
+        }
     )+};
 }
 
+// The third column is the CXD5602 pin number (NuttX `PIN_*` numbering), used to
+// route the pad to an EXDEVICE interrupt slot.
 impl_pinreg!(
     // UART1 console pads (SPI0_CS_X = TX, SPI0_SCK = RX); Func0 is GPIO.
-    GpSpi0CsX => io_spi0_cs_x,
-    GpSpi0Sck => io_spi0_sck,
+    GpSpi0CsX => io_spi0_cs_x => 17,
+    GpSpi0Sck => io_spi0_sck => 18,
     // Main-board LEDs + Arduino D14 (pre-existing)
-    GpI2s1Bck => io_i2s1_bck,
-    GpI2s1Lrck => io_i2s1_lrck,
-    GpI2s1DataIn => io_i2s1_data_in,
-    GpI2s1DataOut => io_i2s1_data_out,
-    GpI2c4Bck => io_i2c4_bck,
+    GpI2s1Bck => io_i2s1_bck => 97,
+    GpI2s1Lrck => io_i2s1_lrck => 98,
+    GpI2s1DataIn => io_i2s1_data_in => 99,
+    GpI2s1DataOut => io_i2s1_data_out => 100,
+    GpI2c4Bck => io_i2c4_bck => 1,
     // JP1 header
-    GpUart2Txd => io_uart2_txd,
-    GpUart2Rxd => io_uart2_rxd,
-    GpUart2Rts => io_uart2_rts,
-    GpUart2Cts => io_uart2_cts,
-    GpI2s0Bck => io_i2s0_bck,
-    GpI2s0Lrck => io_i2s0_lrck,
-    GpEmmcCmd => io_emmc_cmd,
-    GpEmmcClk => io_emmc_clk,
-    GpSenIrqIn => io_sen_irq_in,
+    GpUart2Txd => io_uart2_txd => 67,
+    GpUart2Rxd => io_uart2_rxd => 68,
+    GpUart2Rts => io_uart2_rts => 70,
+    GpUart2Cts => io_uart2_cts => 69,
+    GpI2s0Bck => io_i2s0_bck => 93,
+    GpI2s0Lrck => io_i2s0_lrck => 94,
+    GpEmmcCmd => io_emmc_cmd => 76,
+    GpEmmcClk => io_emmc_clk => 75,
+    GpSenIrqIn => io_sen_irq_in => 37,
     // JP2 header
-    GpEmmcData3 => io_emmc_data3,
-    GpEmmcData2 => io_emmc_data2,
-    GpI2s0DataIn => io_i2s0_data_in,
-    GpI2s0DataOut => io_i2s0_data_out,
-    GpEmmcData1 => io_emmc_data1,
-    GpEmmcData0 => io_emmc_data0,
-    GpI2c0Bck => io_i2c0_bck,
-    GpI2c0Bdt => io_i2c0_bdt,
+    GpEmmcData3 => io_emmc_data3 => 80,
+    GpEmmcData2 => io_emmc_data2 => 79,
+    GpI2s0DataIn => io_i2s0_data_in => 95,
+    GpI2s0DataOut => io_i2s0_data_out => 96,
+    GpEmmcData1 => io_emmc_data1 => 78,
+    GpEmmcData0 => io_emmc_data0 => 77,
+    GpI2c0Bck => io_i2c0_bck => 44,
+    GpI2c0Bdt => io_i2c0_bdt => 45,
 );
 
 /// Program a pad's `IO_*` register for input use: enable the input buffer
@@ -284,6 +296,445 @@ impl<R: PinReg> embedded_hal::digital::InputPin for Input<R> {
     }
     fn is_low(&mut self) -> Result<bool, Self::Error> {
         Ok(Input::is_low(self))
+    }
+}
+
+// =============================================================================
+// GPIO interrupts (EXDEVICE)
+// =============================================================================
+//
+// The CXD5602 has 12 GPIO external-interrupt slots (EXDEVICE_0..11 → NVIC IRQ
+// 20..31). A slot is bound to a pin through the TOPREG `IOCSYS/IOCAPP_INTSEL`
+// mux, and its trigger is configured by the `PMU_WAKE_TRIG_*` registers. Edge
+// modes use the PMU latch (TRIG0_RAW status, TRIG0_CLR to re-arm); level modes
+// route the pad straight through. Encodings and register layout follow the NuttX
+// driver `cxd56_gpioint.c`.
+//
+// `wait_for_*` keep the NVIC line masked and sleep in WFE, woken by SCR.SEVONPEND
+// when the (masked) line goes pending. For handler-driven use call
+// `enable_interrupt` and clear the latch from your `#[interrupt]` with
+// [`clear_interrupt`].
+
+const MAX_SLOT: u8 = 12;
+const MAX_SYS_SLOT: u8 = 6;
+const SLOT_UNUSED: u8 = 0x3f;
+/// First pin number of the APP domain; lower pin numbers are in the SYS domain.
+const PIN_APP_BASE: u8 = 56;
+
+/// Trigger condition for a GPIO interrupt.
+///
+/// Level modes assert while the pin holds the level; edge modes latch a single
+/// transition (held until cleared). Values are the 3-bit `PMU_WAKE_TRIG_INTDET`
+/// polarity encoding.
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub enum Trigger {
+    LevelHigh,
+    LevelLow,
+    RisingEdge,
+    FallingEdge,
+    AnyEdge,
+}
+
+impl Trigger {
+    /// 3-bit `INTDET` polarity field.
+    fn intdet(self) -> u32 {
+        match self {
+            Trigger::LevelHigh => 2,
+            Trigger::LevelLow => 3,
+            Trigger::RisingEdge => 4,
+            Trigger::FallingEdge => 5,
+            Trigger::AnyEdge => 7,
+        }
+    }
+
+    /// 3-bit `CPUINTSEL` route field. Levels route Through/Inverter (or Pmu with
+    /// the noise filter); every edge mode uses the PMU latch.
+    fn route(self, filter: bool) -> u32 {
+        match self {
+            Trigger::LevelHigh => {
+                if filter {
+                    2 // Pmu
+                } else {
+                    0 // Through
+                }
+            }
+            Trigger::LevelLow => {
+                if filter {
+                    2 // Pmu
+                } else {
+                    1 // Inverter
+                }
+            }
+            Trigger::RisingEdge | Trigger::FallingEdge | Trigger::AnyEdge => 3, // PmuLatch
+        }
+    }
+}
+
+/// Error returned by [`Input::into_interrupt`].
+#[derive(Debug, Error)]
+pub enum InterruptError {
+    /// Every EXDEVICE slot in the pin's domain is taken (6 SYS, 6 APP).
+    #[error("no free EXDEVICE slot for this pin's domain")]
+    NoSlotAvailable,
+}
+
+/// Pin index stored in the INTSEL mux for `pin` (index within its domain).
+fn intsel_value(pin: u8) -> u8 {
+    if pin < PIN_APP_BASE {
+        pin - 1
+    } else {
+        pin - PIN_APP_BASE
+    }
+}
+
+/// Read the 6-bit pin index in INTSEL slot `slot` (0..12). One byte per slot:
+/// SYS slots 0–3/4–5 in `IOCSYS_INTSEL0/1`, APP slots 6–9/10–11 in `IOCAPP_INTSEL0/1`.
+fn intsel_read(slot: u8) -> u8 {
+    let t = regs::topreg();
+    let (bits, byte) = match slot {
+        0..=3 => (t.iocsys_intsel0().read().bits(), slot),
+        4..=5 => (t.iocsys_intsel1().read().bits(), slot - 4),
+        6..=9 => (t.iocapp_intsel0().read().bits(), slot - 6),
+        10..=11 => (t.iocapp_intsel1().read().bits(), slot - 10),
+        _ => unreachable!(),
+    };
+    ((bits >> (byte as u32 * 8)) & 0xff) as u8
+}
+
+/// Write the 6-bit pin index `val` into INTSEL slot `slot`. Not interrupt-safe on
+/// its own — callers run it under a critical section.
+fn intsel_write(slot: u8, val: u8) {
+    let t = regs::topreg();
+    let val = val as u32;
+    macro_rules! put {
+        ($reg:ident, $byte:expr) => {{
+            let shift = ($byte as u32) * 8;
+            t.$reg()
+                .modify(|r, w| unsafe { w.bits((r.bits() & !(0xffu32 << shift)) | (val << shift)) });
+        }};
+    }
+    match slot {
+        0..=3 => put!(iocsys_intsel0, slot),
+        4..=5 => put!(iocsys_intsel1, slot - 4),
+        6..=9 => put!(iocapp_intsel0, slot - 6),
+        10..=11 => put!(iocapp_intsel1, slot - 10),
+        _ => unreachable!(),
+    }
+}
+
+/// Allocate (or reuse) an EXDEVICE slot for `pin`. Scans the pin's domain (SYS
+/// slots 0–5, APP slots 6–11): reuses the slot if the pin is already mapped, else
+/// claims the first free (`0x3f`) one. Runs under a critical section — the INTSEL
+/// mux is shared across all interrupt pins.
+fn allocate_slot(pin: u8) -> Result<u8, InterruptError> {
+    let (lo, hi) = if pin < PIN_APP_BASE {
+        (0, MAX_SYS_SLOT)
+    } else {
+        (MAX_SYS_SLOT, MAX_SLOT)
+    };
+    let want = intsel_value(pin);
+    critical_section::with(|_| {
+        let mut free: Option<u8> = None;
+        for slot in lo..hi {
+            let v = intsel_read(slot);
+            if v == want {
+                return Ok(slot); // already mapped → reuse
+            }
+            if v == SLOT_UNUSED && free.is_none() {
+                free = Some(slot);
+            }
+        }
+        match free {
+            Some(slot) => {
+                intsel_write(slot, want);
+                Ok(slot)
+            }
+            None => Err(InterruptError::NoSlotAvailable),
+        }
+    })
+}
+
+/// EXDEVICE interrupt for `slot` (0..12).
+fn slot_interrupt(slot: u8) -> pac::Interrupt {
+    use pac::Interrupt::*;
+    match slot {
+        0 => EXDEVICE_0,
+        1 => EXDEVICE_1,
+        2 => EXDEVICE_2,
+        3 => EXDEVICE_3,
+        4 => EXDEVICE_4,
+        5 => EXDEVICE_5,
+        6 => EXDEVICE_6,
+        7 => EXDEVICE_7,
+        8 => EXDEVICE_8,
+        9 => EXDEVICE_9,
+        10 => EXDEVICE_10,
+        11 => EXDEVICE_11,
+        _ => unreachable!(),
+    }
+}
+
+/// Slot index for an EXDEVICE interrupt, or `None` for any other line.
+fn interrupt_slot(irq: pac::Interrupt) -> Option<u8> {
+    use pac::Interrupt::*;
+    Some(match irq {
+        EXDEVICE_0 => 0,
+        EXDEVICE_1 => 1,
+        EXDEVICE_2 => 2,
+        EXDEVICE_3 => 3,
+        EXDEVICE_4 => 4,
+        EXDEVICE_5 => 5,
+        EXDEVICE_6 => 6,
+        EXDEVICE_7 => 7,
+        EXDEVICE_8 => 8,
+        EXDEVICE_9 => 9,
+        EXDEVICE_10 => 10,
+        EXDEVICE_11 => 11,
+        _ => return None,
+    })
+}
+
+/// Program polarity (`INTDET`), route (`CPUINTSEL`) and noise filter
+/// (`NOISECUTEN`) for `slot`. Runs under a critical section (read-modify-write of
+/// shared per-bank registers).
+fn set_gpioint_config(slot: u8, trigger: Trigger, filter: bool) {
+    let t = regs::topreg();
+    let intdet = trigger.intdet();
+    let route = trigger.route(filter);
+    critical_section::with(|_| {
+        // Noise filter: bit (16 + slot) in NOISECUTEN0.
+        let fbit = 1u32 << (16 + slot as u32);
+        t.pmu_wake_trig_noisecuten0().modify(|r, w| unsafe {
+            w.bits(if filter { r.bits() | fbit } else { r.bits() & !fbit })
+        });
+
+        // Polarity + route are 3-bit fields. Slots 0–3 live in INTDET0/CPUINTSEL0
+        // at bit 16+slot*4; slots 4–11 in INTDET1/CPUINTSEL1 at bit (slot-4)*4.
+        let shift = 16 + (slot as u32) * 4;
+        if shift < 32 {
+            t.pmu_wake_trig_intdet0()
+                .modify(|r, w| unsafe { w.bits((r.bits() & !(0x7u32 << shift)) | (intdet << shift)) });
+            t.pmu_wake_trig_cpuintsel0()
+                .modify(|r, w| unsafe { w.bits((r.bits() & !(0x7u32 << shift)) | (route << shift)) });
+        } else {
+            let shift = shift - 32;
+            t.pmu_wake_trig_intdet1()
+                .modify(|r, w| unsafe { w.bits((r.bits() & !(0x7u32 << shift)) | (intdet << shift)) });
+            t.pmu_wake_trig_cpuintsel1()
+                .modify(|r, w| unsafe { w.bits((r.bits() & !(0x7u32 << shift)) | (route << shift)) });
+        }
+    });
+}
+
+/// Raw PMU edge-latch status for `slot` (bit 16+slot in `PMU_WAKE_TRIG0_RAW`).
+/// Upstream of the INTC/NVIC, so it reflects a captured edge regardless of mask.
+fn edge_latched(slot: u8) -> bool {
+    regs::topreg_sub().pmu_wake_trig0_raw().read().bits() & (1u32 << (16 + slot as u32)) != 0
+}
+
+/// Clear the PMU edge latch for `slot` (write 1 to bit 16+slot in `PMU_WAKE_TRIG0_CLR`).
+fn clear_latch(slot: u8) {
+    regs::topreg_sub()
+        .pmu_wake_trig0_clr()
+        .write(|w| unsafe { w.bits(1u32 << (16 + slot as u32)) });
+}
+
+/// Set `SCR.SEVONPEND` so a masked-but-pending NVIC line is a `WFE` wake event.
+/// Process-global and idempotent; harmless because every `WFE` wait re-checks its
+/// own condition, so a spurious wake only costs a loop iteration.
+fn set_sevonpend() {
+    const SEVONPEND: u32 = 1 << 4;
+    // Safety: SCB is a fixed core peripheral; this is one RMW of its SCR register.
+    unsafe {
+        (*cortex_m::peripheral::SCB::PTR)
+            .scr
+            .modify(|scr| scr | SEVONPEND);
+    }
+}
+
+/// Clear the EXDEVICE edge latch for `interrupt` from within its `#[interrupt]`
+/// handler. The NVIC pending bit is cleared by exception entry, but the PMU latch
+/// must be cleared here or the line re-asserts after the handler returns. No-op for
+/// a non-EXDEVICE interrupt. Mirrors [`crate::timer::clear_pending`].
+pub fn clear_interrupt(interrupt: pac::Interrupt) {
+    if let Some(slot) = interrupt_slot(interrupt) {
+        clear_latch(slot);
+    }
+}
+
+/// A GPIO input wired to an EXDEVICE interrupt slot.
+///
+/// Created by [`Input::into_interrupt`]. Offers blocking
+/// [`wait_for_high`](Self::wait_for_high) … [`wait_for_any_edge`](Self::wait_for_any_edge)
+/// plus a handler-driven mode ([`enable_interrupt`](Self::enable_interrupt) with your
+/// own `#[interrupt]` calling [`clear_interrupt`]). Reading the pin
+/// ([`is_high`](Self::is_high) / [`is_low`](Self::is_low)) still works.
+pub struct InterruptInput<R: PinReg> {
+    input: Input<R>,
+    slot: u8,
+    irq: pac::Interrupt,
+    filter: bool,
+    trigger: Trigger,
+}
+
+impl<R: PinReg> Input<R> {
+    /// Allocate an EXDEVICE slot for this pin and program `trigger`.
+    ///
+    /// `noise_filter` routes level triggers through the PMU noise filter. The pad
+    /// input buffer (ENZI) must already be enabled, exactly as for reading via
+    /// [`Input`]. The NVIC line is left **masked**:
+    /// [`wait_for_high`](InterruptInput::wait_for_high) and friends sleep in `WFE`
+    /// (woken via `SCR.SEVONPEND`, which this sets once); for handler-driven use
+    /// call [`enable_interrupt`](InterruptInput::enable_interrupt).
+    ///
+    /// Returns [`InterruptError::NoSlotAvailable`] if every slot in the pin's
+    /// domain (SYS: pins < 56, APP: pins ≥ 56) is in use.
+    pub fn into_interrupt(
+        self,
+        trigger: Trigger,
+        noise_filter: bool,
+    ) -> Result<InterruptInput<R>, InterruptError> {
+        let slot = allocate_slot(R::PIN)?;
+        set_sevonpend();
+        let mut this = InterruptInput {
+            input: self,
+            slot,
+            irq: slot_interrupt(slot),
+            filter: noise_filter,
+            trigger,
+        };
+        this.apply_trigger();
+        this.clear_pending();
+        Ok(this)
+    }
+}
+
+impl<R: PinReg> InterruptInput<R> {
+    /// The EXDEVICE interrupt this pin's slot is wired to.
+    pub fn interrupt(&self) -> pac::Interrupt {
+        self.irq
+    }
+
+    pub fn is_high(&self) -> bool {
+        self.input.is_high()
+    }
+
+    pub fn is_low(&self) -> bool {
+        self.input.is_low()
+    }
+
+    pub fn get_level(&self) -> Level {
+        self.input.get_level()
+    }
+
+    /// The currently configured trigger.
+    pub fn trigger(&self) -> Trigger {
+        self.trigger
+    }
+
+    /// Reprogram the trigger condition.
+    pub fn set_trigger(&mut self, trigger: Trigger) {
+        self.trigger = trigger;
+        self.apply_trigger();
+    }
+
+    fn apply_trigger(&self) {
+        set_gpioint_config(self.slot, self.trigger, self.filter);
+    }
+
+    /// Unmask the NVIC line so the configured trigger dispatches your `#[interrupt]`
+    /// handler. Not needed for the `wait_for_*` methods (they keep the line masked).
+    pub fn enable_interrupt(&mut self) {
+        // Safety: this HAL uses `critical-section` (PRIMASK), not BASEPRI priority
+        // masking, so unmasking a line cannot escape an in-progress critical section.
+        unsafe { NVIC::unmask(self.irq) };
+    }
+
+    /// Mask the NVIC line.
+    pub fn disable_interrupt(&mut self) {
+        NVIC::mask(self.irq);
+    }
+
+    /// Whether an edge has been latched since the last clear (raw PMU status,
+    /// independent of the NVIC mask). Meaningful for edge triggers; for level
+    /// triggers read [`is_high`](Self::is_high) / [`is_low`](Self::is_low).
+    pub fn is_pending(&self) -> bool {
+        edge_latched(self.slot)
+    }
+
+    /// Clear a latched edge and the NVIC pending bit.
+    pub fn clear_pending(&mut self) {
+        clear_latch(self.slot);
+        NVIC::unpend(self.irq);
+    }
+
+    /// Block until the pin reads high. Returns immediately if it already is.
+    pub fn wait_for_high(&mut self) {
+        self.wait_level(Trigger::LevelHigh, Level::High);
+    }
+
+    /// Block until the pin reads low. Returns immediately if it already is.
+    pub fn wait_for_low(&mut self) {
+        self.wait_level(Trigger::LevelLow, Level::Low);
+    }
+
+    /// Block until a rising edge is latched. An edge already latched since
+    /// configuration / the last [`clear_pending`](Self::clear_pending) satisfies
+    /// this immediately — call `clear_pending` first to discard earlier edges.
+    pub fn wait_for_rising_edge(&mut self) {
+        self.wait_edge(Trigger::RisingEdge);
+    }
+
+    /// Block until a falling edge is latched. See [`wait_for_rising_edge`](Self::wait_for_rising_edge).
+    pub fn wait_for_falling_edge(&mut self) {
+        self.wait_edge(Trigger::FallingEdge);
+    }
+
+    /// Block until either edge is latched. See [`wait_for_rising_edge`](Self::wait_for_rising_edge).
+    pub fn wait_for_any_edge(&mut self) {
+        self.wait_edge(Trigger::AnyEdge);
+    }
+
+    fn wait_level(&mut self, trigger: Trigger, level: Level) {
+        if self.input.get_level() == level {
+            return;
+        }
+        if self.trigger != trigger {
+            self.set_trigger(trigger);
+        }
+        // The level trigger pends the (masked) line when the pin reaches `level`,
+        // waking WFE via SEVONPEND; the pin is the source of truth each iteration.
+        while self.input.get_level() != level {
+            cortex_m::asm::wfe();
+        }
+        self.clear_pending();
+    }
+
+    fn wait_edge(&mut self, trigger: Trigger) {
+        if self.trigger != trigger {
+            self.set_trigger(trigger);
+            // Drop any edge captured under the previous trigger.
+            self.clear_pending();
+        }
+        // Return on an edge already latched since config / last clear; otherwise
+        // sleep until one arrives. Checking before WFE, together with the ARM event
+        // register, closes the latch-vs-sleep race (an edge in the window sets the
+        // event register, so the next WFE returns immediately and we re-check).
+        while !self.is_pending() {
+            cortex_m::asm::wfe();
+        }
+        self.clear_pending();
+    }
+
+    /// Release the EXDEVICE slot and return the plain [`Input`]. Masks the line,
+    /// frees the slot in the mux, parks its trigger at level-high (the unused-slot
+    /// convention) and clears any latch.
+    pub fn release(mut self) -> Input<R> {
+        self.disable_interrupt();
+        set_gpioint_config(self.slot, Trigger::LevelHigh, false);
+        critical_section::with(|_| intsel_write(self.slot, SLOT_UNUSED));
+        self.clear_pending();
+        self.input
     }
 }
 
