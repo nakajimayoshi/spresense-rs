@@ -21,28 +21,34 @@ use defmt_serial as _;
 use panic_probe as _;
 use static_cell::StaticCell;
 
-use cxd56_hal::clocks::{Clocks, Config, RccExt};
-use cxd56_hal::pac;
-use cxd56_hal::uart::{Uart1, Uart2, UartConfig};
+use cxd56_hal::{
+    clocks::{Clock, Config, RccExt},
+    uart_alt::{Uart, Uart2Pins, UartConfig},
+};
+use cxd56_hal::{gpio::pins::Parts, pac, uart_alt::Uart1Pins};
 
-static SERIAL: StaticCell<Uart1> = StaticCell::new();
+static SERIAL: StaticCell<Uart<'static, pac::Uart1>> = StaticCell::new();
 
 /// Transmit one byte and read it straight back (loopback), asserting a match.
-fn echo_byte(uart: &mut Uart2, expect: u8) -> Result<(), &'static str> {
+fn echo_byte(uart: &mut Uart<'_, pac::Uart2>, expect: u8) -> Result<(), &'static str> {
     uart.write_byte(expect);
     uart.flush();
     // After flush() the byte has been clocked out and looped to RX; poll the RX
     // FIFO with a bounded spin so a wiring/clock fault fails fast instead of hanging.
     for _ in 0..1_000_000 {
         if let Some(got) = uart.read_byte() {
-            return if got == expect { Ok(()) } else { Err("byte mismatch") };
+            return if got == expect {
+                Ok(())
+            } else {
+                Err("byte mismatch")
+            };
         }
     }
     Err("RX timeout")
 }
 
 /// Drive a UART2 instance through a fixed byte pattern via `echo_byte`.
-fn run_pattern(uart: &mut Uart2) -> Result<(), &'static str> {
+fn run_pattern(uart: &mut Uart<'_, pac::Uart2>) -> Result<(), &'static str> {
     while uart.read_byte().is_some() {} // drain stale RX
     for &b in &[0xA5u8, 0x5A, 0x00, 0xFF, b'R', b'U', b'S', b'T'] {
         echo_byte(uart, b)?;
@@ -51,12 +57,22 @@ fn run_pattern(uart: &mut Uart2) -> Result<(), &'static str> {
 }
 
 /// [2/3] UART2 self-test using on-chip loopback — needs no external wiring.
-fn uart2_internal_loopback(uart2: pac::Uart2, clocks: &Clocks) -> Result<(), &'static str> {
-    let mut uart =
-        Uart2::new(uart2, clocks, UartConfig::default()).map_err(|_| "Uart2::new failed")?;
-    uart.set_loopback(true);
+fn uart2_internal_loopback(
+    uart2: pac::Uart2,
+    pins: Uart2Pins,
+    clocks: &Clock,
+) -> Result<(), &'static str> {
+    let mut uart = Uart::new(
+        uart2,
+        pins,
+        UartConfig {
+            loopback: true,
+            ..Default::default()
+        },
+        clocks,
+    )
+    .map_err(|_| "Uart2::new failed")?;
     let result = run_pattern(&mut uart);
-    uart.set_loopback(false);
     result
 }
 
@@ -73,11 +89,22 @@ fn uart2_external_loopback(uart2: pac::Uart2, clocks: &Clocks) -> Result<(), &'s
 fn main() -> ! {
     let pac = pac::Peripherals::take().unwrap();
     let crg = pac.crg.constrain(Config::default());
-    let clocks = crg.freeze();
+    let clock = crg.into_clock();
 
-    // UART1 is the console + defmt result channel.
-    let uart1 = Uart1::new(pac.uart1, &clocks, UartConfig::default()).expect("uart1 init failed");
-    defmt_serial::defmt_serial(SERIAL.init(uart1));
+    // UART1 for console output. COM clock is Fixed → Uart<'static, Uart1>.
+    let parts = Parts::new(pac.topreg);
+    let uart1_pins = Uart1Pins {
+        tx: parts.gp_spi0_cs_x,
+        rx: parts.gp_spi0_sck,
+    };
+    let uart2_pins = Uart2Pins {
+        tx: parts.gp_uart2_txd,
+        rx: parts.gp_uart2_rxd,
+    };
+    let uart =
+        Uart::new(pac.uart1, uart1_pins, Default::default(), &clock).expect("uart1 init failed");
+
+    defmt_serial::defmt_serial(crate::SERIAL.init(uart));
 
     defmt::println!("uart_peripheral: starting UART tests");
     let mut all_ok = true;
@@ -86,7 +113,7 @@ fn main() -> ! {
     defmt::println!("[1/3] console_uart1: PASS (UART1 console up, defmt-serial logging)");
 
     // [2/3] UART2 internal loopback (no wiring).
-    match uart2_internal_loopback(pac.uart2, &clocks) {
+    match uart2_internal_loopback(pac.uart2, uart2_pins, &clock) {
         Ok(()) => defmt::println!("[2/3] uart2_internal_loopback: PASS"),
         Err(e) => {
             all_ok = false;
@@ -109,7 +136,9 @@ fn main() -> ! {
         }
     }
     #[cfg(not(feature = "external-loopback"))]
-    defmt::println!("[3/3] uart2_external_loopback: SKIPPED (--features external-loopback + jumper JP1 D01↔D00)");
+    defmt::println!(
+        "[3/3] uart2_external_loopback: SKIPPED (--features external-loopback + jumper JP1 D01↔D00)"
+    );
 
     if all_ok {
         defmt::println!("TEST RESULT: PASS");

@@ -36,6 +36,7 @@ pub struct UartConfig {
     pub word_length: WordLength,
     pub stop_bits: StopBits,
     pub parity: Parity,
+    pub loopback: bool,
 }
 
 impl Default for UartConfig {
@@ -45,6 +46,7 @@ impl Default for UartConfig {
             word_length: WordLength::Eight,
             stop_bits: StopBits::One,
             parity: Parity::None,
+            loopback: false,
         }
     }
 }
