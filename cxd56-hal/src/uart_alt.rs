@@ -115,11 +115,27 @@ pub trait UartPeriph: sealed::Sealed {
     /// [`Uart::free`]. [`Uart1Pins`] for UART1, [`Uart2Pins`] for UART2.
     type Pins;
 
+    /// The TX-side GPIO pin token held by [`UartTx`] after [`Uart::split`].
+    type TxPin;
+
+    /// The RX-side GPIO pin token held by [`UartRx`] after [`Uart::split`].
+    type RxPin;
+
     /// Wrap an initialised inner driver in the correctly-lifetimed driver
     /// struct. Bodies are textually identical across impls; only the return
     /// *type* (and therefore the `'clk` propagation) differs.
     #[doc(hidden)]
     fn wrap<'clk>(inner: pl011::Uart<'static>, uart: Self, pins: Self::Pins) -> Self::Output<'clk>;
+
+    /// Decompose the pin pair into its TX and RX halves. Trivial struct
+    /// destructuring; only the concrete pin types differ across impls.
+    #[doc(hidden)]
+    fn split_pins(pins: Self::Pins) -> (Self::TxPin, Self::RxPin);
+
+    /// Inverse of [`split_pins`](UartPeriph::split_pins): recombine the TX and
+    /// RX pin tokens into the original pin pair.
+    #[doc(hidden)]
+    fn join_pins(tx: Self::TxPin, rx: Self::RxPin) -> Self::Pins;
 }
 
 impl sealed::Sealed for pac::Uart1 {
@@ -147,6 +163,8 @@ impl UartPeriph for pac::Uart1 {
     // ends at the call site, pinning nothing.
     type Output<'clk> = Uart<'static, pac::Uart1>;
     type Pins = Uart1Pins;
+    type TxPin = GpioPin<pac::topreg::GpSpi0CsX>;
+    type RxPin = GpioPin<pac::topreg::GpSpi0Sck>;
 
     fn wrap<'clk>(inner: pl011::Uart<'static>, uart: Self, pins: Self::Pins) -> Self::Output<'clk> {
         Uart {
@@ -155,6 +173,14 @@ impl UartPeriph for pac::Uart1 {
             pins,
             _life: PhantomData,
         }
+    }
+
+    fn split_pins(pins: Self::Pins) -> (Self::TxPin, Self::RxPin) {
+        (pins.tx, pins.rx)
+    }
+
+    fn join_pins(tx: Self::TxPin, rx: Self::RxPin) -> Self::Pins {
+        Uart1Pins { tx, rx }
     }
 }
 
@@ -178,6 +204,8 @@ impl UartPeriph for pac::Uart2 {
     // borrows the Clock for 'clk, blocking Clock::request_perf until dropped.
     type Output<'clk> = Uart<'clk, pac::Uart2>;
     type Pins = Uart2Pins;
+    type TxPin = GpioPin<pac::topreg::GpUart2Txd>;
+    type RxPin = GpioPin<pac::topreg::GpUart2Rxd>;
 
     fn wrap<'clk>(inner: pl011::Uart<'static>, uart: Self, pins: Self::Pins) -> Self::Output<'clk> {
         Uart {
@@ -186,6 +214,14 @@ impl UartPeriph for pac::Uart2 {
             pins,
             _life: PhantomData,
         }
+    }
+
+    fn split_pins(pins: Self::Pins) -> (Self::TxPin, Self::RxPin) {
+        (pins.tx, pins.rx)
+    }
+
+    fn join_pins(tx: Self::TxPin, rx: Self::RxPin) -> Self::Pins {
+        Uart2Pins { tx, rx }
     }
 }
 
@@ -348,6 +384,279 @@ impl<'clk, U: UartPeriph> Uart<'clk, U> {
         let pins = unsafe { core::ptr::read(&md.pins) };
         unsafe { core::ptr::drop_in_place(&mut md.inner) };
         (uart, pins)
+    }
+
+    /// Split the driver into independent [`UartTx`] and [`UartRx`] halves so
+    /// the transmit and receive directions can be owned by different contexts
+    /// (e.g. RX in an interrupt handler, TX in the main loop), or so a
+    /// one-direction peripheral can be expressed by simply dropping the unused
+    /// half.
+    ///
+    /// The UART stays enabled and configured: `split` only divides *software*
+    /// ownership of the already-running peripheral. The two halves partition
+    /// the PL011 register set — TX drives the data register's transmit FIFO and
+    /// polls `TXFF`/`BUSY`; RX drains the receive FIFO and polls `RXFE`; neither
+    /// touches the shared control/format registers — so they operate without
+    /// coordination.
+    ///
+    /// # Note on `Drop` and the clock
+    ///
+    /// The halves have no [`Drop`]: the peripheral clock (and, for UART2, the
+    /// [`Clock`] borrow encoded in `'clk`) stays held for as long as *either*
+    /// half is alive. To gate the clock off and reclaim the GPIO pins, first
+    /// recombine the halves with [`join`](Uart::join), then call
+    /// [`free`](Uart::free) on the result.
+    ///
+    /// Pin-mux is unchanged — on this SoC the function mux routes both pads as a
+    /// group, so the RX pad remains wired to the UART even if you keep only the
+    /// TX half.
+    pub fn split(self) -> (UartTx<'clk, U>, UartRx<'clk, U>) {
+        // Keep the clock and pin-mux active — only dismantle the wrapper. The
+        // ManuallyDrop suppresses Uart's Drop (which would gate the clock off).
+        let mut md = core::mem::ManuallyDrop::new(self);
+        // SAFETY: Each field is read exactly once through a raw pointer and
+        // `md` is never used again, so there is no double-move or
+        // use-after-read. `inner` is dropped in place (it owns only the MMIO
+        // pointer and has no destructor of consequence); `uart` and `pins` are
+        // moved out by value. ManuallyDrop ensures the struct-level Drop does
+        // not run, so the clock stays enabled for the halves.
+        let uart = unsafe { core::ptr::read(&md.uart) };
+        let pins = unsafe { core::ptr::read(&md.pins) };
+        unsafe { core::ptr::drop_in_place(&mut md.inner) };
+        let (tx_pin, rx_pin) = U::split_pins(pins);
+        (
+            UartTx {
+                uart,
+                pin: tx_pin,
+                _life: PhantomData,
+            },
+            UartRx {
+                pin: rx_pin,
+                _life: PhantomData,
+            },
+        )
+    }
+
+    /// Recombine [`UartTx`] and [`UartRx`] halves produced by [`split`](Uart::split)
+    /// back into a full driver, restoring access to the whole-UART operations
+    /// (e.g. [`set_loopback`](Uart::set_loopback)) and enabling
+    /// [`free`](Uart::free).
+    ///
+    /// Consuming both halves restores exclusive ownership of the peripheral, so
+    /// rebuilding the single `pl011::Uart` wrapper is sound again. No hardware
+    /// is reconfigured — the UART keeps the line settings and baud rate from the
+    /// original [`new`](Uart::new).
+    pub fn join(tx: UartTx<'clk, U>, rx: UartRx<'clk, U>) -> U::Output<'clk> {
+        // Move the pin and peripheral tokens out of each half by field access
+        // (neither half has a Drop impl, so partial moves are fine).
+        let pins = U::join_pins(tx.pin, rx.pin);
+        // SAFETY: identical to `Uart::new` — `U::regs()` is the fixed,
+        // 'static-valid PL011 MMIO base. Both halves were just consumed, so no
+        // other accessor to this peripheral remains and uniqueness is restored.
+        // `pl011::Uart::new` only stores the pointer; it performs no register
+        // writes, so the already-configured UART is left untouched.
+        let ptr = NonNull::new(U::regs() as *mut pl011::PL011Registers)
+            .expect("PL011 base address is null");
+        let inner = pl011::Uart::new(unsafe { pl011::UniqueMmioPointer::new(ptr) });
+        U::wrap(inner, tx.uart, pins)
+    }
+}
+
+/// Transmit half of a [`Uart`] produced by [`Uart::split`].
+///
+/// Owns the PAC peripheral token (needed to [`Uart::join`]) and the TX GPIO
+/// pin. Accesses only the PL011 transmit path — pushing bytes into the data
+/// register's TX FIFO and polling `TXFF`/`BUSY` — never the shared
+/// control/format registers, so it coexists with a live [`UartRx`].
+///
+/// Implements [`fmt::Write`], [`embedded_hal_nb::serial::Write`], and
+/// [`embedded_io::Write`].
+pub struct UartTx<'clk, U: UartPeriph> {
+    uart: U,
+    pin: U::TxPin,
+    _life: PhantomData<&'clk ()>,
+}
+
+/// Receive half of a [`Uart`] produced by [`Uart::split`].
+///
+/// Owns the RX GPIO pin. Accesses only the PL011 receive path — draining the
+/// data register's RX FIFO and polling `RXFE` — never the shared
+/// control/format registers, so it coexists with a live [`UartTx`].
+///
+/// Implements [`embedded_hal_nb::serial::Read`] and [`embedded_io::Read`],
+/// reporting the same overrun/break/parity/framing errors as the unsplit
+/// [`Uart`].
+pub struct UartRx<'clk, U: UartPeriph> {
+    pin: U::RxPin,
+    _life: PhantomData<&'clk ()>,
+}
+
+// Exclusive ownership of one direction of the peripheral. The TX half holds the
+// PAC token (Send, matching the PAC `Periph` Send impl) plus a Send pin token;
+// the RX half holds only a Send pin token. The split partitions the register
+// set (TX FIFO / RX FIFO, both via independent volatile accesses), so handing a
+// half to another execution context is sound on the same argument as the
+// unsplit `Uart`'s Send impl.
+unsafe impl<U: UartPeriph> Send for UartTx<'_, U> {}
+unsafe impl<U: UartPeriph> Send for UartRx<'_, U> {}
+
+impl<U: UartPeriph> UartTx<'_, U> {
+    /// Shared `&'static` view of this UART's PL011 register block.
+    ///
+    /// SAFETY: `U::regs()` is the fixed, 'static-valid MMIO base for this
+    /// peripheral (see [`Uart::new`]). The TX half only ever issues volatile
+    /// writes to the data register and volatile reads of the flag register,
+    /// which the RX half never writes, so the shared `&'static` view does not
+    /// enable a conflicting access.
+    #[inline]
+    fn regs(&self) -> &'static pac::uart1::RegisterBlock {
+        unsafe { &*U::regs() }
+    }
+
+    /// Transmit one byte, blocking until the TX FIFO has room.
+    #[inline]
+    pub fn write_byte(&mut self, byte: u8) {
+        while self.regs().fr().read().txff().bit_is_set() {}
+        self.regs().dr().write(|w| unsafe { w.bits(byte as u32) });
+    }
+
+    /// Block until the TX FIFO and shift register are empty.
+    #[inline]
+    pub fn flush(&mut self) {
+        while self.regs().fr().read().busy().bit_is_set() {}
+    }
+}
+
+impl<U: UartPeriph> UartRx<'_, U> {
+    /// Shared `&'static` view of this UART's PL011 register block.
+    ///
+    /// SAFETY: as for [`UartTx::regs`], but the RX half only issues volatile
+    /// reads of the data and flag registers; reading the data register pops the
+    /// RX FIFO, an operation independent of the TX half's data-register writes.
+    #[inline]
+    fn regs(&self) -> &'static pac::uart1::RegisterBlock {
+        unsafe { &*U::regs() }
+    }
+
+    /// Non-blocking read of a single byte, replicating
+    /// [`arm_pl011_uart::Uart::read_word`]: `Ok(None)` when the RX FIFO is
+    /// empty, `Err` on overrun/break/parity/framing (checked in that order).
+    fn read_word(&mut self) -> Result<Option<u8>, pl011::Error> {
+        let regs = self.regs();
+        if regs.fr().read().rxfe().bit_is_set() {
+            return Ok(None);
+        }
+        // Single volatile read latches the data byte and its error flags.
+        let dr = regs.dr().read();
+        if dr.oe().is_error() {
+            Err(pl011::Error::Overrun)
+        } else if dr.be().is_error() {
+            Err(pl011::Error::Break)
+        } else if dr.pe().is_error() {
+            Err(pl011::Error::Parity)
+        } else if dr.fe().is_error() {
+            Err(pl011::Error::Framing)
+        } else {
+            Ok(Some(dr.bits() as u8))
+        }
+    }
+
+    /// Read one byte if the RX FIFO is non-empty, otherwise return `None`.
+    ///
+    /// Returns `None` on both an empty FIFO and RX errors (overrun/parity/
+    /// framing/break); use the [`embedded_hal_nb`] or [`embedded_io`] trait
+    /// impls to observe error detail.
+    #[inline]
+    pub fn read_byte(&mut self) -> Option<u8> {
+        self.read_word().ok().flatten()
+    }
+}
+
+impl<U: UartPeriph> fmt::Write for UartTx<'_, U> {
+    fn write_str(&mut self, s: &str) -> fmt::Result {
+        for byte in s.bytes() {
+            self.write_byte(byte);
+        }
+        Ok(())
+    }
+}
+
+impl<U: UartPeriph> ErrorType for UartTx<'_, U> {
+    type Error = UartError;
+}
+
+impl<U: UartPeriph> embedded_hal_nb::serial::Write<u8> for UartTx<'_, U> {
+    fn write(&mut self, word: u8) -> nb::Result<(), Self::Error> {
+        if self.regs().fr().read().txff().bit_is_set() {
+            Err(nb::Error::WouldBlock)
+        } else {
+            self.regs().dr().write(|w| unsafe { w.bits(word as u32) });
+            Ok(())
+        }
+    }
+
+    fn flush(&mut self) -> nb::Result<(), Self::Error> {
+        if self.regs().fr().read().busy().bit_is_set() {
+            Err(nb::Error::WouldBlock)
+        } else {
+            Ok(())
+        }
+    }
+}
+
+impl<U: UartPeriph> embedded_io::ErrorType for UartTx<'_, U> {
+    type Error = UartError;
+}
+
+impl<U: UartPeriph> embedded_io::Write for UartTx<'_, U> {
+    fn write(&mut self, buf: &[u8]) -> Result<usize, Self::Error> {
+        for &byte in buf {
+            self.write_byte(byte);
+        }
+        Ok(buf.len())
+    }
+
+    fn flush(&mut self) -> Result<(), Self::Error> {
+        while self.regs().fr().read().busy().bit_is_set() {}
+        Ok(())
+    }
+}
+
+impl<U: UartPeriph> ErrorType for UartRx<'_, U> {
+    type Error = UartError;
+}
+
+impl<U: UartPeriph> embedded_hal_nb::serial::Read<u8> for UartRx<'_, U> {
+    fn read(&mut self) -> nb::Result<u8, Self::Error> {
+        match self.read_word() {
+            Ok(Some(byte)) => Ok(byte),
+            Ok(None) => Err(nb::Error::WouldBlock),
+            Err(e) => Err(nb::Error::Other(UartError::Pl011(e))),
+        }
+    }
+}
+
+impl<U: UartPeriph> embedded_io::ErrorType for UartRx<'_, U> {
+    type Error = UartError;
+}
+
+impl<U: UartPeriph> embedded_io::Read for UartRx<'_, U> {
+    fn read(&mut self, buf: &mut [u8]) -> Result<usize, Self::Error> {
+        if buf.is_empty() {
+            return Ok(0);
+        }
+        // Block until at least one byte is available; the caller retries for
+        // more. Mirrors `arm_pl011_uart`'s embedded-io Read impl.
+        loop {
+            match self.read_word() {
+                Ok(Some(byte)) => {
+                    buf[0] = byte;
+                    return Ok(1);
+                }
+                Ok(None) => continue,
+                Err(e) => return Err(UartError::Pl011(e)),
+            }
+        }
     }
 }
 

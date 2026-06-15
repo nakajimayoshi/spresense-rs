@@ -141,8 +141,9 @@ pub(crate) fn brd(f_uart: u32, baud: u32) -> Result<(u16, u8), UartError> {
 // ---------- PL011 init sequence (mirrors cxd56_serial.c:454-516) ----------
 //
 // The sequence is identical for UART1 and UART2. svd2rust generates distinct
-// types for each peripheral, so the body is duplicated. TODO(pl011): factor
-// into a macro when a third UART instance is added.
+// types for each peripheral, so the body is duplicated. The same applies to the
+// Tx/Rx split halves further down. TODO(pl011): factor into a macro when a third
+// UART instance is added.
 
 /// Blocking driver for UART1 (the SYSIOP_SUB "debug" UART wired to the
 /// on-board CP2102N USB-to-serial bridge on the Spresense main board).
@@ -245,6 +246,21 @@ impl Uart1 {
     pub fn set_loopback(&mut self, on: bool) {
         self.uart.cr().modify(|_, w| w.lbe().bit(on));
     }
+
+    /// Split into independent [`Uart1Tx`] and [`Uart1Rx`] halves so the
+    /// transmit and receive directions can be owned separately (e.g. RX in an
+    /// interrupt handler, TX in the main loop). The UART stays enabled — this
+    /// only divides software ownership; recombine with [`Uart1::join`].
+    pub fn split(self) -> (Uart1Tx, Uart1Rx) {
+        (Uart1Tx { uart: self.uart }, Uart1Rx { _private: () })
+    }
+
+    /// Recombine halves produced by [`Uart1::split`]. Consuming both restores
+    /// exclusive ownership; no hardware is reconfigured.
+    pub fn join(tx: Uart1Tx, _rx: Uart1Rx) -> Uart1 {
+        let Uart1Tx { uart } = tx;
+        Uart1 { uart }
+    }
 }
 
 impl fmt::Write for Uart1 {
@@ -315,6 +331,150 @@ impl embedded_io::Read for Uart1 {
                 break;
             }
             buf[count] = self.uart.dr().read().bits() as u8;
+            count += 1;
+        }
+        Ok(count)
+    }
+}
+
+/// Transmit half of [`Uart1`] produced by [`Uart1::split`]. Holds the PAC token
+/// (returned by [`Uart1::join`]) and drives only the PL011 transmit FIFO, so it
+/// coexists with a live [`Uart1Rx`]. Implements [`fmt::Write`],
+/// [`embedded_hal_nb::serial::Write`] and [`embedded_io::Write`].
+pub struct Uart1Tx {
+    uart: pac::Uart1,
+}
+
+/// Receive half of [`Uart1`] produced by [`Uart1::split`]. Drains only the
+/// PL011 receive FIFO, so it coexists with a live [`Uart1Tx`]. Implements
+/// [`embedded_hal_nb::serial::Read`] and [`embedded_io::Read`].
+pub struct Uart1Rx {
+    _private: (),
+}
+
+impl Uart1Tx {
+    /// Shared `&'static` view of the UART1 register block.
+    ///
+    /// SAFETY: `Uart1::PTR` is the fixed, 'static-valid MMIO base. The TX half
+    /// only writes the data register and reads the flag register, which the RX
+    /// half never writes, so this shared view enables no conflicting access.
+    #[inline]
+    fn regs(&self) -> &'static pac::uart1::RegisterBlock {
+        unsafe { &*pac::Uart1::PTR }
+    }
+
+    /// Transmit one byte, blocking until the TX FIFO has room.
+    #[inline]
+    pub fn write_byte(&mut self, byte: u8) {
+        while self.regs().fr().read().txff().bit_is_set() {}
+        self.regs().dr().write(|w| unsafe { w.bits(byte as u32) });
+    }
+
+    /// Block until the TX FIFO and shift register are empty.
+    #[inline]
+    pub fn flush(&mut self) {
+        while self.regs().fr().read().busy().bit_is_set() {}
+    }
+}
+
+impl Uart1Rx {
+    /// Shared `&'static` view of the UART1 register block.
+    ///
+    /// SAFETY: as for [`Uart1Tx::regs`], but the RX half only reads the data
+    /// and flag registers; reading the data register pops the RX FIFO,
+    /// independent of the TX half's data-register writes.
+    #[inline]
+    fn regs(&self) -> &'static pac::uart1::RegisterBlock {
+        unsafe { &*pac::Uart1::PTR }
+    }
+
+    /// Read one byte if the RX FIFO is non-empty, otherwise return `None`.
+    #[inline]
+    pub fn read_byte(&mut self) -> Option<u8> {
+        if self.regs().fr().read().rxfe().bit_is_set() {
+            None
+        } else {
+            Some(self.regs().dr().read().bits() as u8)
+        }
+    }
+}
+
+impl fmt::Write for Uart1Tx {
+    fn write_str(&mut self, s: &str) -> fmt::Result {
+        for byte in s.bytes() {
+            self.write_byte(byte);
+        }
+        Ok(())
+    }
+}
+
+impl ErrorType for Uart1Tx {
+    type Error = ErrorKind;
+}
+
+impl embedded_hal_nb::serial::Write<u8> for Uart1Tx {
+    fn write(&mut self, word: u8) -> nb::Result<(), Self::Error> {
+        if self.regs().fr().read().txff().bit_is_set() {
+            Err(nb::Error::WouldBlock)
+        } else {
+            self.regs().dr().write(|w| unsafe { w.bits(word as u32) });
+            Ok(())
+        }
+    }
+
+    fn flush(&mut self) -> nb::Result<(), Self::Error> {
+        if self.regs().fr().read().busy().bit_is_set() {
+            Err(nb::Error::WouldBlock)
+        } else {
+            Ok(())
+        }
+    }
+}
+
+impl embedded_io::ErrorType for Uart1Tx {
+    type Error = embedded_io::ErrorKind;
+}
+
+impl embedded_io::Write for Uart1Tx {
+    fn write(&mut self, buf: &[u8]) -> Result<usize, Self::Error> {
+        for &byte in buf {
+            self.write_byte(byte);
+        }
+        Ok(buf.len())
+    }
+
+    fn flush(&mut self) -> Result<(), Self::Error> {
+        while nb::block!(<Self as embedded_hal_nb::serial::Write<u8>>::flush(self)).is_err() {}
+        Ok(())
+    }
+}
+
+impl ErrorType for Uart1Rx {
+    type Error = ErrorKind;
+}
+
+impl embedded_hal_nb::serial::Read<u8> for Uart1Rx {
+    fn read(&mut self) -> nb::Result<u8, Self::Error> {
+        match self.read_byte() {
+            Some(b) => Ok(b),
+            None => Err(nb::Error::WouldBlock),
+        }
+    }
+}
+
+impl embedded_io::ErrorType for Uart1Rx {
+    type Error = embedded_io::ErrorKind;
+}
+
+impl embedded_io::Read for Uart1Rx {
+    fn read(&mut self, buf: &mut [u8]) -> Result<usize, Self::Error> {
+        while self.regs().fr().read().rxfe().bit_is_set() {}
+        let mut count = 0;
+        while count < buf.len() {
+            if self.regs().fr().read().rxfe().bit_is_set() {
+                break;
+            }
+            buf[count] = self.regs().dr().read().bits() as u8;
             count += 1;
         }
         Ok(count)
@@ -420,6 +580,21 @@ impl Uart2 {
     pub fn set_loopback(&mut self, on: bool) {
         self.uart.cr().modify(|_, w| w.lbe().bit(on));
     }
+
+    /// Split into independent [`Uart2Tx`] and [`Uart2Rx`] halves so the
+    /// transmit and receive directions can be owned separately. The UART stays
+    /// enabled — this only divides software ownership; recombine with
+    /// [`Uart2::join`].
+    pub fn split(self) -> (Uart2Tx, Uart2Rx) {
+        (Uart2Tx { uart: self.uart }, Uart2Rx { _private: () })
+    }
+
+    /// Recombine halves produced by [`Uart2::split`]. Consuming both restores
+    /// exclusive ownership; no hardware is reconfigured.
+    pub fn join(tx: Uart2Tx, _rx: Uart2Rx) -> Uart2 {
+        let Uart2Tx { uart } = tx;
+        Uart2 { uart }
+    }
 }
 
 impl fmt::Write for Uart2 {
@@ -490,6 +665,152 @@ impl embedded_io::Read for Uart2 {
                 break;
             }
             buf[count] = self.uart.dr().read().bits() as u8;
+            count += 1;
+        }
+        Ok(count)
+    }
+}
+
+/// Transmit half of [`Uart2`] produced by [`Uart2::split`]. Holds the PAC token
+/// (returned by [`Uart2::join`]) and drives only the PL011 transmit FIFO, so it
+/// coexists with a live [`Uart2Rx`]. Implements [`fmt::Write`],
+/// [`embedded_hal_nb::serial::Write`] and [`embedded_io::Write`].
+pub struct Uart2Tx {
+    uart: pac::Uart2,
+}
+
+/// Receive half of [`Uart2`] produced by [`Uart2::split`]. Drains only the
+/// PL011 receive FIFO, so it coexists with a live [`Uart2Tx`]. Implements
+/// [`embedded_hal_nb::serial::Read`] and [`embedded_io::Read`].
+pub struct Uart2Rx {
+    _private: (),
+}
+
+impl Uart2Tx {
+    /// Shared `&'static` view of the UART2 register block.
+    ///
+    /// SAFETY: `Uart2::PTR` is the fixed, 'static-valid MMIO base. The TX half
+    /// only writes the data register and reads the flag register, which the RX
+    /// half never writes, so this shared view enables no conflicting access.
+    /// UART2 exposes the same PL011 layout as UART1 over its MMIO window, so the
+    /// cast to `uart1::RegisterBlock` is sound (as in [`Uart2::new`]).
+    #[inline]
+    fn regs(&self) -> &'static pac::uart1::RegisterBlock {
+        unsafe { &*(pac::Uart2::PTR as *const pac::uart1::RegisterBlock) }
+    }
+
+    /// Transmit one byte, blocking until the TX FIFO has room.
+    #[inline]
+    pub fn write_byte(&mut self, byte: u8) {
+        while self.regs().fr().read().txff().bit_is_set() {}
+        self.regs().dr().write(|w| unsafe { w.bits(byte as u32) });
+    }
+
+    /// Block until the TX FIFO and shift register are empty.
+    #[inline]
+    pub fn flush(&mut self) {
+        while self.regs().fr().read().busy().bit_is_set() {}
+    }
+}
+
+impl Uart2Rx {
+    /// Shared `&'static` view of the UART2 register block.
+    ///
+    /// SAFETY: as for [`Uart2Tx::regs`], but the RX half only reads the data
+    /// and flag registers; reading the data register pops the RX FIFO,
+    /// independent of the TX half's data-register writes.
+    #[inline]
+    fn regs(&self) -> &'static pac::uart1::RegisterBlock {
+        unsafe { &*(pac::Uart2::PTR as *const pac::uart1::RegisterBlock) }
+    }
+
+    /// Read one byte if the RX FIFO is non-empty, otherwise return `None`.
+    #[inline]
+    pub fn read_byte(&mut self) -> Option<u8> {
+        if self.regs().fr().read().rxfe().bit_is_set() {
+            None
+        } else {
+            Some(self.regs().dr().read().bits() as u8)
+        }
+    }
+}
+
+impl fmt::Write for Uart2Tx {
+    fn write_str(&mut self, s: &str) -> fmt::Result {
+        for byte in s.bytes() {
+            self.write_byte(byte);
+        }
+        Ok(())
+    }
+}
+
+impl ErrorType for Uart2Tx {
+    type Error = ErrorKind;
+}
+
+impl embedded_hal_nb::serial::Write<u8> for Uart2Tx {
+    fn write(&mut self, word: u8) -> nb::Result<(), Self::Error> {
+        if self.regs().fr().read().txff().bit_is_set() {
+            Err(nb::Error::WouldBlock)
+        } else {
+            self.regs().dr().write(|w| unsafe { w.bits(word as u32) });
+            Ok(())
+        }
+    }
+
+    fn flush(&mut self) -> nb::Result<(), Self::Error> {
+        if self.regs().fr().read().busy().bit_is_set() {
+            Err(nb::Error::WouldBlock)
+        } else {
+            Ok(())
+        }
+    }
+}
+
+impl embedded_io::ErrorType for Uart2Tx {
+    type Error = embedded_io::ErrorKind;
+}
+
+impl embedded_io::Write for Uart2Tx {
+    fn write(&mut self, buf: &[u8]) -> Result<usize, Self::Error> {
+        for &byte in buf {
+            self.write_byte(byte);
+        }
+        Ok(buf.len())
+    }
+
+    fn flush(&mut self) -> Result<(), Self::Error> {
+        while nb::block!(<Self as embedded_hal_nb::serial::Write<u8>>::flush(self)).is_err() {}
+        Ok(())
+    }
+}
+
+impl ErrorType for Uart2Rx {
+    type Error = ErrorKind;
+}
+
+impl embedded_hal_nb::serial::Read<u8> for Uart2Rx {
+    fn read(&mut self) -> nb::Result<u8, Self::Error> {
+        match self.read_byte() {
+            Some(b) => Ok(b),
+            None => Err(nb::Error::WouldBlock),
+        }
+    }
+}
+
+impl embedded_io::ErrorType for Uart2Rx {
+    type Error = embedded_io::ErrorKind;
+}
+
+impl embedded_io::Read for Uart2Rx {
+    fn read(&mut self, buf: &mut [u8]) -> Result<usize, Self::Error> {
+        while self.regs().fr().read().rxfe().bit_is_set() {}
+        let mut count = 0;
+        while count < buf.len() {
+            if self.regs().fr().read().rxfe().bit_is_set() {
+                break;
+            }
+            buf[count] = self.regs().dr().read().bits() as u8;
             count += 1;
         }
         Ok(count)
