@@ -1,0 +1,3 @@
+[template]
+cargo_generate_version = ">=0.18.0"
+description = "Bare-metal Rust starter for the Sony Spresense (CXD5602), built on cxd56-hal"

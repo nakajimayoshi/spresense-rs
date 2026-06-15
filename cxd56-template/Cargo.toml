@@ -1,0 +1,26 @@
+[package]
+name = "{{project-name}}"
+version = "0.1.0"
+edition = "2024"
+
+# Make the generated project a standalone workspace root (matches the cxd56-hal
+# example crates; harmless when generated outside any workspace).
+[workspace]
+
+[dependencies]
+cortex-m     = { version = "0.7.7", features = ["critical-section-single-core"] }
+cortex-m-rt  = "0.7.5"
+# Not published to crates.io — pulled from git, tracking `main`. To pin a
+# reproducible build, add `rev = "<commit-sha>"` to this line.
+cxd56-hal    = { git = "https://github.com/bsaintjo/spresense.git", features = ["rt", "critical-section"] }
+embedded-hal = "1.0.0"
+panic-halt   = "1.0.0"
+
+[profile.dev]
+panic = "abort"
+
+[profile.release]
+opt-level = "s"
+lto = true
+codegen-units = 1
+panic = "abort"

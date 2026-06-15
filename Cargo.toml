@@ -1,3 +1,7 @@
 [workspace]
 members = ["cxd56-hal", "cxd56-pac", "cxd56-pac-svd2rust", "cxd56-blink-debug", "embassy-cxd56", "spresense-bsp", "tools/*"]
+# cxd56-template is a cargo-generate template: its Cargo.toml uses a
+# `{{project-name}}` placeholder that is not a valid package, so keep cargo and
+# rust-analyzer from trying to load it as a workspace member.
+exclude = ["cxd56-template"]
 resolver = "3"
