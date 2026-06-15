@@ -25,7 +25,9 @@
 #![no_std]
 #![no_main]
 
-use cortex_m_rt as _; // reset handler that calls the defmt-test-generated `main`
+use cortex_m_rt as _;
+use cxd56_hal::{pac, uart_alt::Uart};
+// reset handler that calls the defmt-test-generated `main`
 use defmt_serial as _;
 use panic_probe as _;
 use static_cell::StaticCell;
@@ -33,11 +35,10 @@ use static_cell::StaticCell;
 use cxd56_hal::async_delay;
 use cxd56_hal::gpio;
 use cxd56_hal::pac::{Interrupt, interrupt};
-use cxd56_hal::uart::Uart1;
 
 // `defmt-test` owns the module body, so keep the logger cell at crate root and
 // reach it via `crate::SERIAL`.
-static SERIAL: StaticCell<Uart1> = StaticCell::new();
+static SERIAL: StaticCell<Uart<'static, pac::Uart1>> = StaticCell::new();
 
 /// In-`join` pacing for the loopback driver: wait this many RTC ticks before
 /// driving the edge, so the concurrent `wait_for_*_edge` has finished arming first
@@ -186,10 +187,13 @@ mod rt {
 mod tests {
     use defmt::assert;
 
-    use cxd56_hal::clocks::{Config, RccExt};
-    use cxd56_hal::gpio::{pins, Input, InterruptInput, Level, Output, Pull, Trigger, Wait};
+    use cxd56_hal::gpio::{Input, InterruptInput, Level, Output, Pull, Trigger, Wait};
     use cxd56_hal::pac;
-    use cxd56_hal::uart::{Uart1, UartConfig};
+    use cxd56_hal::{
+        clocks::{Config, RccExt},
+        gpio::pins::Parts,
+        uart_alt::{Uart, Uart1Pins},
+    };
 
     /// Fixtures shared across tests.
     struct State {
@@ -214,11 +218,16 @@ mod tests {
         // CPU base clock the edge-arm settle's one-shot counts at) — the tests use
         // only the free-function settle path, never a `Delay` handle.
         crate::async_delay::init(&clock);
-        let clocks = clock.freeze();
 
-        // Install the defmt-over-UART1 logger before any test logs a frame.
-        let uart =
-            Uart1::new(pac.uart1, &clocks, UartConfig::default()).expect("uart1 init failed");
+        // UART1 for console output. COM clock is Fixed → Uart<'static, Uart1>.
+        let parts = Parts::new(pac.topreg);
+        let uart1_pins = Uart1Pins {
+            tx: parts.gp_spi0_cs_x,
+            rx: parts.gp_spi0_sck,
+        };
+        let uart = Uart::new(pac.uart1, uart1_pins, Default::default(), &clock)
+            .expect("uart1 init failed");
+
         defmt_serial::defmt_serial(crate::SERIAL.init(uart));
 
         // Confirm which async-delay backing the edge-arm settle sleeps on — the
@@ -236,18 +245,17 @@ mod tests {
         // loopback output pad (D28) needs none either — `into_output()` drops
         // DIR to 0, enabling its driver. D22 starts floating; the pull tests
         // switch it to pull-up / pull-down at runtime via `set_pull`.
-        let pins = pins::Parts::new(pac.topreg);
         State {
-            high: pins.gp_emmc_data3.into_floating_input(),
-            low: pins.gp_emmc_data2.into_floating_input(),
-            out: pins.gp_uart2_rts.into_output(Level::Low),
+            high: parts.gp_emmc_data3.into_floating_input(),
+            low: parts.gp_emmc_data2.into_floating_input(),
+            out: parts.gp_uart2_rts.into_output(Level::Low),
             // D27 is pin 69 (APP domain) → first free APP slot 6 → EXDEVICE_6.
-            sense: pins
+            sense: parts
                 .gp_uart2_cts
                 .into_floating_input()
                 .into_interrupt(Trigger::RisingEdge, false)
                 .expect("no free EXDEVICE slot"),
-            pull: pins.gp_sen_irq_in.into_floating_input(),
+            pull: parts.gp_sen_irq_in.into_floating_input(),
         }
     }
 
