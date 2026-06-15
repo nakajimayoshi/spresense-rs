@@ -3,6 +3,8 @@
 pub use cxd56_pac_svd2rust as pac;
 
 pub mod clocks;
+#[cfg(feature = "critical-section-impl")]
+pub mod critical_section_impl;
 pub mod delay;
 pub mod delay_alt;
 pub mod gpio;

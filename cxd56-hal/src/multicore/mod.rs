@@ -6,7 +6,7 @@
 //!
 //! - [`cpu`] — each core's identity ([`Core`], [`current`]).
 //! - [`spawn`] — bring up worker cores ([`spawn`], [`ack_boot`]).
-//! - [`sph`] — hardware-semaphore cross-core locks ([`Sph`], [`HwMutex`]). The
+//! - [`sph`] — hardware-semaphore cross-core lock primitive ([`Sph`]). The
 //!   Cortex-M4 `LDREX`/`STREX` monitors do not work across cores, so the SPH
 //!   block is the only sound cross-core mutual-exclusion primitive.
 //! - [`mailbox`] — two-word inter-core messages over the CPU FIFO ([`Mailbox`]).
@@ -29,4 +29,4 @@ pub mod sph;
 pub use cpu::{Core, current};
 pub use mailbox::{Full, Mailbox};
 pub use spawn::{SpawnError, ack_boot, spawn};
-pub use sph::{HwMutex, HwMutexGuard, Sph};
+pub use sph::{COUNT, RESERVED_CS_ID, Sph};

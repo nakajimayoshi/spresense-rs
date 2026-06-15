@@ -7,6 +7,10 @@ edition = "2024"
 default = ["rt"]
 rt = ["cxd56-pac-svd2rust/rt"]
 critical-section = ["cxd56-pac-svd2rust/critical-section"]
+# Installs a multicore-safe critical_section::Impl using SPH 15.
+# Mutually exclusive with cortex-m/critical-section-single-core (or any other
+# set_impl!) in the same binary — the linker will error on duplicate symbols.
+critical-section-impl = ["critical-section/restore-state-u8"]
 
 [dependencies]
 cxd56-pac-svd2rust = { version = "0.1.0", path = "../cxd56-pac-svd2rust" }
