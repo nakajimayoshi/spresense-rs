@@ -24,7 +24,6 @@
 
 use crate::clocks::{Clock, ClockError, PeripheralId};
 use crate::gpio::GpioPin;
-use crate::i2c::I2cConfig;
 use crate::pac;
 use crate::regs::topreg;
 use embedded_hal::i2c::{ErrorKind, ErrorType, NoAcknowledgeSource, Operation};
@@ -57,6 +56,18 @@ impl embedded_hal::i2c::Error for I2cError {
             I2cError::Arbitration => ErrorKind::ArbitrationLoss,
             I2cError::Timeout => ErrorKind::Other,
             I2cError::Clock(_) => ErrorKind::Other,
+        }
+    }
+}
+
+pub struct I2cConfig {
+    pub freq: Hertz<u32>,
+}
+
+impl Default for I2cConfig {
+    fn default() -> Self {
+        Self {
+            freq: Hertz::<u32>::kHz(400),
         }
     }
 }
@@ -384,4 +395,3 @@ impl<T: I2cPeriph> embedded_hal::i2c::I2c for I2c<T> {
         Ok(())
     }
 }
-
