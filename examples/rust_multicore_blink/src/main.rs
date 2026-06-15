@@ -22,13 +22,13 @@ use cxd56_hal::pac;
 /// ~156 MHz APP core clock → cycles per millisecond for `asm::delay` busy-waits.
 const CYCLES_PER_MS: u32 = 156_000;
 
-/// Worker stack size (bytes). 8 KiB is ample for a polling blink loop.
-const STACK_SIZE: usize = 8192;
+/// Worker stack size in `usize` words (2048 words = 8 KiB).
+/// `align(32)` matches the RP2040 convention and leaves room for a future
+/// MPU stack-guard region (minimum granularity 32 bytes on Cortex-M4).
+const STACK_SIZE: usize = 2048;
 
-/// 8-byte-aligned worker stack, living in the shared combined-image `.bss`.
-/// Both cores share RAM (replicated ADDRCONV view), so `Core1` can run on it.
-#[repr(C, align(8))]
-struct Stack<const N: usize>([u8; N]);
+#[repr(C, align(32))]
+struct Stack<const N: usize>([usize; N]);
 static mut CORE1_STACK: Stack<STACK_SIZE> = Stack([0; STACK_SIZE]);
 
 #[entry]
@@ -46,8 +46,9 @@ fn main() -> ! {
 
     // Start Core1 on its dedicated stack. `core1_main` must call `ack_boot`
     // first and never return (see below).
-    let stack_top = core::ptr::addr_of_mut!(CORE1_STACK) as usize as u32 + STACK_SIZE as u32;
-    // SAFETY: `stack_top` is the top of a uniquely-owned, 8-byte-aligned stack in
+    let stack_top = (core::ptr::addr_of_mut!(CORE1_STACK) as usize
+        + core::mem::size_of::<Stack<STACK_SIZE>>()) as u32;
+    // SAFETY: `stack_top` is the top of a uniquely-owned, 32-byte-aligned stack in
     // shared RAM; `core1_main` is a valid `extern "C"` worker entry that never
     // returns; called once, from the main core only.
     unsafe {
