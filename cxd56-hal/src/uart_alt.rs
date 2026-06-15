@@ -12,16 +12,117 @@ use crate::clocks::{Clock, ClockError, PeripheralId};
 use crate::gpio::GpioPin;
 use crate::pac;
 use crate::regs::topreg;
-use crate::uart::{Parity, StopBits, UartConfig, WordLength, uart1_pinmux, uart2_pinmux};
+
+pub enum WordLength {
+    Five,
+    Six,
+    Seven,
+    Eight,
+}
+
+pub enum StopBits {
+    One,
+    Two,
+}
+
+pub enum Parity {
+    None,
+    Even,
+    Odd,
+}
+
+pub struct UartConfig {
+    pub baud_rate: u32,
+    pub word_length: WordLength,
+    pub stop_bits: StopBits,
+    pub parity: Parity,
+}
+
+impl Default for UartConfig {
+    fn default() -> Self {
+        Self {
+            baud_rate: 115_200,
+            word_length: WordLength::Eight,
+            stop_bits: StopBits::One,
+            parity: Parity::None,
+        }
+    }
+}
+
+pub(crate) fn uart1_pinmux() {
+    // TXD: 2mA drive (LOWEMI=1), float (PDN=1, PUN=1), input disabled (ENZI=0).
+    topreg().io_spi0_cs_x().write(|w| {
+        w.lowemi()
+            .set_bit()
+            .pdn()
+            .set_bit()
+            .pun()
+            .set_bit()
+            .enzi()
+            .clear_bit()
+    });
+    // RXD: same but input enabled (ENZI=1).
+    topreg().io_spi0_sck().write(|w| {
+        w.lowemi()
+            .set_bit()
+            .pdn()
+            .set_bit()
+            .pun()
+            .set_bit()
+            .enzi()
+            .set_bit()
+    });
+    // SPI0A[13:12] = Func1 → UART1.  FieldWriter<2> needs unsafe bits().
+    topreg()
+        .iocsys_iomd0()
+        .modify(|_, w| unsafe { w.spi0a().bits(1) });
+}
+
+// UART2 — IMG-domain UART connected to the extension-board JP1 header (pins 2-5).
+// TXD = P1n_00 (pin 67): IO_UART2_TXD (TOPREG+0x90c), IOCAPP_IOMD UART2=1.
+// RXD = P1n_01 (pin 68): IO_UART2_RXD (TOPREG+0x910), input enabled.
+// Reference: CXD5602 user manual §3.1 pp.66,71-74; cxd5602_pinconfig.h:356-357,577.
+pub(crate) fn uart2_pinmux() {
+    // TXD: 2mA drive (LOWEMI=1), float (PDN=1, PUN=1), input disabled (ENZI=0).
+    topreg().io_uart2_txd().write(|w| {
+        w.lowemi()
+            .set_bit()
+            .pdn()
+            .set_bit()
+            .pun()
+            .set_bit()
+            .enzi()
+            .clear_bit()
+    });
+    // RXD: same but input enabled (ENZI=1).
+    topreg().io_uart2_rxd().write(|w| {
+        w.lowemi()
+            .set_bit()
+            .pdn()
+            .set_bit()
+            .pun()
+            .set_bit()
+            .enzi()
+            .set_bit()
+    });
+    // UART2[3:2] = Func1 → UART2.  FieldWriter<2> needs unsafe bits().
+    topreg()
+        .iocapp_iomd()
+        .modify(|_, w| unsafe { w.uart2().bits(1) });
+}
 
 /// Restore SPI0A mux to Func0 (GPIO) — undoes `uart1_pinmux()`.
 fn uart1_unpinmux() {
-    topreg().iocsys_iomd0().modify(|_, w| unsafe { w.spi0a().bits(0) });
+    topreg()
+        .iocsys_iomd0()
+        .modify(|_, w| unsafe { w.spi0a().bits(0) });
 }
 
 /// Restore UART2 mux to Func0 (GPIO) — undoes `uart2_pinmux()`.
 fn uart2_unpinmux() {
-    topreg().iocapp_iomd().modify(|_, w| unsafe { w.uart2().bits(0) });
+    topreg()
+        .iocapp_iomd()
+        .modify(|_, w| unsafe { w.uart2().bits(0) });
 }
 
 // Map our config types to the external driver's LineConfig.
@@ -313,7 +414,12 @@ impl<'clk, U: UartPeriph> Uart<'clk, U> {
     /// let uart = Uart::new(pac.uart1, pins, Default::default(), &clock)?;
     /// ```
     #[allow(clippy::new_ret_no_self)] // intentional: returns U::Output<'a> (branded by the clock-lifetime GAT)
-    pub fn new<'a>(uart: U, pins: U::Pins, config: UartConfig, clock: &'a Clock) -> Result<U::Output<'a>, UartError> {
+    pub fn new<'a>(
+        uart: U,
+        pins: U::Pins,
+        config: UartConfig,
+        clock: &'a Clock,
+    ) -> Result<U::Output<'a>, UartError> {
         let hz = U::base_hz(clock);
         U::ID.enable()?;
         U::pinmux();
@@ -678,8 +784,7 @@ impl<U: UartPeriph> ErrorType for Uart<'_, U> {
 
 impl<U: UartPeriph> embedded_hal_nb::serial::Read<u8> for Uart<'_, U> {
     fn read(&mut self) -> nb::Result<u8, Self::Error> {
-        embedded_hal_nb::serial::Read::read(&mut self.inner)
-            .map_err(|e| e.map(UartError::from))
+        embedded_hal_nb::serial::Read::read(&mut self.inner).map_err(|e| e.map(UartError::from))
     }
 }
 
@@ -690,8 +795,7 @@ impl<U: UartPeriph> embedded_hal_nb::serial::Write<u8> for Uart<'_, U> {
     }
 
     fn flush(&mut self) -> nb::Result<(), Self::Error> {
-        embedded_hal_nb::serial::Write::flush(&mut self.inner)
-            .map_err(|e| e.map(UartError::from))
+        embedded_hal_nb::serial::Write::flush(&mut self.inner).map_err(|e| e.map(UartError::from))
     }
 }
 
