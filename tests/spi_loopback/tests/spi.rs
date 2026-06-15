@@ -30,9 +30,9 @@ use panic_probe as _;
 use static_cell::StaticCell;
 
 use cxd56_hal::clocks::Clock;
-use cxd56_hal::uart::Uart1;
+use cxd56_hal::{pac, uart_alt::Uart};
 
-static SERIAL: StaticCell<Uart1> = StaticCell::new();
+static SERIAL: StaticCell<Uart<'static, pac::Uart1>> = StaticCell::new();
 static CLOCK: StaticCell<Clock> = StaticCell::new();
 
 /// Pattern that exercises all-zeros, all-ones, alternating bits, and ASCII.
@@ -47,7 +47,7 @@ mod tests {
     use cxd56_hal::gpio::pins::Parts;
     use cxd56_hal::pac;
     use cxd56_hal::spi_alt::{Spi, Spi5Pins, SpiConfig};
-    use cxd56_hal::uart::{Uart1, UartConfig};
+    use cxd56_hal::uart_alt::{Uart, Uart1Pins};
 
     struct State {
         clock: &'static cxd56_hal::clocks::Clock,
@@ -57,15 +57,18 @@ mod tests {
     fn init() -> State {
         let pac = pac::Peripherals::take().unwrap();
         let crg = pac.crg.constrain(Config::default());
+        let clock = crate::CLOCK.init(crg.into_clock());
 
-        // freeze() borrows crg briefly and returns a Copy Clocks snapshot;
-        // the borrow ends here so into_clock() can consume crg below.
-        let clocks = crg.freeze();
-        let uart =
-            Uart1::new(pac.uart1, &clocks, UartConfig::default()).expect("uart1 init failed");
+        // UART1 for defmt console output. COM clock is Fixed → Uart<'static, Uart1>.
+        let parts = Parts::new(pac.topreg);
+        let uart1_pins = Uart1Pins {
+            tx: parts.gp_spi0_cs_x,
+            rx: parts.gp_spi0_sck,
+        };
+        let uart = Uart::new(pac.uart1, uart1_pins, Default::default(), clock)
+            .expect("uart1 init failed");
         defmt_serial::defmt_serial(crate::SERIAL.init(uart));
 
-        let clock = crate::CLOCK.init(crg.into_clock());
         State { clock }
     }
 
