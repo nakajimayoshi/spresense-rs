@@ -7,18 +7,33 @@ use cortex_m_rt::entry;
 use embedded_hal::i2c::I2c;
 use panic_halt as _;
 
-use cxd56_hal::i2c::{I2c0, I2cConfig};
-use cxd56_hal::pac;
-use cxd56_hal::uart::{Uart1, UartConfig};
-use cxd56_hal::clocks::{Config, RccExt};
+use cxd56_hal::uart_alt::Uart;
+use cxd56_hal::{
+    clocks::{Config, RccExt},
+    i2c_alt::I2c0Pins,
+};
+use cxd56_hal::{gpio::pins::Parts, i2c_alt::I2c as HalI2c, uart_alt::Uart1Pins};
+use cxd56_hal::{i2c_alt::I2cConfig, pac};
 
 #[entry]
 fn main() -> ! {
-    let dp = pac::Peripherals::take().unwrap();
-    let clocks = dp.crg.constrain(Config::default()).freeze();
+    let pac = pac::Peripherals::take().unwrap();
+    let crg = pac.crg.constrain(Config::default());
+    let clock = crg.into_clock();
 
-    let mut uart = Uart1::new(dp.uart1, &clocks, UartConfig::default()).unwrap();
-    let mut i2c = I2c0::new(dp.i2c0, &clocks, I2cConfig::default()).unwrap();
+    // UART1 for console output. COM clock is Fixed → Uart<'static, Uart1>.
+    let parts = Parts::new(pac.topreg);
+    let uart1_pins = Uart1Pins {
+        tx: parts.gp_spi0_cs_x,
+        rx: parts.gp_spi0_sck,
+    };
+    let i2c0_pins = I2c0Pins {
+        scl: parts.gp_i2c0_bck,
+        sda: parts.gp_i2c0_bdt,
+    };
+    let mut uart =
+        Uart::new(pac.uart1, uart1_pins, Default::default(), &clock).expect("uart1 init failed");
+    let mut i2c = HalI2c::new(pac.i2c0, i2c0_pins, &clock, I2cConfig::default()).unwrap();
 
     writeln!(uart, "I2C0 scan (0x03..0x77):").ok();
 

@@ -5,9 +5,12 @@ use cortex_m_rt::entry;
 use embedded_io::{Read, Write};
 use panic_halt as _;
 
-use cxd56_hal::clocks::{Config, RccExt};
 use cxd56_hal::pac;
-use cxd56_hal::uart::{Uart1, UartConfig};
+use cxd56_hal::{
+    clocks::{Config, RccExt},
+    gpio::pins::Parts,
+    uart_alt::{Uart, Uart1Pins},
+};
 
 // Read a single byte at a time from the uart and store it in the buf until we
 // get a line ending character '\r' or '\n'. Handles backspaces as well
@@ -37,9 +40,18 @@ fn read_line<R: Read>(uart: &mut R, buf: &mut [u8]) -> Result<usize, R::Error> {
 #[entry]
 fn main() -> ! {
     let pac = pac::Peripherals::take().unwrap();
-    let clocks = pac.crg.constrain(Config::default()).freeze();
 
-    let mut uart = Uart1::new(pac.uart1, &clocks, UartConfig::default()).unwrap();
+    let crg = pac.crg.constrain(Config::default());
+    let clock = crg.into_clock();
+
+    // UART1 for console output. COM clock is Fixed → Uart<'static, Uart1>.
+    let parts = Parts::new(pac.topreg);
+    let uart1_pins = Uart1Pins {
+        tx: parts.gp_spi0_cs_x,
+        rx: parts.gp_spi0_sck,
+    };
+    let mut uart =
+        Uart::new(pac.uart1, uart1_pins, Default::default(), &clock).expect("uart1 init failed");
 
     let mut buf = [0u8; 256];
     loop {

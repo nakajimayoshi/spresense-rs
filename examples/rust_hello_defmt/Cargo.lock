@@ -94,6 +94,13 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "790eea4361631c5e7d22598ecd5723ff611904e3344ce8720784c93e3d83d40b"
 
 [[package]]
+name = "cxd56-blink-debug"
+version = "0.1.0"
+dependencies = [
+ "embedded-hal 1.0.0",
+]
+
+[[package]]
 name = "cxd56-hal"
 version = "0.1.0"
 dependencies = [
@@ -296,6 +303,7 @@ version = "0.1.0"
 dependencies = [
  "cortex-m",
  "cortex-m-rt",
+ "cxd56-blink-debug",
  "cxd56-hal",
  "defmt 1.1.0",
  "defmt-serial",

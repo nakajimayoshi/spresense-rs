@@ -9,10 +9,10 @@ use embedded_hal::delay::DelayNs;
 use panic_halt as _;
 
 use cxd56_hal::clocks::{Config, RccExt};
-use cxd56_hal::delay::Delay;
-use cxd56_hal::gpio::{pins, Level};
+use cxd56_hal::delay_alt::Delay;
+use cxd56_hal::gpio::{Level, pins};
 use cxd56_hal::pac;
-use cxd56_hal::uart::{Uart1, UartConfig};
+use cxd56_hal::uart_alt::{Uart, Uart1Pins};
 
 #[entry]
 fn main() -> ! {
@@ -21,7 +21,7 @@ fn main() -> ! {
 
     // Configure the clock tree (defaults are safe for the CXD5602).
     let crg = pac.crg.constrain(Config::default());
-    let clocks = crg.freeze();
+    let clocks = crg.into_clock();
 
     // Onboard LED0 (GP_I2S1_BCK), driven low to start.
     let pins = pins::Parts::new(pac.topreg);
@@ -30,8 +30,11 @@ fn main() -> ! {
     let mut delay = Delay::new(core.SYST, &clocks);
 
     // UART1 is the Spresense USB-serial console (115200 8N1 by default).
-    let mut uart =
-        Uart1::new(pac.uart1, &clocks, UartConfig::default()).expect("uart1 init failed");
+    let uart1_pins = Uart1Pins {
+        tx: pins.gp_spi0_cs_x,
+        rx: pins.gp_spi0_sck,
+    };
+    let mut uart = Uart::new(pac.uart1, uart1_pins, Default::default(), &clocks).unwrap();
 
     let mut n: u32 = 0;
     loop {

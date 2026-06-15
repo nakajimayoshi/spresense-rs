@@ -8,14 +8,17 @@ use cortex_m_rt::entry;
 use embedded_hal::delay::DelayNs;
 use panic_halt as _;
 
-use cxd56_hal::gpio::{pins, Level};
+use cxd56_blink_debug::{sos, strobe};
 use cxd56_hal::pac;
-use cxd56_hal::uart::{Uart1, UartConfig};
+use cxd56_hal::uart_alt::Uart;
 use cxd56_hal::{
     clocks::{Config, RccExt},
-    delay::Delay,
+    delay_alt::Delay,
 };
-use cxd56_blink_debug::{sos, strobe};
+use cxd56_hal::{
+    gpio::{Level, pins::Parts},
+    uart_alt::Uart1Pins,
+};
 
 #[entry]
 fn main() -> ! {
@@ -23,16 +26,20 @@ fn main() -> ! {
     let core = Peripherals::take().unwrap();
 
     let crg = pac.crg.constrain(Config::default());
-    let clocks = crg.freeze();
+    let clock = crg.into_clock();
 
-    let pins = pins::Parts::new(pac.topreg);
-    let mut led = pins.gp_i2s1_bck.into_output(Level::Low);
-    let mut delay = Delay::new(core.SYST, &clocks);
+    // UART1 for console output. COM clock is Fixed → Uart<'static, Uart1>.
+    let parts = Parts::new(pac.topreg);
+    let uart1_pins = Uart1Pins {
+        tx: parts.gp_spi0_cs_x,
+        rx: parts.gp_spi0_sck,
+    };
+    let mut uart =
+        Uart::new(pac.uart1, uart1_pins, Default::default(), &clock).expect("uart1 init failed");
+    let mut led = parts.gp_i2s1_bck.into_output(Level::Low);
+    let mut delay = Delay::new(core.SYST, &clock);
 
     sos(&mut led, &mut delay);
-
-    let mut uart =
-        Uart1::new(pac.uart1, &clocks, UartConfig::default()).expect("uart1 init failed");
 
     let mut n: u32 = 0;
     loop {

@@ -31,21 +31,22 @@
 use core::fmt::Write;
 use core::sync::atomic::{AtomicBool, AtomicU32, Ordering};
 
-use cortex_m::asm;
+use cortex_m::{Peripherals, asm};
 use cortex_m_rt::entry;
+use embedded_hal::delay::DelayNs;
 use panic_halt as _;
 
-use cxd56_hal::clocks::{Config, RccExt};
-use cxd56_hal::gpio::{pins, Level};
-use cxd56_hal::multicore::{ack_boot, spawn, Core};
+use cxd56_hal::{delay_alt::Delay, gpio::{Level, pins}};
+use cxd56_hal::multicore::{Core, ack_boot, spawn};
 use cxd56_hal::pac;
-use cxd56_hal::uart::{Uart1, UartConfig};
+use cxd56_hal::uart_alt::Uart;
+use cxd56_hal::{
+    clocks::{Config, RccExt},
+    uart_alt::Uart1Pins,
+};
 
 /// Number of increments each core performs. 100 000 per core → 200 000 total.
 const N: u32 = 100_000;
-
-/// ~156 MHz APP core clock → cycles per millisecond for `asm::delay`.
-const CYCLES_PER_MS: u32 = 156_000;
 
 // ---------------------------------------------------------------------------
 // Shared state (visible to both cores via ADDRCONV-replicated SRAM).
@@ -72,16 +73,22 @@ static mut CORE1_STACK: Stack<2048> = Stack([0; 2048]); // 2048 words = 8 KiB
 #[entry]
 fn main() -> ! {
     let pac = pac::Peripherals::take().unwrap();
+    let core = Peripherals::take().unwrap();
 
     let crg = pac.crg.constrain(Config::default());
-    let clocks = crg.freeze();
+    let clocks = crg.into_clock();
+
+    let mut delay = Delay::new(core.SYST, &clocks);
 
     let pins = pins::Parts::new(pac.topreg);
     let mut led0 = pins.gp_i2s1_bck.into_output(Level::Low);
     let mut led1 = pins.gp_i2s1_lrck.into_output(Level::Low);
 
-    let mut uart =
-        Uart1::new(pac.uart1, &clocks, UartConfig::default()).expect("uart1 init failed");
+    let uart1_pins = Uart1Pins {
+        tx: pins.gp_spi0_cs_x,
+        rx: pins.gp_spi0_sck,
+    };
+    let mut uart = Uart::new(pac.uart1, uart1_pins, Default::default(), &clocks).unwrap();
 
     let _ = writeln!(uart, "critical_section contention test: N={N} per core");
 
@@ -110,9 +117,9 @@ fn main() -> ! {
         // Brief blink then hold LED0 on to signal pass.
         for _ in 0..3 {
             led0.set_high();
-            asm::delay(200 * CYCLES_PER_MS);
+            delay.delay_ms(200);
             led0.set_low();
-            asm::delay(200 * CYCLES_PER_MS);
+            delay.delay_ms(200);
         }
         led0.set_high();
     } else {

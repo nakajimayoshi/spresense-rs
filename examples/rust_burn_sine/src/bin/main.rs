@@ -14,9 +14,10 @@ use rust_burn_sine::sine::Model;
 
 use cxd56_hal::{
     clocks::{Config, RccExt},
-    delay::Delay,
+    delay_alt::Delay,
+    gpio::pins::Parts,
     pac,
-    uart::{Uart1, UartConfig},
+    uart_alt::{Uart, Uart1Pins},
 };
 
 type Backend = Flex;
@@ -40,11 +41,16 @@ fn main() -> ! {
     let core = Peripherals::take().unwrap();
 
     let crg = pac.crg.constrain(Config::default());
-    let clocks = crg.freeze();
+    let clocks = crg.into_clock();
 
     let mut delay = Delay::new(core.SYST, &clocks);
-    let mut uart =
-        Uart1::new(pac.uart1, &clocks, UartConfig::default()).expect("uart1 init failed");
+
+    let parts = Parts::new(pac.topreg);
+    let uart1_pins = Uart1Pins {
+        tx: parts.gp_spi0_cs_x,
+        rx: parts.gp_spi0_sck,
+    };
+    let mut uart = Uart::new(pac.uart1, uart1_pins, Default::default(), &clocks).unwrap();
 
     let device = BackendDevice::default();
     let model: Model<Backend> = Model::default();
