@@ -1,0 +1,183 @@
+name: CI
+
+# Builds the whole repo on every push / PR:
+#   * the root workspace — embedded library crates for thumbv7em-none-eabihf
+#     plus the host-side flashing tools,
+#   * every standalone example crate,
+#   * every standalone on-hardware test crate (compile-only — there is no board
+#     in CI, so `--no-run` builds the firmware without invoking the flash runner).
+#
+# The BUILD/COMPILE steps are hard gates. clippy and rustfmt run too (per request)
+# but are ADVISORY (`continue-on-error: true`): the repo currently carries
+# pre-existing clippy debt (e.g. embassy-cxd56, flash-writer) and is largely
+# hand-formatted (cxd56-hal and many others drift from rustfmt), so gating on them
+# today would mean permanently-red CI. The lints still run and annotate; once the
+# debt is burned down, drop the `continue-on-error` lines (and re-include cxd56-hal
+# in fmt) to turn them into hard gates.
+
+on:
+  push:
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+  TARGET: thumbv7em-none-eabihf
+
+jobs:
+  # ---- root workspace: host-side flashing tools (std, need libudev) ----
+  host-tools:
+    name: Host tools (build + test + clippy)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install libudev (serialport dependency)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libudev-dev pkg-config
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
+      - uses: Swatinem/rust-cache@v2
+      - name: Build
+        run: cargo build --locked --release -p mkspk -p flash-writer -p cargo-spresense-flash
+      - name: Test
+        run: cargo test --locked --release -p mkspk -p flash-writer -p cargo-spresense-flash
+      - name: Clippy (advisory)
+        continue-on-error: true
+        run: cargo clippy --locked -p mkspk -p flash-writer -p cargo-spresense-flash -- -D warnings
+
+  # ---- root workspace: embedded library crates (no_std, thumb target) ----
+  embedded-crates:
+    name: Embedded crates (build + clippy)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: thumbv7em-none-eabihf
+          components: clippy
+      - uses: Swatinem/rust-cache@v2
+      - name: Build (svd2rust PAC backend)
+        run: >
+          cargo build --locked --release --target $TARGET --workspace
+          --exclude mkspk --exclude flash-writer --exclude cargo-spresense-flash
+      - name: Build (chiptool PAC backend)
+        run: cargo build --locked --release --target $TARGET -p cxd56-pac --no-default-features --features chiptool
+      - name: Clippy (advisory)
+        continue-on-error: true
+        run: >
+          cargo clippy --locked --target $TARGET --workspace
+          --exclude mkspk --exclude flash-writer --exclude cargo-spresense-flash -- -D warnings
+
+  # ---- standalone example crates (each its own workspace) ----
+  # No --locked: the standalone Cargo.lock files are not kept in lockstep with
+  # their manifests, so a frozen resolve would fail. The target + linker script
+  # come from each crate's .cargo/config.toml.
+  examples:
+    name: Examples (build + clippy)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: thumbv7em-none-eabihf
+          components: clippy
+      - uses: Swatinem/rust-cache@v2
+      - name: Build every example
+        run: |
+          fail=0
+          for d in examples/*/; do
+            echo "::group::cargo build $d"
+            ( cd "$d" && cargo build --release ) || { echo "::error::build failed: $d"; fail=1; }
+            echo "::endgroup::"
+          done
+          exit $fail
+      - name: Clippy every example (advisory)
+        continue-on-error: true
+        run: |
+          fail=0
+          for d in examples/*/; do
+            echo "::group::cargo clippy $d"
+            ( cd "$d" && cargo clippy -- -D warnings ) || { echo "::error::clippy failed: $d"; fail=1; }
+            echo "::endgroup::"
+          done
+          exit $fail
+
+  # ---- standalone on-hardware test crates (compile only) ----
+  tests:
+    name: Tests (compile-only + clippy)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: thumbv7em-none-eabihf
+          components: clippy
+      - uses: Swatinem/rust-cache@v2
+      # Compile-only (no board in CI). Build the harness=false integration tests
+      # by name: a plain `cargo test` would also build the crate's lib unit-test
+      # target, which pulls in the `test` crate + a panic handler that do not
+      # exist on a no_std target. --no-run builds the firmware without invoking
+      # the flash runner. Bin-style crates (no tests/*.rs) just build.
+      - name: Compile every test crate
+        run: |
+          fail=0
+          for d in tests/*/; do
+            echo "::group::compile $d"
+            (
+              cd "$d"
+              if ls tests/*.rs >/dev/null 2>&1; then
+                for t in tests/*.rs; do
+                  cargo test --release --no-run --test "$(basename "$t" .rs)"
+                done
+              else
+                cargo build --release
+              fi
+            ) || { echo "::error::compile failed: $d"; fail=1; }
+            echo "::endgroup::"
+          done
+          exit $fail
+      - name: Clippy every test crate (advisory)
+        continue-on-error: true
+        run: |
+          fail=0
+          for d in tests/*/; do
+            echo "::group::cargo clippy $d"
+            ( cd "$d" && cargo clippy -- -D warnings ) || { echo "::error::clippy failed: $d"; fail=1; }
+            echo "::endgroup::"
+          done
+          exit $fail
+
+  # ---- rustfmt (advisory: the repo is largely hand-formatted) ----
+  fmt:
+    name: Rustfmt (advisory)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt
+      # cxd56-hal is intentionally hand-formatted (documented rustfmt drift), so
+      # it is excluded; `cargo fmt --all` cannot exclude a member, hence the
+      # explicit package list.
+      - name: Check root workspace formatting (cxd56-hal excluded)
+        continue-on-error: true
+        run: >
+          cargo fmt --check
+          -p cxd56-pac -p cxd56-pac-svd2rust -p cxd56-blink-debug
+          -p embassy-cxd56 -p spresense-bsp
+          -p mkspk -p flash-writer -p cargo-spresense-flash
+      - name: Check examples and tests formatting
+        continue-on-error: true
+        run: |
+          fail=0
+          for d in examples/*/ tests/*/; do
+            echo "::group::cargo fmt --check $d"
+            ( cd "$d" && cargo fmt --check ) || { echo "::error::fmt drift: $d"; fail=1; }
+            echo "::endgroup::"
+          done
+          exit $fail
