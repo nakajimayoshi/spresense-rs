@@ -24,8 +24,7 @@
 //!
 //! # Lifetime — why there is none
 //!
-//! Unlike [`crate::uart_alt::Uart`] for `pac::Uart2` (IMG_UART is `Dyn`), the
-//! I2S0 timing reference is the **audio MCLK**, which on the Spresense main
+//! The I2S0 timing reference is the **audio MCLK**, which on the Spresense main
 //! board is the **external audio crystal** ([`AudMclk::Ext`]). That is a
 //! [`Fixed`](crate::clocks::Fixed) clock — it does not track `appsmp`, the
 //! quantity changed by [`Clock::request_perf`]. Master BCK/LRCK therefore stay

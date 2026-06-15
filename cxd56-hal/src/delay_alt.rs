@@ -22,8 +22,7 @@ use crate::clocks::Clock;
 /// `Delay<'clk>` borrows the [`Clock`] for `'clk`, so
 /// [`Clock::request_perf`] (requires `&mut Clock`) cannot be called while a
 /// `Delay` is alive — drop it (or call [`free`](Delay::free)), reconfigure the
-/// operating point, then rebuild with the new rate. Mirrors `Uart<'a>` for
-/// `pac::Uart2` in [`crate::uart_alt`].
+/// operating point, then rebuild with the new rate.
 pub struct Delay<'clk> {
     inner: SystDelay,
     _life: PhantomData<&'clk ()>,

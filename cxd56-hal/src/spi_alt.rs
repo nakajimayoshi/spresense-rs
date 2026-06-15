@@ -1,8 +1,7 @@
 //! Profile-aware PL022 SSP (SPI) driver for the CXD5602.
 //!
 //! Wraps the ARM PrimeCell PL022 Synchronous Serial Port controller present on
-//! the CXD5602's **SPI5** (`IMG WSPI`) block. Follows the same sealed-trait +
-//! GAT lifetime pattern as [`crate::uart_alt`]:
+//! the CXD5602's **SPI5** (`IMG WSPI`) block.
 //!
 //! - The struct is generic over the PAC SPI token (`pac::Spi5`).
 //! - `SPI5` uses the **dynamic** `img_wspi` clock (derived from `appsmp` via a
@@ -155,7 +154,7 @@ mod sealed {
 
         /// Sample this peripheral's base clock from the [`Clock`] snapshot.
         /// Returns a `Copy` [`Hertz`] so the borrow of `clock` ends here; the
-        /// lifetime tie lives in `Output` (same shape as `uart_alt`).
+        /// lifetime tie lives in `Output`
         fn base_hz(clock: &Clock) -> Hertz<u32>;
     }
 }
@@ -199,10 +198,6 @@ pub trait SpiPeriph: sealed::Sealed {
     fn wrap<'clk>(spi: Self, pins: Self::Pins) -> Self::Output<'clk>;
 }
 
-// ============================================================================
-// pac::Spi5 impl (Dyn arm — mirrors uart_alt pac::Uart2)
-// ============================================================================
-
 impl sealed::Sealed for pac::Spi5 {
     const ID: PeripheralId = PeripheralId::Spi5;
 
@@ -224,7 +219,6 @@ impl sealed::Sealed for pac::Spi5 {
 
 impl SpiPeriph for pac::Spi5 {
     /// `img_wspi` is Dyn: the borrow of `Clock` is retained for `'clk`.
-    /// Mirrors `uart_alt::UartPeriph for pac::Uart2` (`:125-137`).
     type Output<'clk> = Spi<'clk, pac::Spi5>;
     type Pins = Spi5Pins;
 
@@ -244,7 +238,7 @@ impl SpiPeriph for pac::Spi5 {
 /// The lifetime `'clk` is tied to the [`Clock`] borrow:
 /// - `pac::Spi5` → `Spi<'clk, pac::Spi5>`: `img_wspi` is Dyn; the `Spi`
 ///   borrows `Clock` for `'clk`, preventing [`Clock::request_perf`] until
-///   dropped — exactly as `uart_alt::Uart<'clk, pac::Uart2>`.
+///   dropped
 ///
 /// Use [`Spi::new`] to construct; `S` is inferred from the PAC token passed.
 pub struct Spi<'clk, S: SpiPeriph> {

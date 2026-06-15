@@ -1,9 +1,8 @@
 //! Watchdog timer (Arm PrimeCell SP805).
 //!
 //! The CXD5602 watchdog is an SP805 at `0xe004_4000`. This module wraps the
-//! trustedfirmware [`arm_sp805`] driver the same way [`uart_alt`](crate::uart_alt)
-//! wraps `arm-pl011-uart`: an [`arm_sp805::UniqueMmioPointer`] over the register
-//! block, owning the [`pac::Wdog`] token for exclusive hardware access.
+//! trustedfirmware [`arm_sp805`] driver over the register block, owning the
+//! [`pac::Wdog`] token for exclusive hardware access.
 //!
 //! # Clocking and timeout
 //!
@@ -122,8 +121,7 @@ impl<'clk> Watchdog<'clk> {
         // of the SP805 register block; it is valid for the program's lifetime.
         // We consumed the `wdog` token above, so there is no other alias to this
         // peripheral. `arm_sp805::SP805Registers` describes the same 0x1000-byte
-        // SP805 MMIO window as the PAC `wdog` block — the same argument as
-        // `uart_alt`'s PL011 cast.
+        // SP805 MMIO window as the PAC `wdog` block
         let ptr = NonNull::new(pac::Wdog::PTR as *mut sp805::SP805Registers)
             .expect("WDOG base address is null");
         let mut inner = sp805::Watchdog::new(unsafe { sp805::UniqueMmioPointer::new(ptr) }, load);

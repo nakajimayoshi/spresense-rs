@@ -56,7 +56,7 @@ fn main() -> ! {
     // locking out `request_perf` for their lifetime.
     let clock = dp.crg.constrain(Config::default()).into_clock();
 
-    // UART1 console — same pin-consuming API as rust_hello_uart_alt.
+    // UART1 console
     let parts = Parts::new(dp.topreg);
     let uart1_pins = Uart1Pins {
         tx: parts.gp_spi0_cs_x,

@@ -8,8 +8,7 @@
 //!
 //! # Lifetime — why there is none
 //!
-//! Unlike [`crate::uart_alt::Uart`] for `pac::Uart2` (IMG_UART is `Dyn`), all
-//! I2C clock sources are **[`Fixed`](crate::clocks::Fixed)**: I2C0/1 use `SCU`
+//! All I2C clock sources are **[`Fixed`](crate::clocks::Fixed)**: I2C0/1 use `SCU`
 //! (RCOSC/XOSC/RTC-derived) and I2C2 uses `COM` (SYS-bus-derived). Neither
 //! tracks `appsmp`, the clock changed by [`Clock::request_perf`]. A programmed
 //! SCL frequency remains correct across HP↔LP transitions, so there is no need

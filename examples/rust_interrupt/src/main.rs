@@ -68,7 +68,7 @@ fn main() -> ! {
     let crg = dp.crg.constrain(Config::default());
     let clock = crg.into_clock();
 
-    // UART1 console — same pin-consuming API as rust_hello_uart_alt.
+    // UART1 console
     let parts = Parts::new(dp.topreg);
     let uart1_pins = Uart1Pins { tx: parts.gp_spi0_cs_x, rx: parts.gp_spi0_sck };
     let mut uart = Uart::new(dp.uart1, uart1_pins, Default::default(), &clock)
