@@ -181,3 +181,35 @@ jobs:
             echo "::endgroup::"
           done
           exit $fail
+
+  # ---- cargo-generate template: scaffold a project from it and build it ----
+  template:
+    name: Template (cargo generate + build)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: thumbv7em-none-eabihf
+      - uses: Swatinem/rust-cache@v2
+      - name: Install cargo-generate
+        uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-generate
+      # Generate into $RUNNER_TEMP (outside the repo workspace), then build. The
+      # generated crate carries its own .cargo/config.toml pinning the thumb
+      # target, so plain `cargo build` cross-compiles it. No --locked (it ships
+      # no lockfile); `cargo build` (not `cargo run`) never invokes the flash
+      # runner. The build pulls cxd56-hal from `main`, matching what a real user
+      # of the template gets.
+      - name: Generate a project from cxd56-template
+        run: >
+          cargo generate
+          --path cxd56-template
+          --name cxd56-template-ci
+          --destination "$RUNNER_TEMP"
+          --vcs none
+          --no-workspace
+      - name: Build the generated project
+        working-directory: ${{ runner.temp }}/cxd56-template-ci
+        run: cargo build --release
