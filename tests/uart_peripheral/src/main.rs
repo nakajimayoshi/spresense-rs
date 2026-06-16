@@ -78,9 +78,13 @@ fn uart2_internal_loopback(
 
 /// [3/3] UART2 over the real JP1 pads — requires a D01 (TXD) ↔ D00 (RXD) jumper.
 #[cfg(feature = "external-loopback")]
-fn uart2_external_loopback(uart2: pac::Uart2, clocks: &Clocks) -> Result<(), &'static str> {
+fn uart2_external_loopback(
+    uart2: pac::Uart2,
+    pins: Uart2Pins,
+    clocks: &Clock,
+) -> Result<(), &'static str> {
     let mut uart =
-        Uart2::new(uart2, clocks, UartConfig::default()).map_err(|_| "Uart2::new failed")?;
+        Uart::new(uart2, pins, UartConfig::default(), clocks).map_err(|_| "Uart::new failed")?;
     // No LBE: bytes travel out TXD and back in RXD over the jumper wire.
     run_pattern(&mut uart)
 }
@@ -126,8 +130,14 @@ fn main() -> ! {
     {
         // Re-acquire UART2: the internal-loopback instance above already consumed
         // and dropped the PAC token. Safe here — single-threaded, no live UART2.
-        let uart2 = unsafe { pac::Peripherals::steal() }.uart2;
-        match uart2_external_loopback(uart2, &clocks) {
+        let stolen = unsafe { pac::Peripherals::steal() };
+        let uart2 = stolen.uart2;
+        let parts = Parts::new(stolen.topreg);
+        let uart2_pins = Uart2Pins {
+            tx: parts.gp_uart2_txd,
+            rx: parts.gp_uart2_rxd,
+        };
+        match uart2_external_loopback(uart2, uart2_pins, &clock) {
             Ok(()) => defmt::println!("[3/3] uart2_external_loopback: PASS"),
             Err(e) => {
                 all_ok = false;
