@@ -437,6 +437,16 @@ impl<'clk, U: UartPeriph> Uart<'clk, U> {
             .expect("PL011 base address is null");
         let mut inner = pl011::Uart::new(unsafe { pl011::UniqueMmioPointer::new(ptr) });
         inner.enable(line_config(&config), config.baud_rate, hz.to_Hz())?;
+        // Apply PL011 internal loopback (UARTCR.LBE) from config — mirrors
+        // spi_alt's config-driven LBM. The external pl011 driver exposes no
+        // loopback API, so write the bit directly. Must follow `enable`, which
+        // writes UARTCR; `modify` preserves the enable/TXE/RXE bits just set.
+        if config.loopback {
+            // SAFETY: `U::regs()` is the fixed, properly-aligned PL011 base for
+            // this peripheral (same argument as the `inner` pointer above); we
+            // consumed the PAC token `uart`, so there is no other alias.
+            unsafe { &*U::regs() }.cr().modify(|_, w| w.lbe().set_bit());
+        }
         Ok(U::wrap(inner, uart, pins))
     }
 
@@ -475,9 +485,11 @@ impl<'clk, U: UartPeriph> Uart<'clk, U> {
     ///
     /// Calling `free` consumes `self` and prevents [`Drop`] from running — the
     /// clock is gated off here before the struct is dismantled.
-    pub fn free(self) -> (U, U::Pins) {
+    pub fn free(mut self) -> (U, U::Pins) {
         // Disable the peripheral and restore pads before dismantling the struct.
-        // ManuallyDrop prevents Drop from running a second disable().
+        // Clear UARTCR while the clock is live (matches Drop / spi_alt), then
+        // gate. ManuallyDrop prevents Drop from running a second disable().
+        self.inner.disable();
         U::ID.disable().ok();
         U::unpinmux();
         let mut md = core::mem::ManuallyDrop::new(self);
@@ -547,8 +559,7 @@ impl<'clk, U: UartPeriph> Uart<'clk, U> {
 
     /// Recombine [`UartTx`] and [`UartRx`] halves produced by [`split`](Uart::split)
     /// back into a full driver, restoring access to the whole-UART operations
-    /// (e.g. [`set_loopback`](Uart::set_loopback)) and enabling
-    /// [`free`](Uart::free).
+    /// and enabling [`free`](Uart::free).
     ///
     /// Consuming both halves restores exclusive ownership of the peripheral, so
     /// rebuilding the single `pl011::Uart` wrapper is sound again. No hardware
@@ -770,6 +781,9 @@ impl<U: UartPeriph> embedded_io::Read for UartRx<'_, U> {
 
 impl<U: UartPeriph> Drop for Uart<'_, U> {
     fn drop(&mut self) {
+        // Clear UARTCR (LBE/UARTEN/TXE/RXE) while the clock is still live, then
+        // gate it — mirrors spi_alt's Drop so internal loopback never persists.
+        self.inner.disable();
         U::ID.disable().ok();
     }
 }
