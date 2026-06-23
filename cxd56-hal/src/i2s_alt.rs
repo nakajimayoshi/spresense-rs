@@ -191,7 +191,7 @@ impl I2sPort for I2s0 {
         i2s0_configure(audio, config);
     }
 
-    fn teardown(audio: &pac::audio::registerblock) {
+    fn teardown(audio: &pac::audio::RegisterBlock) {
         i2s0_teardown(audio);
     }
 }
