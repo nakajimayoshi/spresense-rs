@@ -32,12 +32,22 @@ impl Dyn {
 /// borrowed mutably, preventing [`request_perf`](Clock::request_perf) from
 /// silently invalidating a peripheral's baud/gear configuration.
 ///
-/// Fixed fields are `pub` and `Copy` — they may be held freely. Dynamic
-/// fields are only accessible by reference via the accessor methods, which
-/// ties their lifetime to `&self`, preserving the dependency chain.
+/// [`Fixed`] fields are `pub` and `Copy` (no borrow); [`Dyn`] fields are only
+/// accessible by reference via the accessor methods, tying their lifetime to
+/// `&self` so the borrow checker blocks [`request_perf`](Clock::request_perf)
+/// while a peripheral depends on one.
+///
+/// **Caveat:** several `Fixed` fields — the SYSIOP-tree `syspll`/`sys`/`sys_ahb`/
+/// `sys_apb`/`sys_sfc`/`com`/`gps_cpu`/`gps_ahb` (and `pmui2c` when sourced from
+/// `sys_apb`) — are nonetheless **perf-dependent** (User Manual SYSIOP-825/826,
+/// UART-791/792). They are refreshed on each [`request_perf`](Clock::request_perf)
+/// (via the private `resample_dyn`), but a copy taken *before* a perf
+/// change goes stale — read them again afterwards / rebuild the peripheral.
 pub struct Clock {
     crg: Crg,
-    // Perf-independent — safe to copy out.
+    // `Copy` snapshots (no borrow). Perf-INVARIANT: xosc/rcosc/rtc/scu/hpadc/
+    // lpadc. Perf-DEPENDENT (refreshed by `request_perf`): syspll/sys/sys_ahb/
+    // sys_apb/sys_sfc/com/pmui2c/gps_cpu/gps_ahb.
     pub xosc: Fixed,
     pub rcosc: Fixed,
     pub rtc: Fixed,
@@ -157,8 +167,19 @@ impl Clock {
 
     /// Re-sample the perf-dependent fields after an operation that changes
     /// them (operating-point change, gear rewrite).
+    ///
+    /// Besides the [`Dyn`] APP-domain clocks, the SYSIOP-tree clocks move with
+    /// the voltage mode too — the operating point reconfigures SYSPLL and the
+    /// SYS dividers (User Manual SYSIOP-825/826 & UART-791/792: COM 48.75 MHz HP
+    /// → 32.5 MHz LP). They are typed [`Fixed`] for ergonomics but are *not*
+    /// perf-invariant, so refresh their cached snapshots here; otherwise a
+    /// freshly-built COM-bus peripheral (e.g. an `uart_alt` UART1, whose baud
+    /// divisor is computed from `self.com`) would use the stale boot rate after
+    /// a perf change. The always-on/sensor clocks (`xosc`/`rcosc`/`rtc`/`scu`/
+    /// `hpadc`/`lpadc`) are genuinely perf-invariant and need no refresh.
     fn resample_dyn(&mut self) {
         let c = Clocks::sample(self.crg.cfg);
+        // Perf-dependent APP-domain clocks.
         self.appsmp    = Dyn(c.appsmp);
         self.usb       = Dyn(c.usb);
         self.sdio      = Dyn(c.sdio);
@@ -166,6 +187,17 @@ impl Clock {
         self.img_spi   = Dyn(c.img_spi);
         self.img_wspi  = Dyn(c.img_wspi);
         self.img_vsync = Dyn(c.img_vsync);
+        // Perf-dependent SYSIOP-tree clocks (typed Fixed, but they track the
+        // operating point — `gps_*` derive from `sys`, `pmui2c` from `sys_apb`).
+        self.syspll  = Fixed(c.syspll);
+        self.sys     = Fixed(c.sys);
+        self.sys_ahb = Fixed(c.sys_ahb);
+        self.sys_apb = Fixed(c.sys_apb);
+        self.sys_sfc = Fixed(c.sys_sfc);
+        self.com     = Fixed(c.com);
+        self.pmui2c  = Fixed(c.pmui2c);
+        self.gps_cpu = Fixed(c.gps_cpu);
+        self.gps_ahb = Fixed(c.gps_ahb);
     }
 
     /// Snapshot every readable clock. Cheap; delegates to the owned `Crg`.

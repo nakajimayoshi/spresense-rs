@@ -24,7 +24,11 @@ fn read_gnss_div() -> u32 {
     unsafe { core::ptr::read_volatile(GNSS_DIV_ADDR as *const u32) }
 }
 
-/// SYS/IOP root clock. Mirrors `cxd56_get_sys_baseclock` (cxd56_clock.c:1573).
+/// SYS/IOP root clock. Mirrors `cxd56_get_sys_baseclock` (cxd56_clock.c:1573)
+/// and the manual's CKSEL_ROOT fields. **Perf-dependent and read live** — the
+/// operating point reconfigures SYSPLL/dividers (User Manual SYSIOP-825/826:
+/// SYS 97.5/78 MHz HP → 32.5/31.2 MHz LP). Validated against the SDK + manual;
+/// do not "simplify" to a constant.
 pub fn sys_hz(rcosc: u32, rtc: u32, syspll: u32, xosc: u32) -> u32 {
     let val = topreg().cksel_root().read().bits();
     match (val >> 22) & 0x3 {
@@ -104,7 +108,10 @@ pub fn scu_hz(rcosc: u32, rtc: u32, xosc: u32) -> u32 {
     }
 }
 
-/// COM-bus clock (SPI0/I2C2/UART1). `cxd56_clock.c:1665`.
+/// COM-bus clock (SPI0/I2C2/UART1). Mirrors `cxd56_get_com_baseclock`
+/// (cxd56_clock.c:1665): `sys / ((CKDIV_COM & 0x1f) + 1)`. **Perf-dependent**
+/// via `sys` (User Manual UART-791/792: 48.75 MHz HP → 32.5 MHz LP). Validated
+/// against the SDK + manual; read live, do not change.
 pub fn com_hz(sys: u32) -> u32 {
     let val = topreg().ckdiv_com().read().bits();
     sys / ((val & 0x1f) + 1)
