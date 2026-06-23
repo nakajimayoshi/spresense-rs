@@ -502,32 +502,34 @@ fn interrupt_slot(irq: pac::Interrupt) -> Option<u8> {
     })
 }
 
-/// RTC ticks held after (re)configuring **or** clearing an edge trigger so the PMU
+/// Real-time hold after (re)configuring **or** clearing an edge trigger so the PMU
 /// detector can (re-)sample the pin's current level as its edge baseline before an
-/// edge can arrive. Counted in **RTC ticks** (32.768 kHz, perf-invariant) rather
-/// than CPU cycles because the detector samples on the RTC clock — a fixed CPU-cycle
-/// delay is too short at a high core clock (drops edges) and wastefully long at a
-/// low one.
+/// edge can arrive. Expressed as **wall-clock microseconds** (not CPU cycles)
+/// because the detector samples on the fixed 32.768 kHz RTC clock — a fixed
+/// CPU-cycle delay is too short at a high core clock (drops edges) and wastefully
+/// long at a low one — and as a *duration* (not raw source ticks) so it holds the
+/// same real time under either [`async_delay`](crate::async_delay) backing.
 ///
 /// Sized from the user manual's "Time Interval for a Signal to be Able to Detect an
 /// Event Again" (Table GPIO-31 / Figure GPIO-24): after a configure/clear an edge
 /// trigger is *undetectable* for up to ~13 RTC cycles — (A) re-sample (2–5) + (B)
-/// clear-complete (7–8). 16 gives margin over the worst documented case (edge with
-/// debounce). One-time per arm, dwarfed by the wait it precedes.
-const EDGE_ARM_SETTLE_TICKS: u32 = 16;
+/// clear-complete (7–8). 488 µs is 16 RTC cycles, margin over the worst documented
+/// case (edge with debounce). One-time per arm, dwarfed by the wait it precedes.
+const EDGE_ARM_SETTLE_US: u32 = 488;
 
-/// Await the perf-invariant edge baseline settle — [`EDGE_ARM_SETTLE_TICKS`] ticks
-/// of the 32.768 kHz RTC (which also clocks the PMU detector) — via the
-/// interrupt-driven [`async_delay`](crate::async_delay). The core `WFE`-sleeps and
-/// the executor runs other tasks for the interval, instead of busy-spinning a
-/// counter.
+/// Await the edge baseline settle — [`EDGE_ARM_SETTLE_US`] of wall-clock time (the
+/// 32.768 kHz RTC that clocks the PMU detector is perf-invariant, so the hold is a
+/// fixed real time) — via the interrupt-driven [`async_delay`](crate::async_delay).
+/// The core `WFE`-sleeps and the executor runs other tasks for the interval,
+/// instead of busy-spinning a counter.
 ///
 /// Because it now awaits a real interrupt, an async `wait_for_*_edge` requires the
-/// app to forward the async-delay source IRQ (`RTC0_A0` with the default backing)
-/// to [`async_delay::on_interrupt`](crate::async_delay::on_interrupt) — the same
+/// app to forward the async-delay source IRQ (`RTC0_A0` with the default RTC
+/// backing, `TIMER0` with `async-delay-timer`) to
+/// [`async_delay::on_interrupt`](crate::async_delay::on_interrupt) — the same
 /// one-line `#[interrupt]` pattern as [`on_interrupt`], see [`crate::async_delay`].
 async fn edge_arm_settle() {
-    crate::async_delay::after_ticks(EDGE_ARM_SETTLE_TICKS).await;
+    crate::async_delay::after_micros(EDGE_ARM_SETTLE_US).await;
 }
 
 /// Program polarity (`INTDET`), route (`CPUINTSEL`) and noise filter

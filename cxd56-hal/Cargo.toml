@@ -12,9 +12,14 @@ critical-section = ["cxd56-pac-svd2rust/critical-section"]
 # set_impl!) in the same binary — the linker will error on duplicate symbols.
 critical-section-impl = ["critical-section/restore-state-u8"]
 # Backing peripheral for `async_delay` (the interrupt-driven async tick delay).
-# Exactly one must be enabled; RTC0 alarm 0 is the perf-invariant default. A
-# future `async-delay-timer` (SP804) backing slots in behind the same seam.
+# Exactly one must be enabled (selected like embassy's `time-driver-*`):
+#   * `async-delay-rtc`   — RTC0 alarm 0: perf-invariant, always-on, 32.768 kHz
+#     (~30.5 µs granularity). The default; right for low-power work.
+#   * `async-delay-timer` — SP804 TIMER0: perf-dependent (CPU base clock, sub-µs
+#     resolution) but rescales with the operating point. The base clock must be
+#     sampled via `async_delay::init`/`Delay::new` before first use.
 async-delay-rtc = []
+async-delay-timer = []
 
 [dependencies]
 cxd56-pac-svd2rust = { version = "0.1.0", path = "../cxd56-pac-svd2rust" }
