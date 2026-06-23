@@ -10,14 +10,15 @@
 //!
 //! ```text
 //! APP → SYSIOP: BOOT (once at first call, with target-id table addr)
-//! APP → SYSIOP: FREQLOCK(flag)   — request HP or LP operating point
-//! SYSIOP → APP: FREQLOCK ack     — lock accepted
-//! SYSIOP → APP: CLK_CHG_START   — about to change; quiesce
-//! APP → SYSIOP: CLK_CHG_START   — ack (ret=0)
-//! [SYSIOP changes PLL/mux/dividers + PMIC voltage via CXD5247]
-//! SYSIOP → APP: CLK_CHG_END     — clocks stable
-//! APP → SYSIOP: CLK_CHG_END     — ack (ret=0)
-//! [caller calls Crg::freeze() for updated rates]
+//! APP → SYSIOP: FREQLOCK(flag)   — request HV (HP) or LV (LP) voltage mode
+//! repeat (3× each way, measured on CXD5602):
+//!   SYSIOP → APP: CLK_CHG_START  — about to change one step; quiesce
+//!   APP → SYSIOP: CLK_CHG_START  — ack (ret=0)
+//!   [SYSIOP changes PLL/mux/dividers and/or PMIC voltage via CXD5247]
+//!   SYSIOP → APP: CLK_CHG_END    — that step's clocks stable
+//!   APP → SYSIOP: CLK_CHG_END    — ack (ret=0)
+//! SYSIOP → APP: FREQLOCK(flag)   — trailing reply: whole transition complete
+//! [request_perf returns; resample_dyn re-reads the new rates]
 //! ```
 //!
 //! # Limitations
@@ -42,14 +43,18 @@ use core::sync::atomic::{AtomicBool, AtomicU32, Ordering};
 /// (via the PMIC CXD5247 on the SYSIOP I2C bus); both transitions are
 /// orchestrated by the SYSIOP loader firmware.
 ///
-/// Operating points (XOSC = 26 MHz, from User Manual Table APP-807/808):
-/// - **`Hp`**: APP CPU 156 MHz, VDD_CORE = 1.0 V
-/// - **`Lp`**: APP CPU  39 MHz, VDD_CORE = 0.7 V
+/// Operating points (XOSC = 26 MHz). User Manual Table APP-807/808 lists the
+/// LP APP clock as 39 MHz (SYSPLL-195 tap) *or* 31.2 MHz (SYSPLL-156 tap);
+/// measured on CXD5602, the SYSIOP drives SYSPLL to 156 MHz and uses the 31.2 MHz
+/// tap. The *boot* default (SYSPLL 195 / APP 97.5 MHz) is a third point, distinct
+/// from both — the first `request_perf` in either direction moves off it.
+/// - **`Hp`**: APP CPU ~156 MHz, VDD_CORE ≈ 1.0 V (HV), COM 39 MHz
+/// - **`Lp`**: APP CPU ~31.2 MHz, VDD_CORE ≈ 0.7 V (LV), COM 31.2 MHz
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub enum Perf {
-    /// High performance: ~156 MHz @ 1.0 V.
+    /// High performance: ~156 MHz @ ~1.0 V (HV).
     Hp,
-    /// Low power: ~39 MHz @ 0.7 V.
+    /// Low power: ~31.2 MHz @ ~0.7 V (LV).
     Lp,
 }
 
@@ -93,13 +98,18 @@ static TARGET_ID_TABLE: [u32; 6] = [0; 6];
 static BOOTED: AtomicBool = AtomicBool::new(false);
 
 /// Last voltage-mode FREQLOCK flag sent to the SYSIOP. The SYSIOP runs the
-/// CLK_CHG handshake only on a *change* of voltage mode, so re-requesting the
-/// current mode gets no handshake and would block the recv loop forever — we skip
-/// it (mirroring `cxd56_pm_checkfreqlock`'s `if (g_freqlock_flag != flag)` guard).
-/// Initialised to the **boot** mode, observed on CXD5602 to be HV (high voltage,
-/// ~1.0 V: boot COM reads 48.75 MHz — the HV-mode value — and an HV request from
-/// boot produces no CLK_CHG handshake).
-static LAST_FLAG: AtomicU32 = AtomicU32::new(FLAG_INITIALIZED | FLAG_HV);
+/// CLK_CHG handshake only on a *change* of flag, so re-requesting the current
+/// flag gets no handshake and would block the recv loop forever — we skip it
+/// (mirroring `cxd56_pm_checkfreqlock`'s `if (g_freqlock_flag != flag)` guard).
+///
+/// Seeded to the SYSIOP's **boot** flag: `FLAG_INITIALIZED` alone, with neither
+/// HV nor LV — the unconstrained default. Confirmed on CXD5602: boot runs SYSPLL
+/// 195 / SYS 97.5 / COM 48.75 / APP 97.5 MHz, which is *neither* the FREQLOCK-HV
+/// point (SYSPLL 156 / APP 156 / COM 39) nor the FREQLOCK-LV point (APP/COM 31.2).
+/// So the first request in *either* direction is a real change that runs a
+/// handshake — and no first request is ever mistaken for a no-op (which, with the
+/// blocking recv below, would hang).
+static LAST_FLAG: AtomicU32 = AtomicU32::new(FLAG_INITIALIZED);
 
 fn boot_once() {
     if BOOTED
@@ -143,13 +153,16 @@ fn send_pm(proto_data: u32, data: u32) {
 /// Request a CPU/bus operating-point (voltage-mode) change from the SYSIOP.
 ///
 /// Sends `FREQLOCK(flag)` over the ICC CPU-FIFO, then drives the SYSIOP handshake
-/// to completion: the SYSIOP answers a real change with `CLK_CHG_START` (we ack
-/// it), reconfigures the PLL/dividers + PMIC core voltage, sends `CLK_CHG_END`
-/// (we ack it), and the call returns. It **blocks** until `CLK_CHG_END`.
+/// to completion. A voltage-mode change is **multi-step** on this silicon: the
+/// SYSIOP sends several `CLK_CHG_START`/`CLK_CHG_END` pairs (3 each way, measured),
+/// each of which we ack, while it reconfigures the PLL/dividers + PMIC core
+/// voltage one step at a time; it then sends a trailing **`FREQLOCK` reply** that
+/// marks the whole transition complete. The call **blocks** until that trailing
+/// `FREQLOCK`.
 ///
-/// Observed on CXD5602 (hardware probe): `FREQLOCK` is answered *directly* with
-/// `CLK_CHG_START` — there is no separate FREQLOCK ack on this path, so
-/// `CLK_CHG_END` is the completion signal.
+/// Acking only the first `CLK_CHG_END` and returning (an earlier version) strands
+/// the chip between steps at an out-of-spec operating point — the real cause of
+/// the garbled LP console, *not* the clock readback.
 ///
 /// `FREQLOCK` selects the **voltage mode** (HV ≈ 1.0 V / LV ≈ 0.7 V); the APP CPU
 /// *and* the SYSIOP bus clocks move with it — including COM, which feeds
@@ -184,27 +197,32 @@ pub fn request_perf(perf: Perf) -> Result<(), PmError> {
     // cxd56_pmsendmsg(MSGID_FREQLOCK, flag)
     send_pm(MSGID_FREQLOCK, flag);
 
-    // Drive the handshake: ack CLK_CHG_START, then ack CLK_CHG_END (completion).
+    // Drive the handshake to completion. A voltage-mode change is **multi-step**
+    // on this silicon: the SYSIOP sends several CLK_CHG_START/END pairs (3 each
+    // way, measured on CXD5602), each of which we ack, while it reconfigures the
+    // PLL/dividers and PMIC core voltage one step at a time. It then sends a
+    // trailing FREQLOCK reply that marks the whole transition complete — that is
+    // the completion signal, mirroring NuttX (`cxd56_pmmsghandler` posts the
+    // freqlock-wait semaphore only on MSGID_FREQLOCK, after the maintask has
+    // acked every CLK_CHG pair). Returning on the first CLK_CHG_END instead would
+    // strand the chip between steps at an out-of-spec operating point.
     loop {
         let words = Mailbox::recv_blocking();
         let Some((proto_data, data)) = unpack_pm(words) else {
             continue;
         };
         match proto_data {
-            MSGID_CLK_CHG_START => {
-                // cxd56_pmsendmsg(MSGID_CLK_CHG_START, 0 /*ret=OK*/)
-                send_pm(MSGID_CLK_CHG_START, 0);
-            }
-            MSGID_CLK_CHG_END => {
-                // cxd56_pmsendmsg(MSGID_CLK_CHG_END, 0 /*ret=OK*/)
-                send_pm(MSGID_CLK_CHG_END, 0);
+            // cxd56_pmsendmsg(MSGID_CLK_CHG_*, 0 /*ret=OK*/) — ack each step.
+            MSGID_CLK_CHG_START => send_pm(MSGID_CLK_CHG_START, 0),
+            MSGID_CLK_CHG_END => send_pm(MSGID_CLK_CHG_END, 0),
+            // Trailing reply: the whole transition is done.
+            MSGID_FREQLOCK => {
                 return if data != 0 {
                     Err(PmError::ClockChangeFailed(data))
                 } else {
                     Ok(())
                 };
             }
-            // An unexpected FREQLOCK ack (other firmware revisions): ignore.
             _ => {}
         }
     }
