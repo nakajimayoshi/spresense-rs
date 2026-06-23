@@ -39,8 +39,13 @@ fn main() -> ! {
 
     let mut found = 0u32;
     for addr in 0x03u8..=0x77 {
-        // A zero-length write probes for an ACK on the address byte.
-        if i2c.write(addr, &[]).is_ok() {
+        // Probe with a 1-byte read. A zero-length write does NOT work on the
+        // DW_apb_i2c controller: an empty buffer never writes IC_DATA_CMD, so no
+        // START/address is ever put on the bus and the transfer reports success
+        // for every address. A read queues a CMD_READ, forcing START+address;
+        // an unanswered address raises TX_ABRT → I2cError::NoAck.
+        let mut b = [0u8; 1];
+        if i2c.read(addr, &mut b).is_ok() {
             writeln!(uart, "  found 0x{:02x}", addr).ok();
             found += 1;
         }
