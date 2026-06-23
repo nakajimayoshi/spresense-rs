@@ -33,6 +33,8 @@
 #![no_std]
 #![no_main]
 
+use core::ops::RangeInclusive;
+
 use cortex_m::asm;
 use cortex_m_rt::entry;
 use defmt_serial as _;
@@ -93,10 +95,23 @@ fn within(meas: u32, believed: u32, tol_pct: u32) -> bool {
     (meas.abs_diff(believed) as u64) * 100 <= believed as u64 * tol_pct as u64
 }
 
-const HP_APPSMP: core::ops::RangeInclusive<u32> = 140_000_000..=175_000_000;
-const LP_APPSMP: core::ops::RangeInclusive<u32> = 30_000_000..=48_000_000;
+const HP_APPSMP: RangeInclusive<u32> = 140_000_000..=175_000_000;
+const LP_APPSMP: RangeInclusive<u32> = 30_000_000..=48_000_000;
 /// measured-vs-believed `cpu_baseclk` tolerance (hardware counters; ~0.05 % noise).
 const TOL_PCT: u32 = 5;
+
+/// Drive the operating point to `target`, but **only** send the request when the
+/// HAL doesn't already believe we're in `band`. A `request_perf` that matches the
+/// current operating point hangs: the SYSIOP elides the `CLK_CHG` handshake when
+/// nothing changes, so `request_perf`'s blocking FIFO read never returns. Guarding
+/// on the believed `appsmp` keeps every real call a genuine transition (and makes
+/// the boot-state HP measurement a no-op rather than a hang).
+fn ensure_perf(clock: &mut Clock, target: Perf, band: &RangeInclusive<u32>) {
+    let cur = clock.appsmp().hz().to_Hz();
+    if !band.contains(&cur) {
+        clock.request_perf(target).expect("request_perf failed");
+    }
+}
 
 #[entry]
 fn main() -> ! {
@@ -124,8 +139,11 @@ fn main() -> ! {
         defmt::println!("[0/4] rtc_alive: FAIL (RTC not running; no reference timebase)");
     }
 
-    // [1/4] High performance.
-    clock.request_perf(Perf::Hp).expect("request_perf(Hp) failed");
+    // [1/4] High performance — the boot operating point. We do NOT request HP
+    // here: a request matching the current point makes the SYSIOP skip the
+    // CLK_CHG handshake and request_perf blocks forever. ensure_perf only sends
+    // the request on a real transition, so this is a no-op at boot.
+    ensure_perf(&mut clock, Perf::Hp, &HP_APPSMP);
     let believed_hp = clock.cpu_baseclk().to_Hz();
     let appsmp_hp = clock.appsmp().hz().to_Hz();
     let (meas_hp, t) = measure(&clock, tok, &dp.rtc0);
@@ -140,8 +158,8 @@ fn main() -> ! {
         verdict(ok_hp)
     );
 
-    // [2/4] Low power.
-    clock.request_perf(Perf::Lp).expect("request_perf(Lp) failed");
+    // [2/4] Low power (a real HP->LP transition).
+    ensure_perf(&mut clock, Perf::Lp, &LP_APPSMP);
     let believed_lp = clock.cpu_baseclk().to_Hz();
     let appsmp_lp = clock.appsmp().hz().to_Hz();
     let (meas_lp, t) = measure(&clock, tok, &dp.rtc0);
@@ -156,8 +174,9 @@ fn main() -> ! {
         verdict(ok_lp)
     );
 
-    // [3/4] Back to high performance — proves the LP->HP round-trip recovers.
-    clock.request_perf(Perf::Hp).expect("request_perf(Hp recover) failed");
+    // [3/4] Back to high performance (a real LP->HP transition) — proves the
+    // round-trip recovers.
+    ensure_perf(&mut clock, Perf::Hp, &HP_APPSMP);
     let believed_hp2 = clock.cpu_baseclk().to_Hz();
     let (meas_hp2, t) = measure(&clock, tok, &dp.rtc0);
     tok = t;
