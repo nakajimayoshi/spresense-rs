@@ -24,6 +24,9 @@ pub mod generic;
 #[cfg(feature = "rt")]
 unsafe extern "C" {
     fn CRG();
+    fn RTC0_A0();
+    fn RTC0_A1();
+    fn RTC0_A2();
     fn UART1();
     fn SPI3();
     fn I2C0();
@@ -89,9 +92,9 @@ pub static __INTERRUPTS: [Vector; 119] = [
     Vector { _handler: CRG },
     Vector { _reserved: 0 },
     Vector { _reserved: 0 },
-    Vector { _reserved: 0 },
-    Vector { _reserved: 0 },
-    Vector { _reserved: 0 },
+    Vector { _handler: RTC0_A0 },
+    Vector { _handler: RTC0_A1 },
+    Vector { _handler: RTC0_A2 },
     Vector { _reserved: 0 },
     Vector { _reserved: 0 },
     Vector { _reserved: 0 },
@@ -237,6 +240,12 @@ pub static __INTERRUPTS: [Vector; 119] = [
 pub enum Interrupt {
     ///1 - CRG interrupt
     CRG = 1,
+    ///4 - RTC0 alarm 0 match/error interrupt
+    RTC0_A0 = 4,
+    ///5 - RTC0 alarm 1 match/error interrupt
+    RTC0_A1 = 5,
+    ///6 - RTC0 alarm 2 match/error interrupt
+    RTC0_A2 = 6,
     ///11 - UART1 interrupt
     UART1 = 11,
     ///16 - SPI3 interrupt

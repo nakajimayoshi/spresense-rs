@@ -4753,6 +4753,21 @@ _add:
       offset: 0x0
       size: 0xA8
       usage: "registers"
+    # RTC0 has three independent alarm channels, each with its own match/error
+    # interrupt. IRQ numbers follow the convention header above: NuttX
+    # CXD56_IRQ_RTC0_A0..A2 = EXTINT+4..6 (irq.h:69-71) ⇒ 0-based NVIC 4..6.
+    # (EXDEVICE_0..11 sit much higher at 20..31, so there is no collision.)
+    # Source: nuttx/arch/arm/src/cxd56xx/hardware/cxd56_rtc.h, cxd56_rtc.c.
+    interrupts:
+      RTC0_A0:
+        description: "RTC0 alarm 0 match/error interrupt"
+        value: 4
+      RTC0_A1:
+        description: "RTC0 alarm 1 match/error interrupt"
+        value: 5
+      RTC0_A2:
+        description: "RTC0 alarm 2 match/error interrupt"
+        value: 6
     registers:
       WRREGPOSTCNT:
         description: "Write post-counter (32-bit integer seconds to set)"

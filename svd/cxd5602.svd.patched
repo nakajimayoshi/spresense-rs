@@ -12650,6 +12650,21 @@
         <size>0xA8</size>
         <usage>registers</usage>
       </addressBlock>
+      <interrupt>
+        <name>RTC0_A0</name>
+        <description>RTC0 alarm 0 match/error interrupt</description>
+        <value>4</value>
+      </interrupt>
+      <interrupt>
+        <name>RTC0_A1</name>
+        <description>RTC0 alarm 1 match/error interrupt</description>
+        <value>5</value>
+      </interrupt>
+      <interrupt>
+        <name>RTC0_A2</name>
+        <description>RTC0 alarm 2 match/error interrupt</description>
+        <value>6</value>
+      </interrupt>
       <registers>
         <register>
           <name>WRREGPOSTCNT</name>
