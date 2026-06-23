@@ -510,20 +510,49 @@ fn interrupt_slot(irq: pac::Interrupt) -> Option<u8> {
     })
 }
 
-/// Cycles held after configuring an edge trigger so the PMU samples its baseline.
-/// The detector runs on the ~32 kHz PMU clock; ≥~5k CPU cycles (≈1 sample period
-/// at the max core clock) were needed on hardware for reliable capture, so this
-/// keeps a 4× margin (and only more at slower core clocks). One-time per
-/// (re)configure, so the cost is irrelevant next to the wait it precedes.
-const EDGE_ARM_SETTLE: u32 = 20_000;
+/// RTC ticks held after (re)configuring **or** clearing an edge trigger so the PMU
+/// detector can (re-)sample the pin's current level as its edge baseline before an
+/// edge can arrive. Counted in **RTC ticks** (32.768 kHz, perf-invariant) rather
+/// than CPU cycles because the detector samples on the RTC clock — a fixed CPU-cycle
+/// delay is too short at a high core clock (drops edges) and wastefully long at a
+/// low one.
+///
+/// Sized from the user manual's "Time Interval for a Signal to be Able to Detect an
+/// Event Again" (Table GPIO-31 / Figure GPIO-24): after a configure/clear an edge
+/// trigger is *undetectable* for up to ~13 RTC cycles — (A) re-sample (2–5) + (B)
+/// clear-complete (7–8). 16 gives margin over the worst documented case (edge with
+/// debounce). One-time per arm, dwarfed by the wait it precedes.
+const EDGE_ARM_SETTLE_TICKS: u32 = 16;
+
+/// Busy-wait until the always-on 32.768 kHz RTC has advanced [`EDGE_ARM_SETTLE_TICKS`]
+/// ticks — the perf-invariant edge baseline settle (see the constant). The RTC also
+/// clocks the PMU detector, so it is running whenever edge detection is in use.
+fn edge_arm_settle() {
+    // SAFETY: fixed read-only MMIO; RTC0 is the always-on clock peripheral.
+    let rtc = unsafe { &*pac::Rtc0::PTR };
+    let now = || -> u32 {
+        // Re-read the high half for a consistent (POSTCNT<<15)|PRECNT snapshot across
+        // a PRECNT wrap; the low 32 bits advance 1/tick (monotonic mod 2^32).
+        loop {
+            let hi = rtc.rtpostcnt().read().bits();
+            let lo = rtc.rtprecnt().read().bits() & 0x7fff;
+            if hi == rtc.rtpostcnt().read().bits() {
+                return (hi << 15) | lo;
+            }
+        }
+    };
+    let start = now();
+    while now().wrapping_sub(start) < EDGE_ARM_SETTLE_TICKS {}
+}
 
 /// Program polarity (`INTDET`), route (`CPUINTSEL`) and noise filter
 /// (`NOISECUTEN`) for `slot`. The register writes run under a critical section
 /// (read-modify-write of shared per-bank registers); the settle below does not.
 ///
-/// After (re)configuring an edge trigger this holds for [`EDGE_ARM_SETTLE`]
-/// cycles so the slow PMU detector samples the *current* pin level as its edge
-/// baseline. Without it, an edge driven immediately after the config write — e.g.
+/// After (re)configuring an edge trigger this holds for [`EDGE_ARM_SETTLE_TICKS`]
+/// RTC ticks (via [`edge_arm_settle`]) so the slow PMU detector samples the *current*
+/// pin level as its edge baseline. Without it, an edge driven immediately after the
+/// config write — e.g.
 /// a `RisingEdge`→`FallingEdge` switch then a drop — is silently dropped because
 /// the detector never saw the pre-edge level (measured on hardware; the miss is
 /// total, not just late, which then hangs a `wait_for_*edge`). The caller must
@@ -560,7 +589,7 @@ fn set_gpioint_config(slot: u8, trigger: Trigger, filter: bool) {
     // Let the PMU detector latch the current level as the edge baseline before the
     // caller drives the edge (see the doc comment). Levels need no such arming.
     if trigger.is_edge() {
-        cortex_m::asm::delay(EDGE_ARM_SETTLE);
+        edge_arm_settle();
     }
 }
 
@@ -793,16 +822,26 @@ impl<R: PinReg> InterruptInput<R> {
 
     /// Arm this slot and await an edge — the implementation behind the async
     /// [`Wait`] edge methods. Reconfigures the trigger first if it differs (which
-    /// re-samples the baseline via [`EDGE_ARM_SETTLE`]), clears any stale latch, and
-    /// unmasks the NVIC line (the INTC gate was opened in `into_interrupt`), then
-    /// suspends until [`on_interrupt`] masks the line and wakes us — the NVIC pending
-    /// bit captures the edge in hardware, so the brief PMU latch is never polled.
-    /// Leaves the line masked (the handler disarmed it) and the latch clear.
+    /// re-samples the baseline via [`edge_arm_settle`]), clears any stale latch,
+    /// holds the baseline so the detector re-samples it (see below), and unmasks the
+    /// NVIC line (the INTC gate was opened in `into_interrupt`), then suspends until
+    /// [`on_interrupt`] masks the line and wakes us — the NVIC pending bit captures
+    /// the edge in hardware, so the brief PMU latch is never polled. Leaves the line
+    /// masked (the handler disarmed it) and the latch clear.
+    ///
+    /// The [`edge_arm_settle`] hold **after** the clear is essential: clearing the
+    /// latch makes the slow ~32 kHz PMU detector re-establish its edge baseline, and
+    /// an edge that arrives before it has re-sampled the current level is **silently
+    /// dropped** — a dropped edge never sets the interrupt, so the wait would hang
+    /// forever. Measured on hardware at the LV operating point this happened to ~5%
+    /// of edges driven immediately after arming; the settle eliminates it (0 of many
+    /// hundreds). The cost is one-time per wait, dwarfed by the wait itself.
     async fn wait_edge_async(&mut self, trigger: Trigger) {
         if self.trigger != trigger {
             self.set_trigger(trigger);
         }
         self.clear_pending();
+        edge_arm_settle();
         self.enable_interrupt();
         self.armed_wait().await;
         self.clear_pending();
