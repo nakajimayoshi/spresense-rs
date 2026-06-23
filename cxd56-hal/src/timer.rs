@@ -38,8 +38,12 @@
 //! # Interrupts
 //!
 //! Starting a timer always leaves the interrupt **masked**; opt in with
-//! [`enable_interrupt`](Timer::enable_interrupt) and unmask the NVIC line
-//! ([`Timer::interrupt`] names it). The order is safe either way: the raw
+//! [`enable_interrupt`](Timer::enable_interrupt), open the chip-level INTC gate
+//! with [`interrupt::enable`](crate::interrupt::enable), and unmask the NVIC
+//! line ([`Timer::interrupt`] names it). All three layers are required — the
+//! INTC sits in front of the NVIC, so without it a real peripheral interrupt
+//! never reaches the core (see [`crate::interrupt`]). The order is safe in any
+//! permutation: the raw
 //! status (RIS) latches on every zero-crossing regardless of the mask, so a
 //! tick that lands before the unmask is delivered, not lost. The interrupt is
 //! **level-latched** — the handler must clear it via INTCLR or it re-enters
