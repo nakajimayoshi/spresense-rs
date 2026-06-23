@@ -1,29 +1,37 @@
-# clock_perf — low-power operating-point verification
+# clock_perf — operating-point round-trip verification
 
-On-hardware test that the APP CPU clock is **correctly set up in both the
-low-power and high-power operating points**, and that `Clock::request_perf`
-actually takes effect.
+On-hardware test that `Clock::request_perf` reaches a correct, **in-spec**
+operating point in **both** directions via the multi-step SYSIOP FREQLOCK
+handshake (the fix: ack every `CLK_CHG_START`/`CLK_CHG_END` pair — 3 each way on
+CXD5602 — and complete on the trailing `FREQLOCK` reply, not the first
+`CLK_CHG_END`).
 
 ## What it checks
 
-The SP804 timer counts at `cpu_baseclk` (HP ≈ 156 MHz, LP ≈ 39 MHz) — a
-*perf-dependent* clock. The RTC is a free-running 32.768 kHz counter on the
-always-on external crystal, **invariant** across operating points. Counting the
-timer against the RTC over a fixed real-time window recovers the *real*
-`cpu_baseclk`, which the test compares to the HAL's belief in each mode:
+The SP804 timer counts at `cpu_baseclk` (a *perf-dependent* clock). The RTC is a
+free-running 32.768 kHz counter on the always-on crystal, **invariant** across
+operating points. Counting the timer against the RTC over a fixed real-time
+window recovers the *real* `cpu_baseclk`, compared to the HAL's belief at each
+point. Because the LP console runs at a different COM than HP, **all measurement
+happens with no printing** (captured to RAM); the verdict is printed once over
+the restored-HP console.
 
-- `[0/4] rtc_alive` — the RTC counter advances (no timebase otherwise).
-- `[1/4] hp` — measured ≈ believed `cpu_baseclk`, and `appsmp` ∈ 140..175 MHz.
-- `[2/4] lp` — same after `request_perf(Perf::Lp)`; `appsmp` ∈ 30..48 MHz.
-- `[3/4] hp_recover` — back to HP; proves the LP→HP round-trip recovers.
-- `[4/4] ratio` — measured HP/LP ≈ 4×; physical proof the clock changed.
+- `[1] hp_boot`   — measured ≈ believed `cpu_baseclk` at boot (HP).
+- `[2] lp`        — same after `request_perf(Lp)` (the downshift took, and the
+  readback matches reality at LP).
+- `[3] cache`     — after `request_perf(Lp)`, the cached `clock.com` (the `Fixed`
+  field `uart_alt` reads) equals live `freeze().com` (the `resample_dyn` refresh).
+- `[4] hp_recover`— measured ≈ believed back at HP (the LP→HP round-trip).
+- `[5] changed`   — LP `cpu_baseclk` is clearly below HP's (physical proof the
+  clock moved, not just the readback).
 
 Ends with `TEST RESULT: PASS`/`FAIL`, which `cargo-spresense-flash --test`
 matches to set the process exit code (0 pass / 1 fail / 2 timeout).
 
-> Why not a UART loopback? TX and RX share one baud generator, so an absolute
-> baud (clock) error cancels and the loopback passes anyway. An independent,
-> perf-invariant witness (the RTC) is what makes the absolute check possible.
+> Why measure at LP but print at HP? A UART sized for one COM garbles at another,
+> and `defmt_serial` returns before bytes leave the FIFO — so printing across a
+> perf change corrupts the line and desyncs the decoder. Measuring into RAM and
+> reporting once at HP sidesteps both.
 
 ## Wiring
 
@@ -34,17 +42,18 @@ matches to set the process exit code (0 pass / 1 fail / 2 timeout).
 
 ```sh
 cd tests/clock_perf
-cargo run --release   # builds, flashes, runs as a test; exits 0/1/2
+cargo run --release                    # the verification test; exits 0/1/2
+cargo run --release --bin clock_dump   # diagnostic: raw register/clock dump + FIFO message log
 ```
 
-Expected output (exact figures depend on the XOSC):
+Expected output (exact figures depend on the XOSC; APP ~156 MHz HV, ~31.2 MHz LV):
 
 ```text
-clock_perf: low-power operating-point verification
-[0/4] rtc_alive: PASS (RTC advanced N ticks)
-[1/4] hp: appsmp=156000000 Hz, cpu_baseclk believed=… measured=… Hz -> PASS
-[2/4] lp: appsmp=39000000 Hz,  cpu_baseclk believed=… measured=… Hz -> PASS
-[3/4] hp_recover: cpu_baseclk believed=… measured=… Hz -> PASS
-[4/4] ratio hp/lp (x100) = 400 (expect ~400) -> PASS
+clock_perf: request_perf operating-point round-trip (HP->LP->HP)
+[1] hp_boot:    cpu_base believed=… measured=… -> PASS
+[2] lp:         cpu_base believed=… measured=… -> PASS
+[3] cache:      cached_com=… live_com=… -> PASS
+[4] hp_recover: cpu_base believed=… measured=… -> PASS
+[5] changed:    lp=… < hp/2=… -> PASS
 TEST RESULT: PASS
 ```

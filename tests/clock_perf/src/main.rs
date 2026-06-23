@@ -1,22 +1,31 @@
-//! On-hardware low-power clock-readback test.
+//! On-hardware verification that `request_perf` reaches a correct, in-spec
+//! operating point in **both** directions via the multi-step SYSIOP FREQLOCK
+//! handshake (the fix: ack every CLK_CHG pair, complete on the trailing
+//! FREQLOCK — 3 pairs each way on CXD5602).
 //!
-//! Verifies the fix for the "no output in LP" bug: after `request_perf(Perf::Lp)`
-//! the COM-bus clock that UART1/SPI0/I2C2 derive their baud from must be live, not
-//! the stale boot value. Three checks, all at the LP operating point:
+//! Method: the SP804 timer counts at `cpu_baseclk` (a perf-dependent clock); the
+//! RTC is a free-running 32.768 kHz counter on the always-on crystal, invariant
+//! across operating points. Counting the timer against the RTC over a fixed
+//! real-time window recovers the *real* `cpu_baseclk`, compared to the HAL's
+//! belief at each point.
 //!
-//!   [1/3] cached == live — `clock.com` (the `Fixed` field `uart_alt` reads to
-//!         build UART1) must equal `clock.freeze().com` (a fresh live read). This
-//!         is the `resample_dyn` refresh: before the fix the cached field kept its
-//!         boot value (48.75 MHz) at LP.
-//!   [2/3] console works — the verdict reaches the host over UART1, whose baud was
-//!         computed from the LP COM clock. A clean decode *is* the assertion that
-//!         the COM readback is correct (wrong COM ⇒ wrong baud ⇒ no verdict).
-//!   [3/3] readback == reality — the SP804 timer (cpu_baseclk) measured against the
-//!         fixed 32.768 kHz RTC matches the HAL's believed cpu_baseclk.
+//! The LP console runs at a different COM than HP, so a single UART sized for one
+//! would garble the other. We therefore **measure at every operating point with
+//! no printing** (results captured to RAM), then build the console from the
+//! restored-HP clock and print the verdict once.
 //!
-//! Note: the LP point reached here is ~78 MHz APP (non-canonical — a separate
-//! request_perf matter), so this asserts internal consistency, not a fixed
-//! frequency. No external jumper. CXD5602 GPIO is 1.8 V.
+//! Checks (all at the operating point named):
+//!   [1] hp_boot   — measured ≈ believed `cpu_baseclk` at boot (HP).
+//!   [2] lp        — measured ≈ believed after `request_perf(Lp)` (downshift took
+//!                   *and* the HAL's belief matches reality at LP).
+//!   [3] cache     — after `request_perf(Lp)`, the cached `clock.com` (the `Fixed`
+//!                   field `uart_alt` reads) equals live `freeze().com`
+//!                   (the `resample_dyn` refresh).
+//!   [4] hp_recover— measured ≈ believed back at HP (the LP→HP round-trip).
+//!   [5] changed   — LP `cpu_baseclk` is clearly below HP's (physical proof the
+//!                   clock actually moved, not just the readback).
+//!
+//! Ends with `TEST RESULT: PASS`/`FAIL`. No external jumper. CXD5602 GPIO is 1.8 V.
 
 #![no_std]
 #![no_main]
@@ -75,69 +84,76 @@ fn verdict(ok: bool) -> &'static str {
 fn main() -> ! {
     let dp = pac::Peripherals::take().unwrap();
     let mut clock = dp.crg.constrain(Config::default()).into_clock();
+    let rtc = dp.rtc0;
+    let mut tok = dp.timer0;
 
-    // Enter low power (real HV->LV transition from boot). request_perf refreshes
-    // the cached SYSIOP-tree clocks (the fix under test).
-    clock
-        .request_perf(Perf::Lp)
-        .expect("request_perf(Lp) failed");
+    // --- Measure across HP -> LP -> HP with NO printing (capture to RAM). ------
 
-    // The cached COM rate `uart_alt` would read to size the UART1 baud divisor.
-    let cached_com = clock.com.hz().to_Hz();
+    // [1] HP (boot).
+    let believed_hp = clock.cpu_baseclk().to_Hz();
+    let (meas_hp, t) = measure(&clock, tok, &rtc);
+    tok = t;
 
-    // Build the console from a fresh live snapshot so its baud is correct at LP
-    // regardless of the fix (this is the reference the cached value must match).
+    // -> LP. request_perf drives the full multi-step handshake; resample_dyn
+    // refreshes the cached COM the console will be sized from.
+    clock.request_perf(Perf::Lp).expect("request_perf(Lp) failed");
+    let cached_com_lp = clock.com.hz().to_Hz();
+    let live_com_lp = clock.freeze().com.to_Hz();
+    let believed_lp = clock.cpu_baseclk().to_Hz();
+    let (meas_lp, t) = measure(&clock, tok, &rtc);
+    tok = t;
+
+    // -> HP (recover).
+    clock.request_perf(Perf::Hp).expect("request_perf(Hp) failed");
+    let believed_hp2 = clock.cpu_baseclk().to_Hz();
+    let (meas_hp2, _t) = measure(&clock, tok, &rtc);
+
+    // --- Report over the restored-HP console. ---------------------------------
     let live = clock.freeze();
-    let live_com = live.com.to_Hz();
     let uart1 = Uart1::new(dp.uart1, &live, UartConfig::default()).expect("uart1 init failed");
     defmt_serial::defmt_serial(SERIAL.init(uart1));
 
-    defmt::println!(
-        "clock_perf (LOW POWER): appsmp={} sys={} com(cached)={} com(live)={} Hz",
-        live.appsmp.to_Hz(),
-        live.sys.to_Hz(),
-        cached_com,
-        live_com
-    );
+    defmt::println!("clock_perf: request_perf operating-point round-trip (HP->LP->HP)");
     let mut all_ok = true;
 
-    // [1/3] The fix: resample_dyn refreshed the cached com to the live value.
-    let cache_ok = cached_com == live_com;
+    let hp_ok = within(meas_hp, believed_hp, TOL_PCT);
+    all_ok &= hp_ok;
+    defmt::println!(
+        "[1] hp_boot:    cpu_base believed={=u32} measured={=u32} -> {=str}",
+        believed_hp, meas_hp, verdict(hp_ok)
+    );
+
+    let lp_ok = within(meas_lp, believed_lp, TOL_PCT);
+    all_ok &= lp_ok;
+    defmt::println!(
+        "[2] lp:         cpu_base believed={=u32} measured={=u32} -> {=str}",
+        believed_lp, meas_lp, verdict(lp_ok)
+    );
+
+    let cache_ok = cached_com_lp == live_com_lp;
     all_ok &= cache_ok;
     defmt::println!(
-        "[1/3] cache_refresh: cached==live ({} == {}) -> {}",
-        cached_com,
-        live_com,
-        verdict(cache_ok)
+        "[3] cache:      cached_com={=u32} live_com={=u32} -> {=str}",
+        cached_com_lp, live_com_lp, verdict(cache_ok)
     );
 
-    // [2/3] Reaching the host with a decodable verdict over the LP-clocked UART1
-    // proves the COM baud is correct. (Implicitly asserted by a clean run; we
-    // also sanity-check the RTC reference is alive.)
-    let a = rtc_ticks(&dp.rtc0);
-    asm::delay(2_000_000);
-    let b = rtc_ticks(&dp.rtc0);
-    let console_ok = b > a;
-    all_ok &= console_ok;
+    let recover_ok = within(meas_hp2, believed_hp2, TOL_PCT);
+    all_ok &= recover_ok;
     defmt::println!(
-        "[2/3] console+rtc: this line decoded at the LP baud; rtc +{} ticks -> {}",
-        b - a,
-        verdict(console_ok)
+        "[4] hp_recover: cpu_base believed={=u32} measured={=u32} -> {=str}",
+        believed_hp2, meas_hp2, verdict(recover_ok)
     );
 
-    // [3/3] Readback matches reality: measured cpu_baseclk ~ believed.
-    let (meas, _tok) = measure(&clock, dp.timer0, &dp.rtc0);
-    let believed = clock.cpu_baseclk().to_Hz();
-    let meas_ok = within(meas, believed, TOL_PCT);
-    all_ok &= meas_ok;
+    // LP must be clearly below HP — 156 vs 31.2 MHz APP is ~5x, so a 2x margin is
+    // ample and tolerant of the exact tap the SYSIOP picks.
+    let changed_ok = (meas_lp as u64) * 2 < meas_hp2 as u64;
+    all_ok &= changed_ok;
     defmt::println!(
-        "[3/3] readback==reality: cpu_base believed={} measured={} -> {}",
-        believed,
-        meas,
-        verdict(meas_ok)
+        "[5] changed:    lp={=u32} < hp/2={=u32} -> {=str}",
+        meas_lp, meas_hp2 / 2, verdict(changed_ok)
     );
 
-    defmt::println!("TEST RESULT: {}", verdict(all_ok));
+    defmt::println!("TEST RESULT: {=str}", verdict(all_ok));
     loop {
         asm::wfi();
     }
