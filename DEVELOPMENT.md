@@ -142,3 +142,56 @@ $ brandonsaint-john@saint-john-M93 spresense % svd2pac --license-file LICENSE cx
 [2025-09-17T00:41:47Z ERROR svd2pac::rust_gen::xml2ir] Inheritance of access is not supported. Bitfield: TILE_CLK_GATING_ENB access shall be specified. Bitfield skipped
 [2025-09-17T00:41:47Z ERROR svd2pac] Failed to generate code with err Unsupported feature derived_from is not supported in field
 ```
+
+## GPIO edge-detector wall-clock floor (why the HAL settles but NuttX doesn't)
+
+The CXD5602's GPIO *edge* interrupt isn't caught by a fast bus-clock comparator
+like a normal MCU's EXTI — it runs through the PMU "wake trigger" detector, which
+samples the pin on the always-on 32.768 kHz RTC ("two consecutive sampling",
+manual §3.2.4.4 Fig GPIO-22). Two consequences fall out of that slow sampling:
+
+1. **Re-arm cost.** After you (re)configure a trigger or clear the latch, the
+   detector has to re-sample the current pin level as its baseline before it can
+   recognise an edge. The manual quantifies it in Table GPIO-31 / Fig GPIO-24,
+   "Time Interval for a Signal to be Able to Detect an Event Again": ~10–13 RTC
+   cycles. At 32.768 kHz that's ~300–400 µs of *real* time — a wall-clock floor
+   that does **not** shrink with a faster core.
+2. **Misses are total.** An edge that arrives inside that window is *silently
+   dropped*, not delayed. It never latches, never pends, so an async
+   `wait_for_*_edge` would hang forever.
+
+So the HAL holds a baseline settle (`edge_arm_settle`, 16 RTC ticks for margin)
+after the arming clear, before unmasking the line. It's an *async* delay now (RTC
+alarm 0, via `cxd56_hal::async_delay`), so the core `WFE`-sleeps the ~488 µs
+instead of busy-spinning it — but the wall-clock floor itself is unavoidable.
+
+### Why NuttX doesn't
+
+`cxd56_gpioint.c` has *no* settle anywhere — no udelay/spin after the latch clear
+or the route write. It gets away with it by *usage pattern*, not because the floor
+doesn't exist: every GPIO interrupt source the SDK ships is an external chip
+(ALT1250 modem, NRC7292 / GS2200M Wi-Fi, WizNet Ethernet) whose pin sits at its
+baseline level for milliseconds before the edge, so the detector has long since
+re-sampled. There is no self-loopback (clear-then-immediately-drive the same pin
+on the same core) anywhere in the tree — that pattern is the only thing that hits
+the window, and `examples/rust_gpio_wait_lp` deliberately uses it (D28→D27).
+
+### Realistic ways to hit it *without* a loopback
+
+The floor is a genuine hardware ceiling, not just a test artifact. Even with a real
+external source you drop edges when:
+
+- **Edges land < ~400 µs apart** — i.e. faster than ~2.5–3 kHz. The "detect an
+  event again" interval *is* the detector's maximum edge rate; the second edge of a
+  tight pair is lost. Fast pulse trains, a quadrature-encoder channel at speed, or a
+  chip that double-pulses / coalesces its IRQ line all qualify. NuttX would drop
+  these too — it just never wires a source that fast to `gpioint`.
+- **You flip polarity right before the edge** — switching rising→falling, or arming
+  "both edges", immediately before the line moves: the re-baseline window applies
+  after the config write just as it does after a clear.
+
+Most HALs never need to handle this because their edge detectors run on a MHz clock
+and the re-arm window is nanoseconds. The CXD5602 is unusual in routing edges
+through a 32 kHz PMU wake detector (it's built for wake-from-sleep, not high-rate
+counting), so the window is hundreds of microseconds and has to be handled
+explicitly whenever you self-drive the pin or feed it fast edges.
