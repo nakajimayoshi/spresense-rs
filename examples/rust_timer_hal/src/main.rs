@@ -1,6 +1,7 @@
 //! SP804 dual-timer demo — both channels at once.
 //!
-//! * **TIMER0**: 1 Hz periodic with the interrupt unmasked. The
+//! * **TIMER0**: 1 Hz periodic with the interrupt enabled at all three layers
+//!   (peripheral mask, chip-level INTC gate, NVIC line). The
 //!   `#[interrupt] fn TIMER0` handler clears the level-latched flag via
 //!   `timer::clear_pending` (a `Timer` borrowing a stack-local `Clock` is not
 //!   `'static`, so the ISR cannot own it) and bumps an atomic tick counter.
@@ -33,6 +34,7 @@ use panic_halt as _;
 
 use cxd56_hal::clocks::{Config, RccExt};
 use cxd56_hal::gpio::pins::Parts;
+use cxd56_hal::interrupt as intc;
 use cxd56_hal::pac::{self, interrupt};
 use cxd56_hal::timer::{self, Prescaler, Timer};
 use cxd56_hal::uart_alt::{Uart, Uart1Pins};
@@ -65,13 +67,17 @@ fn main() -> ! {
     let mut uart =
         Uart::new(dp.uart1, uart1_pins, Default::default(), &clock).expect("uart1 init failed");
 
-    // TIMER0: 1 Hz periodic. `start_periodic` leaves the interrupt masked;
-    // unmask at the peripheral, then at the NVIC (either order is safe — RIS
-    // latches independently of the mask, so no tick is lost).
+    // TIMER0: 1 Hz periodic. `start_periodic` leaves the interrupt masked.
+    // Three layers must all opt in for the IRQ to reach the handler: the
+    // peripheral mask, the chip-level INTC gate (which sits in front of the
+    // NVIC — without it a real peripheral interrupt never pends), then the
+    // NVIC line. Order between them is safe — RIS latches independently of the
+    // masks, so no tick is lost.
     let mut tick = Timer::new(dp.timer0, &clock).expect("timer0 init failed");
     tick.start_periodic(1_000_000u32.micros())
         .expect("period out of range");
     tick.enable_interrupt();
+    intc::enable(tick.interrupt());
     unsafe { NVIC::unmask(tick.interrupt()) };
 
     // TIMER1: independent free-running uptime reference (~1.6 µs/tick at HP).
