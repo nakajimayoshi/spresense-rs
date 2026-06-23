@@ -9,12 +9,16 @@
 //! sleeps in `WFE` until the `EXDEVICE_6` handler (which forwards to
 //! [`gpio::on_interrupt`]) masks the line and wakes the task. The NVIC pending bit
 //! captures the edge in hardware, so the brief PMU latch is never polled. A tiny
-//! in-file [`rt`] runtime (`block_on` + `join` + `yield_now`, no executor crate)
+//! in-file [`rt`] runtime (`block_on` + `join` + `delay_ticks`, no executor crate)
 //! drives the futures; an Embassy executor would work just as well.
 //!
-//! Because the demo drives its own loopback, each edge wait is `join`ed with a
-//! small task that drives the edge *after* the wait has armed (a `yield_now` lets
-//! the wait poll first) — so the CPU genuinely sleeps and the ISR wakes it.
+//! Each edge wait holds a baseline so the ~32 kHz PMU detector can sample it, which
+//! the HAL does with an **interrupt-driven async settle** (RTC alarm 0, via
+//! [`cxd56_hal::async_delay`]) — so awaiting an edge needs the `RTC0_A0` handler
+//! below, alongside `EXDEVICE_6`. Because the demo drives its own loopback, each
+//! edge wait is `join`ed with a task that drives the edge only *after* the wait has
+//! finished arming (it paces itself with [`rt::delay_ticks`], which outlasts the
+//! settle) — so the CPU genuinely sleeps and the ISR wakes it.
 //!
 //! D27 (`gp_uart2_cts`) is pin 69 — the APP domain — so it takes the first free
 //! APP interrupt slot (slot 6) and fires `EXDEVICE_6`. That mapping is
@@ -42,16 +46,33 @@ use core::fmt::Write;
 use cortex_m_rt::entry;
 use panic_halt as _;
 
+use cxd56_hal::async_delay::{self, Delay};
 use cxd56_hal::clocks::{Config, RccExt};
 use cxd56_hal::gpio::{self, Level, Trigger, Wait, pins::Parts};
 use cxd56_hal::pac::{self, Interrupt, interrupt};
 use cxd56_hal::uart_alt::{Uart, Uart1Pins};
+
+/// Baseline hold before arming an edge wait, via the public alarm-based [`Delay`]
+/// — lets the driven level settle so the PMU detector's baseline is unambiguous.
+const BASELINE_TICKS: u32 = 8;
+/// In-`join` pacing for the loopback driver: wait this many RTC ticks before
+/// driving the edge, so the concurrent `wait_for_*_edge` has finished arming first
+/// (its 16-tick baseline settle + NVIC unmask). Must exceed the HAL's settle.
+const ARM_TICKS: u32 = 24;
 
 /// CTS (pin 69, APP domain) takes the first free APP slot — slot 6 → `EXDEVICE_6`.
 /// Forward the vector to the HAL, which masks the line and wakes the waiting task.
 #[interrupt]
 fn EXDEVICE_6() {
     gpio::on_interrupt(Interrupt::EXDEVICE_6);
+}
+
+/// RTC0 alarm 0 backs the async delay used by the edge-arm settle and the baseline
+/// holds. Forward it to the HAL, which disarms the alarm and wakes the delaying
+/// task. Required by any async `wait_for_*_edge` (its settle awaits this).
+#[interrupt]
+fn RTC0_A0() {
+    async_delay::on_interrupt(Interrupt::RTC0_A0);
 }
 
 #[entry]
@@ -71,6 +92,10 @@ fn main() -> ! {
     };
     let mut uart =
         Uart::new(dp.uart1, uart1_pins, Default::default(), &clock).expect("uart1 init failed");
+
+    // Async delay on RTC0 alarm 0 — the time source the edge-arm settle and the
+    // baseline holds sleep on.
+    let mut delay = Delay::new(dp.rtc0, &clock);
 
     // JP1 loopback: D28 (UART2_RTS) drives the line, D27 (UART2_CTS) reads it and
     // is wired to the EXDEVICE interrupt. Short the two header pins together.
@@ -92,21 +117,18 @@ fn main() -> ! {
         const PULSES: u32 = 5;
         for _ in 0..PULSES {
             driver.set_low(); // hold the low baseline …
-            cortex_m::asm::delay(400_000); // … long enough for the PMU detector to sample it
-            rt::join(
-                irq_in.wait_for_rising_edge(),
-                async {
-                    rt::yield_now().await; // let the wait arm first
-                    driver.set_high(); // low→high = rising edge → EXDEVICE_6
-                },
-            )
+            delay.after_ticks(BASELINE_TICKS).await; // … long enough to sample it
+            rt::join(irq_in.wait_for_rising_edge(), async {
+                rt::delay_ticks(ARM_TICKS).await; // let the wait finish arming first
+                driver.set_high(); // low→high = rising edge → EXDEVICE_6
+            })
             .await;
         }
         let _ = writeln!(uart, "phase A (async): {PULSES} rising edges (expected {PULSES})");
 
         // --- Phase B: each Wait method once ---
         driver.set_high();
-        cortex_m::asm::delay(1_000);
+        delay.after_ticks(BASELINE_TICKS).await;
         let _ = irq_in.wait_for_high().await; // already high → returns at once
         let _ = writeln!(
             uart,
@@ -115,7 +137,7 @@ fn main() -> ! {
         );
 
         driver.set_low();
-        cortex_m::asm::delay(1_000);
+        delay.after_ticks(BASELINE_TICKS).await;
         let _ = irq_in.wait_for_low().await;
         let _ = writeln!(
             uart,
@@ -125,9 +147,9 @@ fn main() -> ! {
 
         // Rising edge: hold low baseline, then drive high once the wait has armed.
         driver.set_low();
-        cortex_m::asm::delay(400_000);
+        delay.after_ticks(BASELINE_TICKS).await;
         rt::join(irq_in.wait_for_rising_edge(), async {
-            rt::yield_now().await;
+            rt::delay_ticks(ARM_TICKS).await;
             driver.set_high();
         })
         .await;
@@ -135,9 +157,9 @@ fn main() -> ! {
 
         // Falling edge: hold high baseline, then drive low once the wait has armed.
         driver.set_high();
-        cortex_m::asm::delay(400_000);
+        delay.after_ticks(BASELINE_TICKS).await;
         rt::join(irq_in.wait_for_falling_edge(), async {
-            rt::yield_now().await;
+            rt::delay_ticks(ARM_TICKS).await;
             driver.set_low();
         })
         .await;
@@ -151,18 +173,20 @@ fn main() -> ! {
 }
 
 /// Minimal in-file async runtime: a `block_on` that genuinely sleeps the core in
-/// `WFE` between polls, plus `join` / `yield_now` combinators. Kept local (no
+/// `WFE` between polls, plus `join` and a cooperative `delay_ticks`. Kept local (no
 /// executor crate) — `cxd56-hal` implements the standard `embedded-hal-async`
-/// `Wait` trait, so an Embassy executor would work equally; this just keeps the
-/// example dependency-free.
+/// traits, so an Embassy executor would work equally; this just keeps the example
+/// dependency-free.
 mod rt {
     use core::future::{Future, poll_fn};
     use core::pin::pin;
     use core::task::{Context, Poll, RawWaker, RawWakerVTable, Waker};
 
+    use cxd56_hal::pac;
+
     // A waker that just sets the ARM event register (SEV). Combined with WFE in
-    // `block_on`, a wake from any context (including the EXDEVICE ISR) makes the
-    // next WFE fall through, so no wakeup is lost.
+    // `block_on`, a wake from any context (including the EXDEVICE / RTC ISR) makes
+    // the next WFE fall through, so no wakeup is lost.
     const VTABLE: RawWakerVTable = RawWakerVTable::new(clone, wake, wake, drop_noop);
     fn clone(_: *const ()) -> RawWaker {
         RawWaker::new(core::ptr::null(), &VTABLE)
@@ -191,15 +215,34 @@ mod rt {
         }
     }
 
-    /// Yield once: `Pending` the first poll (waking itself so the executor re-polls
-    /// promptly), `Ready` thereafter. Lets a sibling future run first.
-    pub async fn yield_now() {
-        let mut yielded = false;
+    /// Cooperative poll-based wait of at least `ticks` RTC ticks. Reads the
+    /// always-on 32.768 kHz counter and yields (re-polling) until the deadline.
+    ///
+    /// Used to pace the loopback driver so it drives the edge only *after* the
+    /// concurrent `wait_for_*_edge` has finished arming (its baseline settle +
+    /// NVIC unmask). It is independent of the HAL's single async-delay alarm
+    /// channel — which the settle is already using — so the two can run at once.
+    /// Test scaffolding: it busy-polls (the executor spins), unlike the HAL settle
+    /// it paces against, which truly sleeps the core on the RTC alarm.
+    pub async fn delay_ticks(ticks: u32) {
+        // SAFETY: read-only MMIO of the always-on RTC counter.
+        let rtc = unsafe { &*pac::Rtc0::PTR };
+        let now = || -> u64 {
+            // Re-read the high half for a consistent (POSTCNT<<15)|PRECNT snapshot
+            // across a PRECNT wrap; the 47-bit count is monotonic.
+            loop {
+                let hi = rtc.rtpostcnt().read().bits();
+                let lo = rtc.rtprecnt().read().bits() & 0x7fff;
+                if hi == rtc.rtpostcnt().read().bits() {
+                    return ((hi as u64) << 15) | lo as u64;
+                }
+            }
+        };
+        let deadline = now().wrapping_add(ticks as u64);
         poll_fn(|cx| {
-            if yielded {
+            if now() >= deadline {
                 Poll::Ready(())
             } else {
-                yielded = true;
                 cx.waker().wake_by_ref();
                 Poll::Pending
             }

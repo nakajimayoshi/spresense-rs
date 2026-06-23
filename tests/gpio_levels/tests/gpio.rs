@@ -30,6 +30,7 @@ use defmt_serial as _;
 use panic_probe as _;
 use static_cell::StaticCell;
 
+use cxd56_hal::async_delay;
 use cxd56_hal::gpio;
 use cxd56_hal::pac::{Interrupt, interrupt};
 use cxd56_hal::uart::Uart1;
@@ -38,11 +39,24 @@ use cxd56_hal::uart::Uart1;
 // reach it via `crate::SERIAL`.
 static SERIAL: StaticCell<Uart1> = StaticCell::new();
 
+/// In-`join` pacing for the loopback driver: wait this many RTC ticks before
+/// driving the edge, so the concurrent `wait_for_*_edge` has finished arming first
+/// (its 16-tick baseline settle + NVIC unmask). Must exceed the HAL's settle.
+const ARM_TICKS: u32 = 24;
+
 /// D27 (CTS, pin 69) → first free APP slot 6 → `EXDEVICE_6`. Forward the vector to
 /// the HAL so the async `wait_for_*` futures wake.
 #[interrupt]
 fn EXDEVICE_6() {
     gpio::on_interrupt(Interrupt::EXDEVICE_6);
+}
+
+/// RTC0 alarm 0 backs the async delay the edge-arm settle sleeps on. Forward it to
+/// the HAL, which disarms the alarm and wakes the delaying task. Required by any
+/// async `wait_for_*_edge` (its settle awaits this).
+#[interrupt]
+fn RTC0_A0() {
+    async_delay::on_interrupt(Interrupt::RTC0_A0);
 }
 
 /// Poll the PMU edge latch *continuously* for up to ~1M iterations, returning
@@ -65,14 +79,16 @@ fn wait_pending(
     false
 }
 
-/// Minimal in-file async runtime (`block_on` sleeps the core in `WFE`; `join` /
-/// `yield_now` combinators) used to drive the async `wait_for_*` futures from the
+/// Minimal in-file async runtime (`block_on` sleeps the core in `WFE`; `join` and
+/// a cooperative `delay_ticks`) used to drive the async `wait_for_*` futures from the
 /// synchronous `defmt-test` bodies. No executor crate — `cxd56-hal` implements the
 /// standard `embedded-hal-async` `Wait` trait, so an Embassy executor would work too.
 mod rt {
     use core::future::{Future, poll_fn};
     use core::pin::pin;
     use core::task::{Context, Poll, RawWaker, RawWakerVTable, Waker};
+
+    use cxd56_hal::pac;
 
     const VTABLE: RawWakerVTable = RawWakerVTable::new(clone, wake, wake, drop_noop);
     fn clone(_: *const ()) -> RawWaker {
@@ -101,14 +117,29 @@ mod rt {
         }
     }
 
-    /// Yield once so a sibling future can run before we re-poll.
-    pub async fn yield_now() {
-        let mut yielded = false;
+    /// Cooperative poll-based wait of at least `ticks` RTC ticks. Reads the
+    /// always-on 32.768 kHz counter and yields (re-polling) until the deadline —
+    /// paces the loopback driver so it drives the edge only *after* the concurrent
+    /// `wait_for_*_edge` has finished arming (its baseline settle + NVIC unmask).
+    /// Independent of the HAL's single async-delay alarm channel (which the settle
+    /// uses), so the two can run at once.
+    pub async fn delay_ticks(ticks: u32) {
+        // SAFETY: read-only MMIO of the always-on RTC counter.
+        let rtc = unsafe { &*pac::Rtc0::PTR };
+        let now = || -> u64 {
+            loop {
+                let hi = rtc.rtpostcnt().read().bits();
+                let lo = rtc.rtprecnt().read().bits() & 0x7fff;
+                if hi == rtc.rtpostcnt().read().bits() {
+                    return ((hi as u64) << 15) | lo as u64;
+                }
+            }
+        };
+        let deadline = now().wrapping_add(ticks as u64);
         poll_fn(|cx| {
-            if yielded {
+            if now() >= deadline {
                 Poll::Ready(())
             } else {
-                yielded = true;
                 cx.waker().wake_by_ref();
                 Poll::Pending
             }
@@ -263,7 +294,9 @@ mod tests {
     // masks the line and wakes the task. The NVIC pending bit captures the edge in
     // hardware, so the brief, phase-dependent PMU latch is never polled. The edge
     // tests `join` the wait with a task that drives the loopback edge *after* the
-    // wait has armed (a `yield_now` lets it poll first); reaching the end means the
+    // wait has armed (a short `delay_ticks` lets it finish arming — its baseline
+    // settle is now an interrupt-driven async delay, hence the `RTC0_A0` handler);
+    // reaching the end means the
     // ISR woke the future, a miss would hang → harness timeout. Level waits use an
     // already-true level and return at once. `is_pending_tracks_and_clears` still
     // covers the polled latch directly via [`wait_pending`]. Each test sets its own
@@ -298,7 +331,7 @@ mod tests {
         let _ = crate::rt::block_on(crate::rt::join(
             sense.wait_for_rising_edge(),
             async move {
-                crate::rt::yield_now().await;
+                crate::rt::delay_ticks(crate::ARM_TICKS).await;
                 out.set_high(); // rising edge on the shorted line
             },
         ));
@@ -314,7 +347,7 @@ mod tests {
         let _ = crate::rt::block_on(crate::rt::join(
             sense.wait_for_falling_edge(), // switches trigger → settle samples high
             async move {
-                crate::rt::yield_now().await;
+                crate::rt::delay_ticks(crate::ARM_TICKS).await;
                 out.set_low(); // falling edge on the shorted line
             },
         ));
@@ -330,7 +363,7 @@ mod tests {
         let _ = crate::rt::block_on(crate::rt::join(
             sense.wait_for_any_edge(), // switches trigger → settle samples low
             async move {
-                crate::rt::yield_now().await;
+                crate::rt::delay_ticks(crate::ARM_TICKS).await;
                 out.set_high(); // a transition (here, rising) under AnyEdge
             },
         ));
