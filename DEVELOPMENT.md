@@ -160,10 +160,12 @@ manual §3.2.4.4 Fig GPIO-22). Two consequences fall out of that slow sampling:
    dropped*, not delayed. It never latches, never pends, so an async
    `wait_for_*_edge` would hang forever.
 
-So the HAL holds a baseline settle (`edge_arm_settle`, 16 RTC ticks for margin)
-after the arming clear, before unmasking the line. It's an *async* delay now (RTC
-alarm 0, via `cxd56_hal::async_delay`), so the core `WFE`-sleeps the ~488 µs
-instead of busy-spinning it — but the wall-clock floor itself is unavoidable.
+So the HAL holds a baseline settle (`edge_arm_settle`, ~488 µs = 16 RTC cycles for
+margin) after the arming clear, before unmasking the line. It's an *async* delay
+now (via `cxd56_hal::async_delay`), so the core `WFE`-sleeps the ~488 µs instead of
+busy-spinning it — but the wall-clock floor itself is unavoidable. The settle is
+expressed as a real-time *duration* (`after_micros`), not raw source ticks, so it
+holds the same ~488 µs under either async-delay backing (see below).
 
 ### Why NuttX doesn't
 
@@ -195,3 +197,47 @@ and the re-arm window is nanoseconds. The CXD5602 is unusual in routing edges
 through a 32 kHz PMU wake detector (it's built for wake-from-sleep, not high-rate
 counting), so the window is hundreds of microseconds and has to be handled
 explicitly whenever you self-drive the pin or feed it fast edges.
+
+### Choosing the async-delay backing (RTC vs SP804 TIMER)
+
+The async delay that backs the settle (`cxd56_hal::async_delay`) lives behind a
+`TickSource` seam selected by a Cargo feature, like embassy's `time-driver-*`.
+Exactly one must be enabled:
+
+- **`async-delay-rtc`** (default) — RTC0 alarm channel 0. The RTC is **always-on
+  and perf-invariant** (fixed 32.768 kHz), so a delay is the same real time at every
+  operating point and survives a clock change with no bookkeeping. Granularity is
+  ~30.5 µs. The right default, and ideal for low-power work where the core clock
+  moves around. The app forwards `RTC0_A0`. No clock setup needed.
+- **`async-delay-timer`** — SP804 `TIMER0` in one-shot mode. It counts the **CPU/AHB
+  base clock**, so resolution is sub-µs (≈6.4 ns/tick at HP) — but that clock is
+  **perf-dependent**: the backing samples it once (via `async_delay::init` or
+  `Delay::new`, which the examples/tests call after any perf switch) and the
+  operating point must not change while a delay is in flight, exactly the constraint
+  `timer::Timer` enforces with its `Clock` borrow. The app forwards `TIMER0`.
+
+Both honour the same real-time `after_micros` / `DelayNs` API, so the GPIO settle
+and any portable caller are unaffected by the choice; only the raw `after_ticks`
+escape hatch is in source-specific ticks. The seam keeps two paradigms behind one
+trait: the RTC is an *absolute-compare* source (program a 47-bit deadline, expiry =
+`now() >= deadline`, robust to a missed wake), while the SP804 is a *relative
+one-shot down-counter* with no monotonic `now()` and no compare register — its
+expiry is the counter's zero-crossing latch, recorded by the `TIMER0` ISR (which
+must clear the level interrupt anyway) for a later poll to observe.
+
+Both backings are exercised by the same examples and tests at both operating points:
+`examples/rust_gpio_wait` (boot OP) and `examples/rust_gpio_wait_lp` (LP), plus the
+`tests/gpio_levels` edge tests, each take a `backing-rtc` (default) / `backing-timer`
+feature — build the timer variant with `--no-default-features --features
+backing-timer`. The LP + timer combination is the interesting one: it proves the
+~488 µs settle is held correctly even though the SP804's rate was sampled at the
+slow LP base clock.
+
+Why provide the timer option at all, given the RTC is the better default here? Two
+reasons: (1) it validates the seam is genuinely paradigm-neutral (an
+absolute-compare alarm and a relative one-shot both drop in without touching any
+call site), so future sources slot in cleanly; and (2) an app already dedicating the
+RTC alarm channels elsewhere, or one that wants sub-µs delay resolution for its own
+`DelayNs` use, can move the async delay onto a spare SP804 channel. Most embassy
+HALs expose exactly this kind of compile-time time-driver choice for the same
+reasons.
