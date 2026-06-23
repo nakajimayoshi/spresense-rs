@@ -508,7 +508,8 @@ fn interrupt_slot(irq: pac::Interrupt) -> Option<u8> {
 /// because the detector samples on the fixed 32.768 kHz RTC clock — a fixed
 /// CPU-cycle delay is too short at a high core clock (drops edges) and wastefully
 /// long at a low one — and as a *duration* (not raw source ticks) so it holds the
-/// same real time under either [`async_delay`](crate::async_delay) backing.
+/// same real time under any async-time backend (the embassy [`time`](crate::time)
+/// driver or [`async_delay`](crate::async_delay)).
 ///
 /// Sized from the user manual's "Time Interval for a Signal to be Able to Detect an
 /// Event Again" (Table GPIO-31 / Figure GPIO-24): after a configure/clear an edge
@@ -519,16 +520,22 @@ const EDGE_ARM_SETTLE_US: u32 = 488;
 
 /// Await the edge baseline settle — [`EDGE_ARM_SETTLE_US`] of wall-clock time (the
 /// 32.768 kHz RTC that clocks the PMU detector is perf-invariant, so the hold is a
-/// fixed real time) — via the interrupt-driven [`async_delay`](crate::async_delay).
-/// The core `WFE`-sleeps and the executor runs other tasks for the interval,
-/// instead of busy-spinning a counter.
+/// fixed real time) — via the active interrupt-driven async-time backend: the embassy
+/// [`time`](crate::time) driver (`time-driver-*`) or [`async_delay`](crate::async_delay)
+/// (`async-delay-*`). The core `WFE`-sleeps and the executor runs other tasks for the
+/// interval instead of busy-spinning a counter.
 ///
-/// Because it now awaits a real interrupt, an async `wait_for_*_edge` requires the
-/// app to forward the async-delay source IRQ (`RTC0_A0` with the default RTC
-/// backing, `TIMER0` with `async-delay-timer`) to
-/// [`async_delay::on_interrupt`](crate::async_delay::on_interrupt) — the same
-/// one-line `#[interrupt]` pattern as [`on_interrupt`], see [`crate::async_delay`].
+/// Because it awaits a real interrupt, an async `wait_for_*_edge` requires the app to
+/// forward the backend's source IRQ(s) to its handler:
+/// * `time-driver-rtc` / `async-delay-rtc` → `RTC0_A0`;
+/// * `time-driver-timer` → `TIMER0` (overflow) **and** `TIMER1` (alarm);
+/// * `async-delay-timer` → `TIMER0`.
+///
+/// See [`crate::time`] / [`crate::async_delay`] for the one-line `#[interrupt]` shape.
 async fn edge_arm_settle() {
+    #[cfg(any(feature = "time-driver-rtc", feature = "time-driver-timer"))]
+    crate::time::after_micros(EDGE_ARM_SETTLE_US).await;
+    #[cfg(not(any(feature = "time-driver-rtc", feature = "time-driver-timer")))]
     crate::async_delay::after_micros(EDGE_ARM_SETTLE_US).await;
 }
 
