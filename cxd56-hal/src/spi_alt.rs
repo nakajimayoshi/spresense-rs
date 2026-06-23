@@ -59,6 +59,16 @@ use crate::gpio::GpioPin;
 use crate::pac;
 use crate::regs::topreg;
 
+/// PL022 TX/RX FIFO depth (8 words), matching NuttX `CXD56_SPI_FIFOSZ`. The
+/// pipelined transfer keeps up to this many words in flight so the TX FIFO is
+/// never starved mid-call — which is what holds the hardware frame-select
+/// (auto CS) asserted across a whole multi-byte burst (see the `SpiBus` impl).
+const FIFO_DEPTH: usize = 8;
+
+/// Bounded spin budget for one no-progress poll of the FIFOs, so a wedged bus
+/// returns [`SpiError::Timeout`] instead of hanging.
+const TRANSFER_RETRY: u32 = 100_000;
+
 // ============================================================================
 // Public configuration types
 // ============================================================================
@@ -313,26 +323,53 @@ impl<'clk, S: SpiPeriph> Spi<'clk, S> {
         Ok(S::wrap(spi, pins))
     }
 
-    // One full-duplex 16-bit word exchange:
-    //   write `word` → TX FIFO, then read one word from RX FIFO.
-    // Bounded-spin on both TNF (TX not-full) and RNE (RX not-empty).
-    // Returns Timeout if either FIFO doesn't become ready within the retry limit.
-    fn transfer_word(&mut self, word: u16) -> Result<u16, SpiError> {
-        // Wait until TX FIFO has room.
-        let mut retry = 100_000u32;
-        while !self.spi.sspsr().read().tnf().bit_is_set() {
-            retry = retry.checked_sub(1).ok_or(SpiError::Timeout)?;
+    // FIFO-pipelined full-duplex transfer of `len` words.
+    //
+    // `tx(i)` supplies the i-th word to send; `rx(i, word)` receives the i-th
+    // word read back. The loop keeps the 8-deep TX FIFO topped up (up to
+    // `FIFO_DEPTH` words in flight) while draining the RX FIFO, so the shift
+    // register is never starved between words — that is what holds the PL022
+    // frame-select (auto CS) LOW for the whole call. Mirrors NuttX
+    // `cxd56_spi.c spi_exchange` and the rp2040-hal PL022 transfer loop.
+    //
+    // Used for the non-aliasing trait methods; `transfer_in_place` open-codes
+    // the same loop because its TX source and RX sink are the same slice.
+    fn pump(
+        &mut self,
+        len: usize,
+        mut tx: impl FnMut(usize) -> u16,
+        mut rx: impl FnMut(usize, u16),
+    ) -> Result<(), SpiError> {
+        let mut tx_idx = 0usize;
+        let mut rx_idx = 0usize;
+        let mut retry = TRANSFER_RETRY;
+        while rx_idx < len {
+            let mut progressed = false;
+            // Fill the TX FIFO while there is room, data left, and we have not
+            // exceeded the FIFO depth of outstanding (unread) words.
+            while tx_idx < len
+                && (tx_idx - rx_idx) < FIFO_DEPTH
+                && self.spi.sspsr().read().tnf().bit_is_set()
+            {
+                let word = tx(tx_idx);
+                self.spi.sspdr().write(|w| unsafe { w.bits(word as u32) });
+                tx_idx += 1;
+                progressed = true;
+            }
+            // Drain everything the RX FIFO has so far.
+            while self.spi.sspsr().read().rne().bit_is_set() {
+                let word = self.spi.sspdr().read().data().bits();
+                rx(rx_idx, word);
+                rx_idx += 1;
+                progressed = true;
+            }
+            if progressed {
+                retry = TRANSFER_RETRY;
+            } else {
+                retry = retry.checked_sub(1).ok_or(SpiError::Timeout)?;
+            }
         }
-        // Write the data word to the TX FIFO.
-        self.spi.sspdr().write(|w| unsafe { w.bits(word as u32) });
-
-        // Wait until RX FIFO is non-empty.
-        retry = 100_000u32;
-        while !self.spi.sspsr().read().rne().bit_is_set() {
-            retry = retry.checked_sub(1).ok_or(SpiError::Timeout)?;
-        }
-        // Read and return the received word.
-        Ok(self.spi.sspdr().read().data().bits())
+        Ok(())
     }
 
     /// Disable the SPI bus, restore the pads to GPIO (Func0), and return the
@@ -374,25 +411,30 @@ impl<S: SpiPeriph> ErrorType for Spi<'_, S> {
 
 /// Full-duplex byte-oriented SPI bus.
 ///
-/// All five methods delegate to [`transfer_word`](Spi::transfer_word), which
-/// exchanges one 16-bit word at a time (only the low 8 bits are meaningful
-/// when the data-frame size is 8). CS is **not** managed here (this is
-/// `SpiBus`, not `SpiDevice`) — drive a GPIO CS pin yourself.
+/// The methods are **FIFO-pipelined**: a whole slice is pushed through the
+/// PL022 keeping the TX FIFO fed (via [`pump`](Spi::pump)), rather than one
+/// blocking word at a time. Besides throughput, this guarantees the hardware
+/// frame-select (auto CS) stays asserted LOW for the full duration of each
+/// call — the CXD5602 User Manual specifies that in continuous back-to-back
+/// transfers `SSPFSSOUT` is held LOW between successive words and only returns
+/// HIGH once the FIFO drains. Issuing a command + its response window as one
+/// call is therefore enough to hold CS across a whole SD-card transaction.
+///
+/// CS is **not** a separate signal you can drive on SPI5: its CS pad
+/// (`EMMC_CMD`) shares the `IOCAPP_IOMD.EMMCA` mux group with SCK/MOSI/MISO and
+/// is driven by the PL022 frame-select. See `DEVELOPMENT.md` ("SPI5 chip-select
+/// cannot be a separate GPIO").
 impl<S: SpiPeriph> SpiBus<u8> for Spi<'_, S> {
     /// Send `0x00` for each byte, populating `words` with received bytes.
     fn read(&mut self, words: &mut [u8]) -> Result<(), SpiError> {
-        for slot in words.iter_mut() {
-            *slot = self.transfer_word(0x00)? as u8;
-        }
-        Ok(())
+        let len = words.len();
+        self.pump(len, |_| 0, |i, word| words[i] = word as u8)
     }
 
     /// Send every byte in `words`, discarding received bytes.
     fn write(&mut self, words: &[u8]) -> Result<(), SpiError> {
-        for &w in words {
-            self.transfer_word(w as u16)?;
-        }
-        Ok(())
+        let len = words.len();
+        self.pump(len, |i| words[i] as u16, |_, _| {})
     }
 
     /// Full-duplex transfer: send each byte in `write`, receive into `read`.
@@ -401,21 +443,49 @@ impl<S: SpiPeriph> SpiBus<u8> for Spi<'_, S> {
     /// for TX, discarded for RX).
     fn transfer(&mut self, read: &mut [u8], write: &[u8]) -> Result<(), SpiError> {
         let len = read.len().max(write.len());
-        for i in 0..len {
-            let tx = write.get(i).copied().unwrap_or(0);
-            let rx = self.transfer_word(tx as u16)? as u8;
-            if let Some(slot) = read.get_mut(i) {
-                *slot = rx;
-            }
-        }
-        Ok(())
+        self.pump(
+            len,
+            |i| write.get(i).copied().unwrap_or(0) as u16,
+            |i, word| {
+                if let Some(slot) = read.get_mut(i) {
+                    *slot = word as u8;
+                }
+            },
+        )
     }
 
     /// In-place full-duplex transfer: each byte is transmitted, then
-    /// overwritten with the simultaneously received byte.
+    /// overwritten with the simultaneously received byte. Open-codes the
+    /// [`pump`](Spi::pump) loop because the TX source and RX sink alias.
     fn transfer_in_place(&mut self, words: &mut [u8]) -> Result<(), SpiError> {
-        for w in words.iter_mut() {
-            *w = self.transfer_word(*w as u16)? as u8;
+        let len = words.len();
+        let mut tx_idx = 0usize;
+        let mut rx_idx = 0usize;
+        let mut retry = TRANSFER_RETRY;
+        while rx_idx < len {
+            let mut progressed = false;
+            // Safe to read `words[tx_idx]` before `words[rx_idx]` is overwritten:
+            // `tx_idx >= rx_idx` always, and a slot is only overwritten with its
+            // received byte after it has already been sent.
+            while tx_idx < len
+                && (tx_idx - rx_idx) < FIFO_DEPTH
+                && self.spi.sspsr().read().tnf().bit_is_set()
+            {
+                let word = words[tx_idx] as u32;
+                self.spi.sspdr().write(|w| unsafe { w.bits(word) });
+                tx_idx += 1;
+                progressed = true;
+            }
+            while self.spi.sspsr().read().rne().bit_is_set() {
+                words[rx_idx] = self.spi.sspdr().read().data().bits() as u8;
+                rx_idx += 1;
+                progressed = true;
+            }
+            if progressed {
+                retry = TRANSFER_RETRY;
+            } else {
+                retry = retry.checked_sub(1).ok_or(SpiError::Timeout)?;
+            }
         }
         Ok(())
     }

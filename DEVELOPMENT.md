@@ -303,3 +303,81 @@ The older `async-delay-*` backends stay (now opt-in, `--no-default-features --fe
 async-delay-rtc|timer`) for code that wants the lighter single-in-flight delay with no
 embassy dependency; the GPIO examples/tests still pin them, which is why flipping the
 default to embassy left them untouched.
+
+## SPI5 chip-select cannot be a separate GPIO (why `spi_alt` owns no CS line)
+
+Most Rust HALs hand you an `Spi` that owns only SCK/MOSI/MISO and let you drive **any
+GPIO** as chip-select — rp2040-hal's `Spi` takes `(Tx, Sck)` or `(Tx, Rx, Sck)`, implements
+embedded-hal's `SpiBus` (not `SpiDevice`), and you combine it with an `OutputPin` CS via
+`embedded-hal-bus`'s `ExclusiveDevice` to get a `SpiDevice` (which is what `embedded-sdmmc`
+consumes for SD cards). Our `spi_alt::Spi` is already that same `SpiBus` shape — but on
+**SPI5 specifically you cannot supply your own CS**, and an SD card is the use case that
+makes you feel it. Here is exactly why, with the sources, so nobody re-litigates it.
+
+### 1. The CS pad shares one mux group with the data pads
+
+Pin function on the CXD5602 is selected **per group, not per pin**. SPI5's four signals —
+`EMMC_CLK`/`CMD`/`DATA0`/`DATA1` (SCK/CS_X/MOSI/MISO) — are all controlled by the single
+2-bit field `IOCAPP_IOMD.EMMCA` (bits [7:6]):
+
+- `EMMCA = 0` → all four pads are GPIO
+- `EMMCA = 2` → all four pads are SPI5 (incl. `EMMC_CMD` = `SPI5_CS_X`)
+
+There is no per-pin override. NuttX confirms the grouping: `cxd56_pinconfig.c` defines
+`GROUP_EMMCA (6)` and maps every pin `<= PIN_EMMC_DATA1` to it, and `cxd56_pin_configs()`
+writes the whole field at once: `modifyreg32(modereg, 0x3 << shift, mode << shift)`. So you
+*cannot* set `EMMC_CMD` to GPIO while `CLK/DATA0/DATA1` stay SPI5 — `cxd56_gpio_config()`
+forcing the pin to mode 0 would knock the other three out of SPI mode too.
+
+Crucially, when `EMMCA = 2` the `EMMC_CMD` pad is driven by the PL022 frame-select, and the
+GPIO output register (`GP_EMMC_CMD`) is **disconnected from the pad** — a `GpioPin` over it
+is inert. (This is why `Spi5Pins` consumes `csn`: not to drive it, just to prove exclusive
+ownership of a pad it cannot meaningfully toggle.)
+
+### 2. The PL022's own manual-CS registers exist — but not on SPI5
+
+The CXD5602 SPI block does document software CS control: `CS_MODE` (0x090, "1 = CS is
+manually controlled by SSP_CS register"), `SSP_CS` (0x094, drive CS active/inactive), and
+`SLAVE_TYPE` (0x098) — User Manual §3.10.6.2.11–13, p. 948. But every one of those tables
+says **"This is supported only for SPI0 and SPI3."** SPI5 has no manual-CS register; its
+register block is the stock PL022 (`SSPCR0/1`, `SSPDR`, `SSPSR`, `SSPCPSR`, `SSPIMSC`,
+`SSPRIS`, `SSPMIS`, `SSPICR`, `SSPDMACR` — nothing else, which is why the PAC's `spi4`/
+`spi5` block has no CS field). NuttX matches the restriction: `cxd56_spi.c` writes the
+`CSMODE`/`CS` registers only for `port == 0 || port == 3`, and uses a **no-op** select
+callback for SPI5. The SD card's CS is hardwired to `SPI5_CS_X` (= `EMMC_CMD`) on the
+SensiEDGE board, so SPI0/SPI3's manual CS is unreachable for it.
+
+### 3. Why other HALs can do it and we (on SPI5) can't
+
+rp2040-hal and the LPC PL022 HALs route each pad through a **per-pin** function table, so CS
+falls out as a free GPIO and the standard `SpiBus + embedded-hal-bus + embedded-sdmmc` stack
+just works. The CXD5602 groups SPI5's CS pad with its data pads, so the one ingredient that
+makes that stack work — an independent GPIO CS — is the thing the silicon denies on this
+bus. The clean ecosystem path is only fully available in an all-GPIO bit-bang (where all
+four pads are GPIO and CS is a real `OutputPin`); on the hardware peripheral, CS is the
+PL022 auto frame-select, full stop.
+
+### 4. What we do instead: hold auto-CS across a FIFO-fed burst
+
+The PL022 frame-select is not useless for SD — it just has to be *kept* asserted. The User
+Manual's SPI5 "Motorola SPI frame format" section (Figures SPI-128/131, "continuous
+transfer", p. 939–943) states that for **continuous back-to-back transfers `SSPFSSOUT` is
+held LOW between successive data words**, returning to idle HIGH only one `SSPCLKOUT` period
+after the FIFO drains. So if a whole SD command + its response window is clocked as one
+**uninterrupted, FIFO-fed burst**, CS stays asserted for the entire command and deasserts
+(legally) only between commands.
+
+That is exactly what the FIFO-pipelined `SpiBus` implementation in `spi_alt.rs` guarantees:
+its `pump()` loop keeps up to `FIFO_DEPTH` (8, matching NuttX `CXD56_SPI_FIFOSZ`) words in
+flight, never starving the shift register mid-call — the same technique as NuttX
+`cxd56_spi.c spi_exchange` and rp2040-hal's transfer loop. The earlier word-at-a-time
+implementation blocked on `RNE` after each byte, draining the FIFO and pulsing CS between
+every byte, which would abort any multi-byte SD command. `examples/rust_sd_spi` exercises
+this end-to-end (CMD0/CMD8/ACMD41/CMD58), and `tests/spi_loopback` covers the pipelined
+path in isolation.
+
+References: CXD5602 User Manual §3.10.5 SPI5 / §3.10.6.2 (pp. 936–948); NuttX
+`arch/arm/src/cxd56xx/cxd56_pinconfig.c` (`GROUP_EMMCA`, `cxd56_pin_configs`),
+`cxd56_gpio.c` (`cxd56_gpio_config`), `cxd56_spi.c` (`CSMODE`/`CS` for ports 0/3,
+`spi_exchange`, `CXD56_SPI_FIFOSZ`); rp2040-hal `spi` module (`SpiBus`, external GPIO CS via
+`embedded-hal-bus`).
