@@ -34,7 +34,7 @@
 //! - NuttX: `arch/arm/src/cxd56xx/cxd56_icc.h` (CXD56_PROTO_PM, message layout)
 
 use crate::multicore::Mailbox;
-use core::sync::atomic::{AtomicBool, Ordering};
+use core::sync::atomic::{AtomicBool, AtomicU32, Ordering};
 
 /// CPU/bus performance level.
 ///
@@ -92,6 +92,12 @@ static TARGET_ID_TABLE: [u32; 6] = [0; 6];
 
 static BOOTED: AtomicBool = AtomicBool::new(false);
 
+/// Mirrors NuttX `g_freqlock_flag`: the last aggregate FREQLOCK flag sent to the
+/// SYSIOP (`0` = none sent yet). `cxd56_pm_checkfreqlock` only messages the
+/// SYSIOP when this value changes; the SYSIOP acks (and acts on) a FREQLOCK only
+/// for a real change, so re-sending an unchanged flag would block forever.
+static LAST_FLAG: AtomicU32 = AtomicU32::new(0);
+
 fn boot_once() {
     if BOOTED
         .compare_exchange(false, true, Ordering::Relaxed, Ordering::Relaxed)
@@ -133,17 +139,31 @@ fn send_pm(proto_data: u32, data: u32) {
 
 /// Request a CPU/bus operating-point change from the SYSIOP loader firmware.
 ///
-/// Sends `FREQLOCK` over ICC and drives the `CLK_CHG_START` / `CLK_CHG_END`
-/// handshake to completion. The call **blocks** until the SYSIOP confirms the
-/// new operating point is stable.
+/// Sends `FREQLOCK` over the ICC CPU-FIFO and returns once the SYSIOP **acks the
+/// lock** — the same completion signal NuttX waits on: `cxd56_pm_checkfreqlock`
+/// sends `MSGID_FREQLOCK` then `nxsem_wait(&g_freqlockwait)`, and the semaphore
+/// is posted by the FREQLOCK ack in `cxd56_pmmsghandler`.
 ///
-/// After this returns `Ok(())`, call [`crate::clocks::Crg::freeze`] to obtain
-/// updated clock rates.
+/// The clock change proceeds on the SYSIOP side. The `CLK_CHG_START`/`CLK_CHG_END`
+/// handshake exists only to quiesce **registered domain callbacks**
+/// (`cxd56_pm_do_callback`) and is serviced asynchronously by NuttX's PM task —
+/// `up_pm_acquire_freqlock` does **not** wait for it. With our empty target-id
+/// table (no callbacks) the SYSIOP omits that handshake entirely, so waiting for
+/// `CLK_CHG_END` here would block forever. We still ack `CLK_CHG_START`/`END` if
+/// they do arrive (callbacks registered), and surface a non-zero `CLK_CHG_END`
+/// status as an error.
+///
+/// Mirrors `cxd56_pm_checkfreqlock`'s `if (g_freqlock_flag != flag)` guard: a
+/// request whose flag matches the last one sent is a no-op (the SYSIOP neither
+/// acks nor acts on an unchanged FREQLOCK) and returns immediately.
+///
+/// After this returns `Ok(())`, call [`crate::clocks::Crg::freeze`] for updated
+/// rates.
 ///
 /// # Errors
 ///
-/// Returns [`PmError::ClockChangeFailed`] if the SYSIOP reports a non-zero
-/// status in `CLK_CHG_END` (indicates a firmware-side callback failure).
+/// Returns [`PmError::ClockChangeFailed`] if the SYSIOP reports a non-zero status
+/// in a `CLK_CHG_END` message (a firmware-side callback failure).
 pub fn request_perf(perf: Perf) -> Result<(), PmError> {
     boot_once();
 
@@ -153,20 +173,26 @@ pub fn request_perf(perf: Perf) -> Result<(), PmError> {
             Perf::Lp => FLAG_LV,
         };
 
+    // cxd56_pm_checkfreqlock: only message the SYSIOP when the flag changes.
+    // Re-sending an unchanged flag yields no ack and would hang the recv below.
+    if LAST_FLAG.swap(flag, Ordering::Relaxed) == flag {
+        return Ok(());
+    }
+
     // cxd56_pmsendmsg(MSGID_FREQLOCK, flag)
     send_pm(MSGID_FREQLOCK, flag);
 
-    // Drive the handshake loop until CLK_CHG_END. We handle messages in
-    // whatever order the SYSIOP sends them. Non-PM FIFO words are dropped.
-    let clk_chg_status: u32 = loop {
+    // Completion is the FREQLOCK ack (NuttX returns from the g_freqlockwait post
+    // here). Ack the optional CLK_CHG handshake if the SYSIOP drives it; do not
+    // require CLK_CHG_END, which never comes with an empty target-id table.
+    loop {
         let words = Mailbox::recv_blocking();
         let Some((proto_data, data)) = unpack_pm(words) else {
             continue;
         };
         match proto_data {
-            MSGID_FREQLOCK => {
-                // SYSIOP ack: lock accepted; nxsem_post(&g_freqlockwait) in NuttX.
-            }
+            // SYSIOP ack — the lock is accepted and the request is complete.
+            MSGID_FREQLOCK => return Ok(()),
             MSGID_CLK_CHG_START => {
                 // cxd56_pmsendmsg(MSGID_CLK_CHG_START, 0 /*ret=OK*/)
                 send_pm(MSGID_CLK_CHG_START, 0);
@@ -174,15 +200,11 @@ pub fn request_perf(perf: Perf) -> Result<(), PmError> {
             MSGID_CLK_CHG_END => {
                 // cxd56_pmsendmsg(MSGID_CLK_CHG_END, 0 /*ret=OK*/)
                 send_pm(MSGID_CLK_CHG_END, 0);
-                break data;
+                if data != 0 {
+                    return Err(PmError::ClockChangeFailed(data));
+                }
             }
             _ => {}
         }
-    };
-
-    if clk_chg_status != 0 {
-        Err(PmError::ClockChangeFailed(clk_chg_status))
-    } else {
-        Ok(())
     }
 }
