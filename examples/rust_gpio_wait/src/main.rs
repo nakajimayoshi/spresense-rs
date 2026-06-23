@@ -13,12 +13,15 @@
 //! drives the futures; an Embassy executor would work just as well.
 //!
 //! Each edge wait holds a baseline so the ~32 kHz PMU detector can sample it, which
-//! the HAL does with an **interrupt-driven async settle** (RTC alarm 0, via
-//! [`cxd56_hal::async_delay`]) — so awaiting an edge needs the `RTC0_A0` handler
-//! below, alongside `EXDEVICE_6`. Because the demo drives its own loopback, each
-//! edge wait is `join`ed with a task that drives the edge only *after* the wait has
-//! finished arming (it paces itself with [`rt::delay_ticks`], which outlasts the
-//! settle) — so the CPU genuinely sleeps and the ISR wakes it.
+//! the HAL does with an **interrupt-driven async settle** (via
+//! [`cxd56_hal::async_delay`]) — so awaiting an edge needs the async-delay source
+//! handler below, alongside `EXDEVICE_6`. The source is feature-selected: the
+//! default `backing-rtc` (RTC alarm 0 → `RTC0_A0`) or `backing-timer` (SP804
+//! `TIMER0` → `TIMER0`); build the latter with
+//! `--no-default-features --features backing-timer`. Because the demo drives its
+//! own loopback, each edge wait is `join`ed with a task that drives the edge only
+//! *after* the wait has finished arming (it paces itself with [`rt::delay_ticks`],
+//! which outlasts the settle) — so the CPU genuinely sleeps and the ISR wakes it.
 //!
 //! D27 (`gp_uart2_cts`) is pin 69 — the APP domain — so it takes the first free
 //! APP interrupt slot (slot 6) and fires `EXDEVICE_6`. That mapping is
@@ -28,6 +31,7 @@
 //!
 //! ```text
 //! gpio wait demo — cts interrupt = EXDEVICE_6
+//! async-delay backing: RTC0 alarm 0 (IRQ RTC0_A0, 32768 Hz)
 //! phase A (async): 5 rising edges (expected 5)
 //! phase B: wait_for_high  -> cts is_high=true
 //! phase B: wait_for_low   -> cts is_low=true
@@ -52,12 +56,15 @@ use cxd56_hal::gpio::{self, Level, Trigger, Wait, pins::Parts};
 use cxd56_hal::pac::{self, Interrupt, interrupt};
 use cxd56_hal::uart_alt::{Uart, Uart1Pins};
 
-/// Baseline hold before arming an edge wait, via the public alarm-based [`Delay`]
-/// — lets the driven level settle so the PMU detector's baseline is unambiguous.
-const BASELINE_TICKS: u32 = 8;
+/// Baseline hold before arming an edge wait, via the public [`Delay`] — lets the
+/// driven level settle so the PMU detector's baseline is unambiguous. A wall-clock
+/// duration (~244 µs) so it is the same under either async-delay backing.
+const BASELINE_US: u32 = 244;
 /// In-`join` pacing for the loopback driver: wait this many RTC ticks before
 /// driving the edge, so the concurrent `wait_for_*_edge` has finished arming first
-/// (its 16-tick baseline settle + NVIC unmask). Must exceed the HAL's settle.
+/// (its ~488 µs baseline settle + NVIC unmask). At 32.768 kHz, 24 ticks ≈ 732 µs,
+/// so it outlasts the settle regardless of backing. Reads the RTC counter directly
+/// (see [`rt::delay_ticks`]), independent of the HAL's async-delay source.
 const ARM_TICKS: u32 = 24;
 
 /// CTS (pin 69, APP domain) takes the first free APP slot — slot 6 → `EXDEVICE_6`.
@@ -67,12 +74,19 @@ fn EXDEVICE_6() {
     gpio::on_interrupt(Interrupt::EXDEVICE_6);
 }
 
-/// RTC0 alarm 0 backs the async delay used by the edge-arm settle and the baseline
-/// holds. Forward it to the HAL, which disarms the alarm and wakes the delaying
-/// task. Required by any async `wait_for_*_edge` (its settle awaits this).
+/// Forward the async-delay source IRQ to the HAL, which disarms the source and
+/// wakes the delaying task. Backs the edge-arm settle and the baseline holds, so it
+/// is required by any async `wait_for_*_edge`. The vector matches the selected
+/// backing: `RTC0_A0` (default) or `TIMER0`.
+#[cfg(feature = "backing-rtc")]
 #[interrupt]
 fn RTC0_A0() {
     async_delay::on_interrupt(Interrupt::RTC0_A0);
+}
+#[cfg(feature = "backing-timer")]
+#[interrupt]
+fn TIMER0() {
+    async_delay::on_interrupt(Interrupt::TIMER0);
 }
 
 #[entry]
@@ -93,9 +107,14 @@ fn main() -> ! {
     let mut uart =
         Uart::new(dp.uart1, uart1_pins, Default::default(), &clock).expect("uart1 init failed");
 
-    // Async delay on RTC0 alarm 0 — the time source the edge-arm settle and the
-    // baseline holds sleep on.
+    // Async delay source the edge-arm settle and the baseline holds sleep on, and
+    // which `Delay::new` opens the interrupt path for + samples the clock of. The
+    // backing peripheral is feature-selected: RTC0 alarm 0 (perf-invariant) or
+    // SP804 TIMER0 (counts the CPU base clock, sampled from `clock` here).
+    #[cfg(feature = "backing-rtc")]
     let mut delay = Delay::new(dp.rtc0, &clock);
+    #[cfg(feature = "backing-timer")]
+    let mut delay = Delay::new(dp.timer0, &clock);
 
     // JP1 loopback: D28 (UART2_RTS) drives the line, D27 (UART2_CTS) reads it and
     // is wired to the EXDEVICE interrupt. Short the two header pins together.
@@ -111,13 +130,24 @@ fn main() -> ! {
         "gpio wait demo — cts interrupt = {:?}",
         irq_in.interrupt()
     );
+    // Confirm the async-delay backing the edge-arm settle sleeps on. The name and
+    // rate come from the HAL, so this validates the `backing-*` feature actually
+    // reached `cxd56-hal`: `SP804 TIMER0` at the CPU base clock (e.g. ~156 MHz)
+    // with `--features backing-timer`, vs `RTC0 alarm 0` at 32768 Hz by default.
+    let _ = writeln!(
+        uart,
+        "async-delay backing: {} (IRQ {:?}, {} Hz)",
+        async_delay::BACKING_NAME,
+        async_delay::SOURCE_INTERRUPT,
+        async_delay::tick_hz(),
+    );
 
     rt::block_on(async {
         // --- Phase A: count rising edges, each driven concurrently ---
         const PULSES: u32 = 5;
         for _ in 0..PULSES {
             driver.set_low(); // hold the low baseline …
-            delay.after_ticks(BASELINE_TICKS).await; // … long enough to sample it
+            delay.after_micros(BASELINE_US).await; // … long enough to sample it
             rt::join(irq_in.wait_for_rising_edge(), async {
                 rt::delay_ticks(ARM_TICKS).await; // let the wait finish arming first
                 driver.set_high(); // low→high = rising edge → EXDEVICE_6
@@ -128,7 +158,7 @@ fn main() -> ! {
 
         // --- Phase B: each Wait method once ---
         driver.set_high();
-        delay.after_ticks(BASELINE_TICKS).await;
+        delay.after_micros(BASELINE_US).await;
         let _ = irq_in.wait_for_high().await; // already high → returns at once
         let _ = writeln!(
             uart,
@@ -137,7 +167,7 @@ fn main() -> ! {
         );
 
         driver.set_low();
-        delay.after_ticks(BASELINE_TICKS).await;
+        delay.after_micros(BASELINE_US).await;
         let _ = irq_in.wait_for_low().await;
         let _ = writeln!(
             uart,
@@ -147,7 +177,7 @@ fn main() -> ! {
 
         // Rising edge: hold low baseline, then drive high once the wait has armed.
         driver.set_low();
-        delay.after_ticks(BASELINE_TICKS).await;
+        delay.after_micros(BASELINE_US).await;
         rt::join(irq_in.wait_for_rising_edge(), async {
             rt::delay_ticks(ARM_TICKS).await;
             driver.set_high();
@@ -157,7 +187,7 @@ fn main() -> ! {
 
         // Falling edge: hold high baseline, then drive low once the wait has armed.
         driver.set_high();
-        delay.after_ticks(BASELINE_TICKS).await;
+        delay.after_micros(BASELINE_US).await;
         rt::join(irq_in.wait_for_falling_edge(), async {
             rt::delay_ticks(ARM_TICKS).await;
             driver.set_low();

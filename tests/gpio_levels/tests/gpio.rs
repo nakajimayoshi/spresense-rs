@@ -41,7 +41,8 @@ static SERIAL: StaticCell<Uart1> = StaticCell::new();
 
 /// In-`join` pacing for the loopback driver: wait this many RTC ticks before
 /// driving the edge, so the concurrent `wait_for_*_edge` has finished arming first
-/// (its 16-tick baseline settle + NVIC unmask). Must exceed the HAL's settle.
+/// (its ~488 µs baseline settle + NVIC unmask). At 32.768 kHz, 24 ticks ≈ 732 µs,
+/// so it outlasts the settle regardless of the async-delay backing.
 const ARM_TICKS: u32 = 24;
 
 /// D27 (CTS, pin 69) → first free APP slot 6 → `EXDEVICE_6`. Forward the vector to
@@ -51,12 +52,19 @@ fn EXDEVICE_6() {
     gpio::on_interrupt(Interrupt::EXDEVICE_6);
 }
 
-/// RTC0 alarm 0 backs the async delay the edge-arm settle sleeps on. Forward it to
-/// the HAL, which disarms the alarm and wakes the delaying task. Required by any
-/// async `wait_for_*_edge` (its settle awaits this).
+/// Forward the async-delay source IRQ to the HAL, which disarms the source and
+/// wakes the delaying task. The edge-arm settle sleeps on it, so it is required by
+/// any async `wait_for_*_edge`. The vector matches the selected backing: `RTC0_A0`
+/// (default) or `TIMER0`.
+#[cfg(feature = "backing-rtc")]
 #[interrupt]
 fn RTC0_A0() {
     async_delay::on_interrupt(Interrupt::RTC0_A0);
+}
+#[cfg(feature = "backing-timer")]
+#[interrupt]
+fn TIMER0() {
+    async_delay::on_interrupt(Interrupt::TIMER0);
 }
 
 /// Poll the PMU edge latch *continuously* for up to ~1M iterations, returning
@@ -198,12 +206,30 @@ mod tests {
     #[init]
     fn init() -> State {
         let pac = pac::Peripherals::take().unwrap();
-        let clocks = pac.crg.constrain(Config::default()).freeze();
+        let clock = pac.crg.constrain(Config::default()).into_clock();
+
+        // Sample the async-delay source's input clock and open its interrupt path.
+        // Backing-agnostic: a no-op beyond opening the gate for the perf-invariant
+        // RTC backing, but *required* for the SP804 timer backing (it samples the
+        // CPU base clock the edge-arm settle's one-shot counts at) — the tests use
+        // only the free-function settle path, never a `Delay` handle.
+        crate::async_delay::init(&clock);
+        let clocks = clock.freeze();
 
         // Install the defmt-over-UART1 logger before any test logs a frame.
         let uart =
             Uart1::new(pac.uart1, &clocks, UartConfig::default()).expect("uart1 init failed");
         defmt_serial::defmt_serial(crate::SERIAL.init(uart));
+
+        // Confirm which async-delay backing the edge-arm settle sleeps on — the
+        // name + rate come from the HAL, validating the `backing-*` feature reached
+        // `cxd56-hal` (`SP804 TIMER0` at the CPU base clock vs `RTC0 alarm 0` at
+        // 32768 Hz).
+        defmt::info!(
+            "async-delay backing: {} ({} Hz)",
+            crate::async_delay::BACKING_NAME,
+            crate::async_delay::tick_hz(),
+        );
 
         // `into_floating_input()` now enables the pad input buffer (ENZI) and
         // sets the pull, so the inputs need no manual IO_* writes here. The
