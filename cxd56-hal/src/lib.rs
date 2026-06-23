@@ -2,6 +2,7 @@
 
 pub use cxd56_pac_svd2rust as pac;
 
+pub mod async_delay;
 pub mod clocks;
 #[cfg(feature = "critical-section-impl")]
 pub mod critical_section_impl;

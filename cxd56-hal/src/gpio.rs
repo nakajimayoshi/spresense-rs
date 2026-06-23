@@ -376,14 +376,6 @@ impl Trigger {
             Trigger::RisingEdge | Trigger::FallingEdge | Trigger::AnyEdge => 3, // PmuLatch
         }
     }
-
-    /// Whether this is an edge trigger (latches a single transition).
-    fn is_edge(self) -> bool {
-        matches!(
-            self,
-            Trigger::RisingEdge | Trigger::FallingEdge | Trigger::AnyEdge
-        )
-    }
 }
 
 /// Error returned by [`Input::into_interrupt`].
@@ -524,40 +516,31 @@ fn interrupt_slot(irq: pac::Interrupt) -> Option<u8> {
 /// debounce). One-time per arm, dwarfed by the wait it precedes.
 const EDGE_ARM_SETTLE_TICKS: u32 = 16;
 
-/// Busy-wait until the always-on 32.768 kHz RTC has advanced [`EDGE_ARM_SETTLE_TICKS`]
-/// ticks — the perf-invariant edge baseline settle (see the constant). The RTC also
-/// clocks the PMU detector, so it is running whenever edge detection is in use.
-fn edge_arm_settle() {
-    // SAFETY: fixed read-only MMIO; RTC0 is the always-on clock peripheral.
-    let rtc = unsafe { &*pac::Rtc0::PTR };
-    let now = || -> u32 {
-        // Re-read the high half for a consistent (POSTCNT<<15)|PRECNT snapshot across
-        // a PRECNT wrap; the low 32 bits advance 1/tick (monotonic mod 2^32).
-        loop {
-            let hi = rtc.rtpostcnt().read().bits();
-            let lo = rtc.rtprecnt().read().bits() & 0x7fff;
-            if hi == rtc.rtpostcnt().read().bits() {
-                return (hi << 15) | lo;
-            }
-        }
-    };
-    let start = now();
-    while now().wrapping_sub(start) < EDGE_ARM_SETTLE_TICKS {}
+/// Await the perf-invariant edge baseline settle — [`EDGE_ARM_SETTLE_TICKS`] ticks
+/// of the 32.768 kHz RTC (which also clocks the PMU detector) — via the
+/// interrupt-driven [`async_delay`](crate::async_delay). The core `WFE`-sleeps and
+/// the executor runs other tasks for the interval, instead of busy-spinning a
+/// counter.
+///
+/// Because it now awaits a real interrupt, an async `wait_for_*_edge` requires the
+/// app to forward the async-delay source IRQ (`RTC0_A0` with the default backing)
+/// to [`async_delay::on_interrupt`](crate::async_delay::on_interrupt) — the same
+/// one-line `#[interrupt]` pattern as [`on_interrupt`], see [`crate::async_delay`].
+async fn edge_arm_settle() {
+    crate::async_delay::after_ticks(EDGE_ARM_SETTLE_TICKS).await;
 }
 
 /// Program polarity (`INTDET`), route (`CPUINTSEL`) and noise filter
-/// (`NOISECUTEN`) for `slot`. The register writes run under a critical section
-/// (read-modify-write of shared per-bank registers); the settle below does not.
+/// (`NOISECUTEN`) for `slot`, under a critical section (read-modify-write of
+/// shared per-bank registers).
 ///
-/// After (re)configuring an edge trigger this holds for [`EDGE_ARM_SETTLE_TICKS`]
-/// RTC ticks (via [`edge_arm_settle`]) so the slow PMU detector samples the *current*
-/// pin level as its edge baseline. Without it, an edge driven immediately after the
-/// config write — e.g.
-/// a `RisingEdge`→`FallingEdge` switch then a drop — is silently dropped because
-/// the detector never saw the pre-edge level (measured on hardware; the miss is
-/// total, not just late, which then hangs a `wait_for_*edge`). The caller must
-/// hold the pin at the baseline level across this call, which it naturally does
-/// (the edge is driven afterwards).
+/// This no longer performs the edge baseline settle itself. The async edge wait
+/// ([`wait_edge_async`](InterruptInput::wait_edge_async)) settles *after* its
+/// arming `clear_pending`, which subsumes a config-time settle — clearing the latch
+/// re-establishes the detector's baseline anyway. Polled / raw-handler users and
+/// real external sources get the baseline for free (the signal sits at its level
+/// long before its edge), exactly as the NuttX driver relies on: `cxd56_gpioint.c`
+/// has no settle either. See [`edge_arm_settle`] and [`crate::async_delay`].
 fn set_gpioint_config(slot: u8, trigger: Trigger, filter: bool) {
     let t = regs::topreg();
     let intdet = trigger.intdet();
@@ -585,12 +568,6 @@ fn set_gpioint_config(slot: u8, trigger: Trigger, filter: bool) {
                 .modify(|r, w| unsafe { w.bits((r.bits() & !(0x7u32 << shift)) | (route << shift)) });
         }
     });
-
-    // Let the PMU detector latch the current level as the edge baseline before the
-    // caller drives the edge (see the doc comment). Levels need no such arming.
-    if trigger.is_edge() {
-        edge_arm_settle();
-    }
 }
 
 /// Raw PMU edge-latch status for `slot` (bit 16+slot in `PMU_WAKE_TRIG0_RAW`).
@@ -821,27 +798,29 @@ impl<R: PinReg> InterruptInput<R> {
     }
 
     /// Arm this slot and await an edge — the implementation behind the async
-    /// [`Wait`] edge methods. Reconfigures the trigger first if it differs (which
-    /// re-samples the baseline via [`edge_arm_settle`]), clears any stale latch,
-    /// holds the baseline so the detector re-samples it (see below), and unmasks the
-    /// NVIC line (the INTC gate was opened in `into_interrupt`), then suspends until
-    /// [`on_interrupt`] masks the line and wakes us — the NVIC pending bit captures
-    /// the edge in hardware, so the brief PMU latch is never polled. Leaves the line
-    /// masked (the handler disarmed it) and the latch clear.
+    /// [`Wait`] edge methods. Reconfigures the trigger first if it differs, clears
+    /// any stale latch, [settles](edge_arm_settle) the detector's baseline, and
+    /// unmasks the NVIC line (the INTC gate was opened in `into_interrupt`), then
+    /// suspends until [`on_interrupt`] masks the line and wakes us — the NVIC
+    /// pending bit captures the edge in hardware, so the brief PMU latch is never
+    /// polled. Leaves the line masked (the handler disarmed it) and the latch clear.
     ///
-    /// The [`edge_arm_settle`] hold **after** the clear is essential: clearing the
-    /// latch makes the slow ~32 kHz PMU detector re-establish its edge baseline, and
-    /// an edge that arrives before it has re-sampled the current level is **silently
-    /// dropped** — a dropped edge never sets the interrupt, so the wait would hang
-    /// forever. Measured on hardware at the LV operating point this happened to ~5%
-    /// of edges driven immediately after arming; the settle eliminates it (0 of many
-    /// hundreds). The cost is one-time per wait, dwarfed by the wait itself.
+    /// The [`edge_arm_settle`] hold **after** the clear is essential (and is the
+    /// sole settle — `set_gpioint_config` no longer settles on its own): clearing
+    /// the latch makes the slow ~32 kHz PMU detector re-establish its edge baseline,
+    /// and an edge that arrives before it has re-sampled the current level is
+    /// **silently dropped** — a dropped edge never sets the interrupt, so the wait
+    /// would hang forever. Measured on hardware at the LV operating point this
+    /// happened to ~5% of edges driven immediately after arming; the settle
+    /// eliminates it (0 of many hundreds). It is now an interrupt-driven async
+    /// delay (the core `WFE`-sleeps it); the cost is one-time per wait, dwarfed by
+    /// the wait itself.
     async fn wait_edge_async(&mut self, trigger: Trigger) {
         if self.trigger != trigger {
             self.set_trigger(trigger);
         }
         self.clear_pending();
-        edge_arm_settle();
+        edge_arm_settle().await;
         self.enable_interrupt();
         self.armed_wait().await;
         self.clear_pending();
