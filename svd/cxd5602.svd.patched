@@ -3219,6 +3219,24 @@
               <bitOffset>23</bitOffset>
               <bitWidth>1</bitWidth>
             </field>
+            <field>
+              <name>DSPRAM4_CLR</name>
+              <description>Clear DSP RAM bank 4 (codec initdsp). NuttX RI_DSPRAM4_CLR</description>
+              <bitOffset>28</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>DSPRAM2_CLR</name>
+              <description>Clear DSP RAM bank 2 (codec initdsp). NuttX RI_DSPRAM2_CLR</description>
+              <bitOffset>30</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>DSPRAM1_CLR</name>
+              <description>Clear DSP RAM bank 1 (codec initdsp). NuttX RI_DSPRAM1_CLR</description>
+              <bitOffset>31</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
           </fields>
         </register>
         <register>
@@ -10598,6 +10616,39 @@
           </fields>
         </register>
         <register>
+          <name>IO_MCLK</name>
+          <description>IOCELL control for the audio MCLK pad</description>
+          <addressOffset>0x994</addressOffset>
+          <access>read-write</access>
+          <resetValue>0x01010100</resetValue>
+          <fields>
+            <field>
+              <name>LOWEMI</name>
+              <description>Output current: 0=4mA(max 64MHz), 1=2mA(max 32MHz)</description>
+              <bitOffset>24</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>PDN</name>
+              <description>Pulldown: 0=pulldown enabled, 1=normal (off)</description>
+              <bitOffset>16</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>PUN</name>
+              <description>Pullup: 0=pullup enabled, 1=normal (off)</description>
+              <bitOffset>8</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>ENZI</name>
+              <description>Input enable: 0=disabled, 1=enabled</description>
+              <bitOffset>0</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+          </fields>
+        </register>
+        <register>
           <name>IO_I2C0_BCK</name>
           <description>IOCELL control for I2C0_BCK pad</description>
           <addressOffset>0x8B0</addressOffset>
@@ -11441,6 +11492,12 @@
               <bitOffset>18</bitOffset>
               <bitWidth>2</bitWidth>
             </field>
+            <field>
+              <name>MCLK</name>
+              <description>Mode select for the MCLK pad (audio master clock, Func1). SDK: cxd56_pinconfig.c GROUP_MCLK=22</description>
+              <bitOffset>22</bitOffset>
+              <bitWidth>2</bitWidth>
+            </field>
           </fields>
         </register>
         <register>
@@ -11501,6 +11558,33 @@
           <name>GP_SPI0_SCK</name>
           <description>GPIO SYS pin 18 — SPI0_SCK / UART1_RX (on-board console)</description>
           <addressOffset>0x2044</addressOffset>
+          <access>read-write</access>
+          <resetValue>0x00010000</resetValue>
+          <fields>
+            <field>
+              <name>DIR</name>
+              <description>Output enable, active-low (0 = drive output, 1 = high-Z input)</description>
+              <bitOffset>16</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>OUT</name>
+              <description>Output data</description>
+              <bitOffset>8</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>IN</name>
+              <description>Sampled pin level (read)</description>
+              <bitOffset>0</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+          </fields>
+        </register>
+        <register>
+          <name>GP_SPI3_CS2_X</name>
+          <description>GPIO SYS pin — SPI3_CS2_X / CXD5247 audio reset (XRST)</description>
+          <addressOffset>0x209C</addressOffset>
           <access>read-write</access>
           <resetValue>0x00010000</resetValue>
           <fields>

@@ -2363,6 +2363,33 @@ _add:
             bitOffset: 0
             bitWidth: 1
 
+      # IOCELL pin register for the audio MCLK pad (PIN_MCLK, master-clock input
+      # from the CXD5247). CXD56_TOPREG_IO_MCLK = CXD56_TOPREG_BASE + 0x0994.
+      # Same field layout as the other IOCELL pads. board_audio_initialize's
+      # PINCONFS_MCLK programs 2mA / float / input-enabled.
+      IO_MCLK:
+        description: "IOCELL control for the audio MCLK pad"
+        addressOffset: 0x994
+        access: read-write
+        resetValue: 0x01010100
+        fields:
+          LOWEMI:
+            description: "Output current: 0=4mA(max 64MHz), 1=2mA(max 32MHz)"
+            bitOffset: 24
+            bitWidth: 1
+          PDN:
+            description: "Pulldown: 0=pulldown enabled, 1=normal (off)"
+            bitOffset: 16
+            bitWidth: 1
+          PUN:
+            description: "Pullup: 0=pullup enabled, 1=normal (off)"
+            bitOffset: 8
+            bitWidth: 1
+          ENZI:
+            description: "Input enable: 0=disabled, 1=enabled"
+            bitOffset: 0
+            bitWidth: 1
+
       # IOCELL pin register for I2C0_BCK (I2C0 clock pad, sensor bus).
       # CXD56_TOPREG_IO_I2C0_BCK = CXD56_TOPREG_BASE + 0x08b0.
       # Reset 0x01010100 = LOWEMI=1(2mA), PDN=1(normal), PUN=1(normal), ENZI=0(disabled).
@@ -3028,6 +3055,23 @@ _add:
               - name: Func3
                 description: "Function 3"
                 value: 3
+          MCLK:
+            description: "Mode select for the MCLK pad (audio master clock, Func1). SDK: cxd56_pinconfig.c GROUP_MCLK=22"
+            bitOffset: 22
+            bitWidth: 2
+            enumeratedValues:
+              - name: Gpio
+                description: "GPIO mode"
+                value: 0
+              - name: Func1
+                description: "Function 1 (MCLK)"
+                value: 1
+              - name: Func2
+                description: "Function 2"
+                value: 2
+              - name: Func3
+                description: "Function 3"
+                value: 3
 
       # GP_* GPIO data registers — TOPREG_BASE + 0x2000+.
       # SDK: cxd5602_topreg.h lines 276, 352-355.
@@ -3114,6 +3158,48 @@ _add:
       GP_SPI0_SCK:
         description: "GPIO SYS pin 18 — SPI0_SCK / UART1_RX (on-board console)"
         addressOffset: 0x2044
+        access: read-write
+        resetValue: 0x00010000
+        fields:
+          DIR:
+            description: "Output enable, active-low (0 = drive output, 1 = high-Z input)"
+            bitOffset: 16
+            bitWidth: 1
+            enumeratedValues:
+              - name: Enable
+                description: "Drive output"
+                value: 0
+              - name: Disable
+                description: "High-impedance input"
+                value: 1
+          OUT:
+            description: "Output data"
+            bitOffset: 8
+            bitWidth: 1
+            enumeratedValues:
+              - name: Low
+                description: ""
+                value: 0
+              - name: High
+                description: ""
+                value: 1
+          IN:
+            description: "Sampled pin level (read)"
+            bitOffset: 0
+            bitWidth: 1
+            enumeratedValues:
+              - name: Low
+                description: ""
+                value: 0
+              - name: High
+                description: ""
+                value: 1
+      # GP_SPI3_CS2_X: the CXD5247 audio reset line (XRST) on the Spresense main
+      # board. SDK: cxd5602_topreg.h GP_SPI3_CS2_X (TOPREG_BASE + 0x209c);
+      # board.h CXD5247_XRST = PIN_SPI3_CS2_X. board_aca_power_control drives it.
+      GP_SPI3_CS2_X:
+        description: "GPIO SYS pin — SPI3_CS2_X / CXD5247 audio reset (XRST)"
+        addressOffset: 0x209c
         access: read-write
         resetValue: 0x00010000
         fields:
@@ -6322,6 +6408,18 @@ _add:
           ARWPHSET:
             description: "SRC auto mute (0=disable)"
             bitOffset: 23
+            bitWidth: 1
+          DSPRAM4_CLR:
+            description: "Clear DSP RAM bank 4 (codec initdsp). NuttX RI_DSPRAM4_CLR"
+            bitOffset: 28
+            bitWidth: 1
+          DSPRAM2_CLR:
+            description: "Clear DSP RAM bank 2 (codec initdsp). NuttX RI_DSPRAM2_CLR"
+            bitOffset: 30
+            bitWidth: 1
+          DSPRAM1_CLR:
+            description: "Clear DSP RAM bank 1 (codec initdsp). NuttX RI_DSPRAM1_CLR"
+            bitOffset: 31
             bitWidth: 1
       LR_SWAP:
         description: "I2S L/R channel swap (set together with left-justified format)"

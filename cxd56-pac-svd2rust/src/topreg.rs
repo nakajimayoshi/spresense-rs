@@ -111,36 +111,39 @@ pub struct RegisterBlock {
     io_i2s1_lrck: IoI2s1Lrck,
     io_i2s1_data_in: IoI2s1DataIn,
     io_i2s1_data_out: IoI2s1DataOut,
-    _reserved87: [u8; 0x0ae0],
+    io_mclk: IoMclk,
+    _reserved88: [u8; 0x0adc],
     iooen_app: IooenApp,
-    _reserved88: [u8; 0x18],
+    _reserved89: [u8; 0x18],
     iocapp_intsel0: IocappIntsel0,
     iocapp_intsel1: IocappIntsel1,
-    _reserved90: [u8; 0x08],
+    _reserved91: [u8; 0x08],
     iocapp_iomd: IocappIomd,
-    _reserved91: [u8; 0x0b5c],
+    _reserved92: [u8; 0x0b5c],
     gp_i2c4_bck: GpI2c4Bck,
-    _reserved92: [u8; 0x3c],
+    _reserved93: [u8; 0x3c],
     gp_spi0_cs_x: GpSpi0CsX,
     gp_spi0_sck: GpSpi0Sck,
-    _reserved94: [u8; 0x48],
+    _reserved95: [u8; 0x48],
     gp_sen_irq_in: GpSenIrqIn,
-    _reserved95: [u8; 0x18],
+    _reserved96: [u8; 0x08],
+    gp_spi3_cs2_x: GpSpi3Cs2X,
+    _reserved97: [u8; 0x0c],
     gp_i2c0_bck: GpI2c0Bck,
     gp_i2c0_bdt: GpI2c0Bdt,
-    _reserved97: [u8; 0x3c],
+    _reserved99: [u8; 0x3c],
     gp_uart2_txd: GpUart2Txd,
     gp_uart2_rxd: GpUart2Rxd,
     gp_uart2_cts: GpUart2Cts,
     gp_uart2_rts: GpUart2Rts,
-    _reserved101: [u8; 0x10],
+    _reserved103: [u8; 0x10],
     gp_emmc_clk: GpEmmcClk,
     gp_emmc_cmd: GpEmmcCmd,
     gp_emmc_data0: GpEmmcData0,
     gp_emmc_data1: GpEmmcData1,
     gp_emmc_data2: GpEmmcData2,
     gp_emmc_data3: GpEmmcData3,
-    _reserved107: [u8; 0x30],
+    _reserved109: [u8; 0x30],
     gp_i2s0_bck: GpI2s0Bck,
     gp_i2s0_lrck: GpI2s0Lrck,
     gp_i2s0_data_in: GpI2s0DataIn,
@@ -586,6 +589,11 @@ impl RegisterBlock {
     pub const fn io_i2s1_data_out(&self) -> &IoI2s1DataOut {
         &self.io_i2s1_data_out
     }
+    ///0x994 - IOCELL control for the audio MCLK pad
+    #[inline(always)]
+    pub const fn io_mclk(&self) -> &IoMclk {
+        &self.io_mclk
+    }
     ///0x1474 - I2S BCK/LRCK pad output enable (active-low: 0=enable, 1=disable)
     #[inline(always)]
     pub const fn iooen_app(&self) -> &IooenApp {
@@ -625,6 +633,11 @@ impl RegisterBlock {
     #[inline(always)]
     pub const fn gp_sen_irq_in(&self) -> &GpSenIrqIn {
         &self.gp_sen_irq_in
+    }
+    ///0x209c - GPIO SYS pin — SPI3_CS2_X / CXD5247 audio reset (XRST)
+    #[inline(always)]
+    pub const fn gp_spi3_cs2_x(&self) -> &GpSpi3Cs2X {
+        &self.gp_spi3_cs2_x
     }
     ///0x20ac - GPIO SYS pin 44 — I2C0_SCL / Arduino D15 (JP2)
     #[inline(always)]
@@ -1312,6 +1325,15 @@ For information about available fields see [`mod@io_spi0_sck`] module*/
 pub type IoSpi0Sck = crate::Reg<io_spi0_sck::IoSpi0SckSpec>;
 ///IOCELL control for SPI0_SCK / UART1-RXD
 pub mod io_spi0_sck;
+/**IO_MCLK (rw) register accessor: IOCELL control for the audio MCLK pad
+
+You can [`read`](crate::Reg::read) this register and get [`io_mclk::R`]. You can [`reset`](crate::Reg::reset), [`write`](crate::Reg::write), [`write_with_zero`](crate::Reg::write_with_zero) this register using [`io_mclk::W`]. You can also [`modify`](crate::Reg::modify) this register. See [API](https://docs.rs/svd2rust/#read--modify--write-api).
+
+For information about available fields see [`mod@io_mclk`] module*/
+#[doc(alias = "IO_MCLK")]
+pub type IoMclk = crate::Reg<io_mclk::IoMclkSpec>;
+///IOCELL control for the audio MCLK pad
+pub mod io_mclk;
 /**IO_I2C0_BCK (rw) register accessor: IOCELL control for I2C0_BCK pad
 
 You can [`read`](crate::Reg::read) this register and get [`io_i2c0_bck::R`]. You can [`reset`](crate::Reg::reset), [`write`](crate::Reg::write), [`write_with_zero`](crate::Reg::write_with_zero) this register using [`io_i2c0_bck::W`]. You can also [`modify`](crate::Reg::modify) this register. See [API](https://docs.rs/svd2rust/#read--modify--write-api).
@@ -1573,6 +1595,15 @@ For information about available fields see [`mod@gp_spi0_sck`] module*/
 pub type GpSpi0Sck = crate::Reg<gp_spi0_sck::GpSpi0SckSpec>;
 ///GPIO SYS pin 18 — SPI0_SCK / UART1_RX (on-board console)
 pub mod gp_spi0_sck;
+/**GP_SPI3_CS2_X (rw) register accessor: GPIO SYS pin — SPI3_CS2_X / CXD5247 audio reset (XRST)
+
+You can [`read`](crate::Reg::read) this register and get [`gp_spi3_cs2_x::R`]. You can [`reset`](crate::Reg::reset), [`write`](crate::Reg::write), [`write_with_zero`](crate::Reg::write_with_zero) this register using [`gp_spi3_cs2_x::W`]. You can also [`modify`](crate::Reg::modify) this register. See [API](https://docs.rs/svd2rust/#read--modify--write-api).
+
+For information about available fields see [`mod@gp_spi3_cs2_x`] module*/
+#[doc(alias = "GP_SPI3_CS2_X")]
+pub type GpSpi3Cs2X = crate::Reg<gp_spi3_cs2_x::GpSpi3Cs2XSpec>;
+///GPIO SYS pin — SPI3_CS2_X / CXD5247 audio reset (XRST)
+pub mod gp_spi3_cs2_x;
 /**GP_I2S1_BCK (rw) register accessor: GPIO APP pin 97 — I2S1_BCK / LED0 on Spresense main board
 
 You can [`read`](crate::Reg::read) this register and get [`gp_i2s1_bck::R`]. You can [`reset`](crate::Reg::reset), [`write`](crate::Reg::write), [`write_with_zero`](crate::Reg::write_with_zero) this register using [`gp_i2s1_bck::W`]. You can also [`modify`](crate::Reg::modify) this register. See [API](https://docs.rs/svd2rust/#read--modify--write-api).

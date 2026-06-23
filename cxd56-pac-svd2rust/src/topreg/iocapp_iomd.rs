@@ -18,6 +18,10 @@ pub type EmmcbW<'a, REG> = crate::FieldWriter<'a, REG, 2>;
 pub type I2s0R = crate::FieldReader;
 ///Field `I2S0` writer - Mode select for I2S0 BCK/LRCK/DATA_IN/DATA_OUT pins (I2S0 = Func1)
 pub type I2s0W<'a, REG> = crate::FieldWriter<'a, REG, 2>;
+///Field `MCLK` reader - Mode select for the MCLK pad (audio master clock, Func1). SDK: cxd56_pinconfig.c GROUP_MCLK=22
+pub type MclkR = crate::FieldReader;
+///Field `MCLK` writer - Mode select for the MCLK pad (audio master clock, Func1). SDK: cxd56_pinconfig.c GROUP_MCLK=22
+pub type MclkW<'a, REG> = crate::FieldWriter<'a, REG, 2>;
 impl R {
     ///Bits 2:3 - Mode select for UART2 TXD/RXD pins (UART2 = Func1)
     #[inline(always)]
@@ -38,6 +42,11 @@ impl R {
     #[inline(always)]
     pub fn i2s0(&self) -> I2s0R {
         I2s0R::new(((self.bits >> 18) & 3) as u8)
+    }
+    ///Bits 22:23 - Mode select for the MCLK pad (audio master clock, Func1). SDK: cxd56_pinconfig.c GROUP_MCLK=22
+    #[inline(always)]
+    pub fn mclk(&self) -> MclkR {
+        MclkR::new(((self.bits >> 22) & 3) as u8)
     }
 }
 impl W {
@@ -60,6 +69,11 @@ impl W {
     #[inline(always)]
     pub fn i2s0(&mut self) -> I2s0W<'_, IocappIomdSpec> {
         I2s0W::new(self, 18)
+    }
+    ///Bits 22:23 - Mode select for the MCLK pad (audio master clock, Func1). SDK: cxd56_pinconfig.c GROUP_MCLK=22
+    #[inline(always)]
+    pub fn mclk(&mut self) -> MclkW<'_, IocappIomdSpec> {
+        MclkW::new(self, 22)
     }
 }
 /**APP-domain IO-cell mode-mux register

@@ -22,6 +22,18 @@ pub type HaltInhibitW<'a, REG> = crate::BitWriter<'a, REG>;
 pub type ArwphsetR = crate::BitReader;
 ///Field `ARWPHSET` writer - SRC auto mute (0=disable)
 pub type ArwphsetW<'a, REG> = crate::BitWriter<'a, REG>;
+///Field `DSPRAM4_CLR` reader - Clear DSP RAM bank 4 (codec initdsp). NuttX RI_DSPRAM4_CLR
+pub type Dspram4ClrR = crate::BitReader;
+///Field `DSPRAM4_CLR` writer - Clear DSP RAM bank 4 (codec initdsp). NuttX RI_DSPRAM4_CLR
+pub type Dspram4ClrW<'a, REG> = crate::BitWriter<'a, REG>;
+///Field `DSPRAM2_CLR` reader - Clear DSP RAM bank 2 (codec initdsp). NuttX RI_DSPRAM2_CLR
+pub type Dspram2ClrR = crate::BitReader;
+///Field `DSPRAM2_CLR` writer - Clear DSP RAM bank 2 (codec initdsp). NuttX RI_DSPRAM2_CLR
+pub type Dspram2ClrW<'a, REG> = crate::BitWriter<'a, REG>;
+///Field `DSPRAM1_CLR` reader - Clear DSP RAM bank 1 (codec initdsp). NuttX RI_DSPRAM1_CLR
+pub type Dspram1ClrR = crate::BitReader;
+///Field `DSPRAM1_CLR` writer - Clear DSP RAM bank 1 (codec initdsp). NuttX RI_DSPRAM1_CLR
+pub type Dspram1ClrW<'a, REG> = crate::BitWriter<'a, REG>;
 impl R {
     ///Bit 6 - SRC1 (I2S0 path) filter bypass (1=bypass)
     #[inline(always)]
@@ -47,6 +59,21 @@ impl R {
     #[inline(always)]
     pub fn arwphset(&self) -> ArwphsetR {
         ArwphsetR::new(((self.bits >> 23) & 1) != 0)
+    }
+    ///Bit 28 - Clear DSP RAM bank 4 (codec initdsp). NuttX RI_DSPRAM4_CLR
+    #[inline(always)]
+    pub fn dspram4_clr(&self) -> Dspram4ClrR {
+        Dspram4ClrR::new(((self.bits >> 28) & 1) != 0)
+    }
+    ///Bit 30 - Clear DSP RAM bank 2 (codec initdsp). NuttX RI_DSPRAM2_CLR
+    #[inline(always)]
+    pub fn dspram2_clr(&self) -> Dspram2ClrR {
+        Dspram2ClrR::new(((self.bits >> 30) & 1) != 0)
+    }
+    ///Bit 31 - Clear DSP RAM bank 1 (codec initdsp). NuttX RI_DSPRAM1_CLR
+    #[inline(always)]
+    pub fn dspram1_clr(&self) -> Dspram1ClrR {
+        Dspram1ClrR::new(((self.bits >> 31) & 1) != 0)
     }
 }
 impl W {
@@ -74,6 +101,21 @@ impl W {
     #[inline(always)]
     pub fn arwphset(&mut self) -> ArwphsetW<'_, TestCtrlSpec> {
         ArwphsetW::new(self, 23)
+    }
+    ///Bit 28 - Clear DSP RAM bank 4 (codec initdsp). NuttX RI_DSPRAM4_CLR
+    #[inline(always)]
+    pub fn dspram4_clr(&mut self) -> Dspram4ClrW<'_, TestCtrlSpec> {
+        Dspram4ClrW::new(self, 28)
+    }
+    ///Bit 30 - Clear DSP RAM bank 2 (codec initdsp). NuttX RI_DSPRAM2_CLR
+    #[inline(always)]
+    pub fn dspram2_clr(&mut self) -> Dspram2ClrW<'_, TestCtrlSpec> {
+        Dspram2ClrW::new(self, 30)
+    }
+    ///Bit 31 - Clear DSP RAM bank 1 (codec initdsp). NuttX RI_DSPRAM1_CLR
+    #[inline(always)]
+    pub fn dspram1_clr(&mut self) -> Dspram1ClrW<'_, TestCtrlSpec> {
+        Dspram1ClrW::new(self, 31)
     }
 }
 /**Audio test/control — SRC filter bypass, soft reset, SRC clock-halt inhibit
