@@ -48,6 +48,16 @@ fn main() -> ! {
         if i2c.read(addr, &mut b).is_ok() {
             writeln!(uart, "  found 0x{:02x}", addr).ok();
             found += 1;
+            continue;
+        }
+        // Fallback for command-first parts (e.g. Sensirion SGP40 at 0x59) that
+        // NACK a bare read until a command is issued. A 1-byte write puts
+        // START+address+one data byte on the bus; the part ACKs the address even
+        // though the lone byte is just an opcode it accepts or ignores. Mark it
+        // "(w)" so a read-only hit and a write-only hit are distinguishable.
+        if i2c.write(addr, &[0x00]).is_ok() {
+            writeln!(uart, "  found 0x{:02x} (w)", addr).ok();
+            found += 1;
         }
     }
 

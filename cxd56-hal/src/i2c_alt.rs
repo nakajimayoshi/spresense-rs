@@ -335,16 +335,25 @@ impl<T: I2cPeriph> I2c<T> {
                 .write(|w| unsafe { w.bits(byte as u32 | stop) });
         }
 
-        // Wait for TX_EMPTY (all bytes shifted out).
+        // Wait for STOP_DET — the transaction has actually completed on the bus.
+        // TX_EMPTY/TFE assert as soon as the byte leaves the FIFO for the shift
+        // register, which is *before* the address/data (N)ACK is known; a write
+        // to a NACKing address would otherwise drain the FIFO and return Ok
+        // before the abort latches. STOP_DET (the STOP we requested on the last
+        // byte, or the STOP the controller issues on abort) is the real
+        // completion signal. check_abort still runs each poll to catch the NACK.
         let mut retry = 100_000u32;
         loop {
             self.check_abort()?;
-            if self.i2c.ic_raw_intr_stat().read().tx_empty().bit_is_set() {
+            if self.i2c.ic_raw_intr_stat().read().stop_det().bit_is_set() {
                 break;
             }
             retry = retry.checked_sub(1).ok_or(I2cError::Timeout)?;
         }
+        // Final check in case the abort and STOP latched on the same poll.
+        self.check_abort()?;
 
+        let _ = self.i2c.ic_clr_stop_det().read();
         let _ = self.i2c.ic_clr_intr().read();
         Ok(())
     }
