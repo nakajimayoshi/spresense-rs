@@ -15,6 +15,7 @@ pub mod audio_aca;
 pub mod i2c_alt;
 pub mod i2s_alt;
 pub mod interrupt;
+pub mod i2s_alt;
 pub mod multicore;
 pub mod pmic;
 pub mod spi_alt;

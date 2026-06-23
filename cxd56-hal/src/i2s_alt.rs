@@ -110,6 +110,21 @@ impl Default for I2sConfig {
     }
 }
 
+/// BCK/LRCK pad rates read back from the I2S0 block — see
+/// [`I2s::frame_clocks`](crate::i2s_alt::I2s::frame_clocks).
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
+pub struct FrameClocks {
+    /// LRCK (word/frame clock) at the pad, in Hz.
+    pub lrck_hz: u32,
+    /// BCK (bit clock) at the pad, in Hz (= `lrck_hz * 64`).
+    pub bck_hz: u32,
+    /// `true` when I2S0 drives the BCK/LRCK pads (master mode); `false` = slave
+    /// (the pads are inputs and the rates are the expected external source).
+    pub is_master: bool,
+    /// `true` when the block is in hi-res (192 kHz) mode.
+    pub hires: bool,
+}
+
 /// GPIO tokens for the I2S0 pads.
 ///
 /// Consumed by [`I2s::new`] to enforce at the type level that no other code can
@@ -176,7 +191,7 @@ impl I2sPort for I2s0 {
         i2s0_configure(audio, config);
     }
 
-    fn teardown(audio: &pac::audio::RegisterBlock) {
+    fn teardown(audio: &pac::audio::registerblock) {
         i2s0_teardown(audio);
     }
 }
@@ -204,6 +219,55 @@ fn i2s0_unpinmux() {
         .modify(|_, w| unsafe { w.i2s0().bits(0) });
 }
 
+// Clear the codec/SRC DSP coefficient RAM and soft-reset the DSPs — mirrors
+// `cxd56_audio_ac_reg_initdsp`. The audio block powers up with garbage in DSP
+// RAM; without clearing it the digital path mangles samples (a loopback returns
+// data that is non-zero but not bit-exact). Runs once before the port config.
+fn ac_initdsp(audio: &pac::audio::RegisterBlock) {
+    // Power every DSP block up so its RAM is writable.
+    audio.ac_pdn().modify(|_, w| {
+        w.pdn_dspb().clear_bit();
+        w.pdn_dsps2().clear_bit();
+        w.pdn_dsps1().clear_bit();
+        w.pdn_dspc().clear_bit()
+    });
+    audio.test_ctrl().modify(|_, w| {
+        w.dspram1_clr()
+            .set_bit()
+            .dspram2_clr()
+            .set_bit()
+            .dspram4_clr()
+            .set_bit()
+    });
+    crate::clocks::pmu::delay_us(1_000); // >= 512 cycles @ 24.576 MHz
+    audio.test_ctrl().modify(|_, w| {
+        w.dspram1_clr()
+            .clear_bit()
+            .dspram2_clr()
+            .clear_bit()
+            .dspram4_clr()
+            .clear_bit()
+    });
+    // Power the DSPs back down, then pulse the soft reset.
+    audio.ac_pdn().modify(|_, w| {
+        w.pdn_dspb().set_bit();
+        w.pdn_dsps2().set_bit();
+        w.pdn_dsps1().set_bit();
+        w.pdn_dspc().set_bit()
+    });
+    audio.test_ctrl().modify(|_, w| w.s_reset().set_bit());
+    audio.test_ctrl().modify(|_, w| w.s_reset().clear_bit());
+}
+
+// Pulse the DSP soft reset and wait 20 ms for the digital path to settle —
+// mirrors `cxd56_audio_ac_reg_resetdsp`. Runs after the port is configured but
+// before the data paths are enabled.
+fn ac_resetdsp(audio: &pac::audio::RegisterBlock) {
+    audio.test_ctrl().modify(|_, w| w.s_reset().set_bit());
+    audio.test_ctrl().modify(|_, w| w.s_reset().clear_bit());
+    crate::clocks::pmu::delay_us(20_000);
+}
+
 // Mirrors cxd56_i2s0_config(en=true) + cxd56_i2sclock_out + the digital-path
 // power-up of cxd56_audio_ac_reg_poweron_codec / poweron_i2s0 / enable_dma.
 fn i2s0_configure(audio: &pac::audio::RegisterBlock, config: &I2sConfig) {
@@ -212,6 +276,9 @@ fn i2s0_configure(audio: &pac::audio::RegisterBlock, config: &I2sConfig) {
         .ahb_i2s_clken()
         .modify(|_, w| w.ahbi2s1_clken().set_bit());
     audio.ac_clken().modify(|_, w| w.mck_ahbmstr_en().set_bit());
+
+    // Clear DSP RAM + soft-reset before configuring the path.
+    ac_initdsp(audio);
 
     // Power up the digital path: codec DSP (DSPC), the I2S0 sample-rate
     // converter (DSPS1 = SRC1) and the output filter (DSPB). Without these the
@@ -275,6 +342,9 @@ fn i2s0_configure(audio: &pac::audio::RegisterBlock, config: &I2sConfig) {
     audio
         .i2s_datarate()
         .modify(|_, w| w.i2sall_datarate().bit(datarate));
+
+    // Settle the DSP path (20 ms) before opening the data paths.
+    ac_resetdsp(audio);
 
     // Serial data-path enables + the BLF output filter block.
     let (tx, rx) = match config.direction {
@@ -435,6 +505,40 @@ impl I2s<I2s0> {
         self.tx_setup_start(tx);
         self.wait_tx_done()?;
         self.wait_rx_done()
+    }
+
+    /// CXD5247 audio master clock feeding the I2S0 block: 24.576 MHz.
+    ///
+    /// This is the [`Fixed`](crate::clocks::Fixed) crystal-derived reference the
+    /// companion's `POWER_ON_COMMON` starts; BCK/LRCK are integer divisions of
+    /// it (User Manual §3.15.6, audio regdef "Fb = MCLK/512").
+    pub const MCLK_HZ: u32 = 24_576_000;
+
+    /// Master-mode BCK/LRCK **pad** rates, read back from the hardware.
+    ///
+    /// Returns `(lrck_hz, bck_hz)` derived deterministically from [`MCLK_HZ`]
+    /// and the live `I2S_CTRL.HI_RES_MODE` bit: normal mode drives
+    /// LRCK = MCLK/512 (48 kHz) and BCK = MCLK/8 (3.072 MHz, = LRCK×64); hi-res
+    /// mode drives LRCK = MCLK/128 (192 kHz) and BCK = MCLK/2 (12.288 MHz).
+    ///
+    /// This is the authoritative on-chip view of the **pin** clock: unlike timing
+    /// a capture DMA — which observes the SRC's *internal* rate (2× the frame
+    /// clock in the 8K–48K SRC mode) rather than the pad — it computes the pad
+    /// rate from the actual rate-mode register and the known MCLK. `is_master`
+    /// reports whether I2S0 actually drives these pads (`SD1MASTER`); in slave
+    /// mode the pads are inputs and the returned rates are the expected source.
+    ///
+    /// [`MCLK_HZ`]: Self::MCLK_HZ
+    pub fn frame_clocks(&self) -> FrameClocks {
+        let ctrl = self.audio.i2s_ctrl().read();
+        let hires = ctrl.hi_res_mode().bit_is_set();
+        let (lrck_div, bck_div) = if hires { (128, 2) } else { (512, 8) };
+        FrameClocks {
+            lrck_hz: Self::MCLK_HZ / lrck_div,
+            bck_hz: Self::MCLK_HZ / bck_div,
+            is_master: ctrl.sd1master().bit_is_set(),
+            hires,
+        }
     }
 
     fn tx_setup_start(&mut self, buf: &[u32]) {
