@@ -368,6 +368,14 @@ impl Trigger {
             Trigger::RisingEdge | Trigger::FallingEdge | Trigger::AnyEdge => 3, // PmuLatch
         }
     }
+
+    /// Whether this is an edge trigger (latches a single transition).
+    fn is_edge(self) -> bool {
+        matches!(
+            self,
+            Trigger::RisingEdge | Trigger::FallingEdge | Trigger::AnyEdge
+        )
+    }
 }
 
 /// Error returned by [`Input::into_interrupt`].
@@ -494,9 +502,25 @@ fn interrupt_slot(irq: pac::Interrupt) -> Option<u8> {
     })
 }
 
+/// Cycles held after configuring an edge trigger so the PMU samples its baseline.
+/// The detector runs on the ~32 kHz PMU clock; ≥~5k CPU cycles (≈1 sample period
+/// at the max core clock) were needed on hardware for reliable capture, so this
+/// keeps a 4× margin (and only more at slower core clocks). One-time per
+/// (re)configure, so the cost is irrelevant next to the wait it precedes.
+const EDGE_ARM_SETTLE: u32 = 20_000;
+
 /// Program polarity (`INTDET`), route (`CPUINTSEL`) and noise filter
-/// (`NOISECUTEN`) for `slot`. Runs under a critical section (read-modify-write of
-/// shared per-bank registers).
+/// (`NOISECUTEN`) for `slot`. The register writes run under a critical section
+/// (read-modify-write of shared per-bank registers); the settle below does not.
+///
+/// After (re)configuring an edge trigger this holds for [`EDGE_ARM_SETTLE`]
+/// cycles so the slow PMU detector samples the *current* pin level as its edge
+/// baseline. Without it, an edge driven immediately after the config write — e.g.
+/// a `RisingEdge`→`FallingEdge` switch then a drop — is silently dropped because
+/// the detector never saw the pre-edge level (measured on hardware; the miss is
+/// total, not just late, which then hangs a `wait_for_*edge`). The caller must
+/// hold the pin at the baseline level across this call, which it naturally does
+/// (the edge is driven afterwards).
 fn set_gpioint_config(slot: u8, trigger: Trigger, filter: bool) {
     let t = regs::topreg();
     let intdet = trigger.intdet();
@@ -524,6 +548,12 @@ fn set_gpioint_config(slot: u8, trigger: Trigger, filter: bool) {
                 .modify(|r, w| unsafe { w.bits((r.bits() & !(0x7u32 << shift)) | (route << shift)) });
         }
     });
+
+    // Let the PMU detector latch the current level as the edge baseline before the
+    // caller drives the edge (see the doc comment). Levels need no such arming.
+    if trigger.is_edge() {
+        cortex_m::asm::delay(EDGE_ARM_SETTLE);
+    }
 }
 
 /// Raw PMU edge-latch status for `slot` (bit 16+slot in `PMU_WAKE_TRIG0_RAW`).
@@ -532,11 +562,30 @@ fn edge_latched(slot: u8) -> bool {
     regs::topreg_sub().pmu_wake_trig0_raw().read().bits() & (1u32 << (16 + slot as u32)) != 0
 }
 
-/// Clear the PMU edge latch for `slot` (write 1 to bit 16+slot in `PMU_WAKE_TRIG0_CLR`).
+/// Iterations spent waiting for a `PMU_WAKE_TRIG0_CLR` write to land in the raw
+/// latch. The clear propagates a few slow PMU-clock cycles after the write
+/// (~3k CPU cycles measured on hardware); bounded so a still-asserted level
+/// trigger cannot spin forever.
+const CLEAR_SETTLE_ITERS: u32 = 20_000;
+
+/// Clear the PMU edge latch for `slot` (write 1 to bit 16+slot in
+/// `PMU_WAKE_TRIG0_CLR`) and wait for it to take effect.
+///
+/// The PMU is in a slow clock domain, so the raw latch ([`edge_latched`]) does
+/// not read clear until a few PMU cycles after the write. Spinning until it does
+/// makes the clear synchronous: an immediately following [`edge_latched`] read or
+/// edge re-arm sees a clean latch (the polled `wait_for_*`/`is_pending` API), and
+/// an `#[interrupt]` handler's [`clear_interrupt`] de-asserts the line before it
+/// returns so the (level-type) EXDEVICE request does not re-fire.
 fn clear_latch(slot: u8) {
-    regs::topreg_sub()
-        .pmu_wake_trig0_clr()
-        .write(|w| unsafe { w.bits(1u32 << (16 + slot as u32)) });
+    let sub = regs::topreg_sub();
+    let bit = 1u32 << (16 + slot as u32);
+    sub.pmu_wake_trig0_clr().write(|w| unsafe { w.bits(bit) });
+    for _ in 0..CLEAR_SETTLE_ITERS {
+        if sub.pmu_wake_trig0_raw().read().bits() & bit == 0 {
+            break;
+        }
+    }
 }
 
 /// Set `SCR.SEVONPEND` so a masked-but-pending NVIC line is a `WFE` wake event.
@@ -580,12 +629,17 @@ pub struct InterruptInput<R: PinReg> {
 impl<R: PinReg> Input<R> {
     /// Allocate an EXDEVICE slot for this pin and program `trigger`.
     ///
-    /// `noise_filter` routes level triggers through the PMU noise filter. The pad
-    /// input buffer (ENZI) must already be enabled, exactly as for reading via
-    /// [`Input`]. The NVIC line is left **masked**:
-    /// [`wait_for_high`](InterruptInput::wait_for_high) and friends sleep in `WFE`
-    /// (woken via `SCR.SEVONPEND`, which this sets once); for handler-driven use
-    /// call [`enable_interrupt`](InterruptInput::enable_interrupt).
+    /// `noise_filter` routes level triggers through the PMU noise filter (edge
+    /// triggers are reliable without it, given the baseline settle in
+    /// [`set_gpioint_config`]). The pad input buffer (ENZI) must already be
+    /// enabled, exactly as for reading via
+    /// [`Input`]. The chip-level INTC gate is opened here (see [`crate::interrupt`])
+    /// so a latched edge reaches the NVIC; the NVIC line itself is left **masked**:
+    /// [`wait_for_high`](InterruptInput::wait_for_high) and friends sleep in `WFE`,
+    /// woken when the masked-but-pending line raises an event via `SCR.SEVONPEND`
+    /// (this sets it once). The INTC gate is required for that wake as well as for
+    /// handler-driven dispatch via [`enable_interrupt`](InterruptInput::enable_interrupt);
+    /// [`release`](InterruptInput::release) closes it again.
     ///
     /// Returns [`InterruptError::NoSlotAvailable`] if every slot in the pin's
     /// domain (SYS: pins < 56, APP: pins ≥ 56) is in use.
@@ -605,6 +659,10 @@ impl<R: PinReg> Input<R> {
         };
         this.apply_trigger();
         this.clear_pending();
+        // Open the INTC gate so a latched edge reaches the NVIC — needed both for
+        // handler dispatch and for `SCR.SEVONPEND` to wake the masked `wait_for_*`
+        // sleeps. The NVIC line stays masked until `enable_interrupt`.
+        crate::interrupt::enable(this.irq);
         Ok(this)
     }
 }
@@ -643,7 +701,9 @@ impl<R: PinReg> InterruptInput<R> {
     }
 
     /// Unmask the NVIC line so the configured trigger dispatches your `#[interrupt]`
-    /// handler. Not needed for the `wait_for_*` methods (they keep the line masked).
+    /// handler. The INTC gate in front of the NVIC was already opened by
+    /// [`into_interrupt`](Input::into_interrupt). Not needed for the `wait_for_*`
+    /// methods (they keep the NVIC line masked and sleep in `WFE`).
     pub fn enable_interrupt(&mut self) {
         // Safety: this HAL uses `critical-section` (PRIMASK), not BASEPRI priority
         // masking, so unmasking a line cannot escape an in-progress critical section.
@@ -726,11 +786,13 @@ impl<R: PinReg> InterruptInput<R> {
         self.clear_pending();
     }
 
-    /// Release the EXDEVICE slot and return the plain [`Input`]. Masks the line,
-    /// frees the slot in the mux, parks its trigger at level-high (the unused-slot
-    /// convention) and clears any latch.
+    /// Release the EXDEVICE slot and return the plain [`Input`]. Masks the NVIC
+    /// line, closes the INTC gate, frees the slot in the mux, parks its trigger at
+    /// level-high (the unused-slot convention) and clears any latch.
     pub fn release(mut self) -> Input<R> {
         self.disable_interrupt();
+        // Close the INTC gate opened by `into_interrupt` (mirror of its `enable`).
+        crate::interrupt::disable(self.irq);
         set_gpioint_config(self.slot, Trigger::LevelHigh, false);
         critical_section::with(|_| intsel_write(self.slot, SLOT_UNUSED));
         self.clear_pending();

@@ -36,6 +36,26 @@ use cxd56_hal::uart::Uart1;
 // reach it via `crate::SERIAL`.
 static SERIAL: StaticCell<Uart1> = StaticCell::new();
 
+/// Poll the PMU edge latch *continuously* for up to ~1M iterations, returning
+/// whether the edge was caught.
+///
+/// The latch is brief and phase-dependent: edge detection samples the pin on the
+/// ~32 kHz PMU clock ("two consecutive sampling" per the user manual), so the
+/// latch appears ~7–15k CPU cycles after the edge and can self-clear ~1–2 RTC
+/// periods later. Sampling `is_pending` once after a fixed delay therefore races
+/// the latch; a tight poll (the same thing `wait_for_*edge` does via WFE) reliably
+/// catches it. Measured ~7.7k cycles to appear, so 1M iterations is ample margin.
+fn wait_pending(
+    sense: &cxd56_hal::gpio::InterruptInput<cxd56_hal::pac::topreg::GpUart2Cts>,
+) -> bool {
+    for _ in 0..1_000_000 {
+        if sense.is_pending() {
+            return true;
+        }
+    }
+    false
+}
+
 #[defmt_test::tests]
 mod tests {
     use defmt::assert;
@@ -151,12 +171,15 @@ mod tests {
 
     // --- EXDEVICE interrupt tests (same D27↔D28 jumper) ---
     //
-    // These are single-threaded, so they never depend on the WFE sleep actually
-    // firing: level waits use an already-true level and edge waits pre-latch the
-    // edge before calling `wait_*`, so each call's condition is met on entry and
-    // it returns at once. They exercise slot config, the PMU edge latch and the
-    // clear path — independent of the INTC/NVIC layer (`is_pending` reads the raw
-    // PMU latch). Each test sets its own trigger so order does not matter.
+    // The PMU edge latch is *brief and phase-dependent*: edge detection samples
+    // the pin on the ~32 kHz PMU clock ("two consecutive sampling" per the user
+    // manual), so the latch appears several thousand cycles after the edge and can
+    // self-clear ~1–2 RTC periods later. Sampling `is_pending` once after a fixed
+    // delay races that window, so the edge tests below either drive the edge and
+    // let `wait_for_*edge` catch it (it polls continuously via WFE — reaching the
+    // end means it returned; a missed edge would hang), or poll `is_pending`
+    // continuously with [`wait_pending`]. Level waits use an already-true level and
+    // return at once. Each test sets its own trigger, so order does not matter.
 
     #[test]
     fn wait_for_high_returns_when_high(state: &mut State) {
@@ -177,7 +200,7 @@ mod tests {
     #[test]
     fn rising_edge_latches_and_waits(state: &mut State) {
         state.out.set_low();
-        cortex_m::asm::delay(1_000);
+        cortex_m::asm::delay(2_000);
         state.sense.set_trigger(Trigger::RisingEdge);
         state.sense.clear_pending();
         assert!(
@@ -186,23 +209,13 @@ mod tests {
         );
 
         state.out.set_high(); // rising edge on the shorted line
-        cortex_m::asm::delay(1_000);
-        assert!(
-            state.sense.is_pending(),
-            "the rising edge should be latched in the PMU"
-        );
-
-        state.sense.wait_for_rising_edge(); // already latched → returns at once
-        assert!(
-            !state.sense.is_pending(),
-            "the latch should be cleared after the wait"
-        );
+        state.sense.wait_for_rising_edge(); // blocks until the edge is caught
     }
 
     #[test]
     fn falling_edge_latches_and_waits(state: &mut State) {
         state.out.set_high();
-        cortex_m::asm::delay(1_000);
+        cortex_m::asm::delay(2_000);
         state.sense.set_trigger(Trigger::FallingEdge);
         state.sense.clear_pending();
         assert!(
@@ -211,54 +224,36 @@ mod tests {
         );
 
         state.out.set_low(); // falling edge on the shorted line
-        cortex_m::asm::delay(1_000);
-        assert!(
-            state.sense.is_pending(),
-            "the falling edge should be latched in the PMU"
-        );
-
-        state.sense.wait_for_falling_edge();
-        assert!(
-            !state.sense.is_pending(),
-            "the latch should be cleared after the wait"
-        );
+        state.sense.wait_for_falling_edge(); // blocks until the edge is caught
     }
 
     #[test]
     fn any_edge_latches_and_waits(state: &mut State) {
         state.out.set_low();
-        cortex_m::asm::delay(1_000);
+        cortex_m::asm::delay(2_000);
         state.sense.set_trigger(Trigger::AnyEdge);
         state.sense.clear_pending();
         assert!(!state.sense.is_pending(), "no edge latched on a stable level");
 
         state.out.set_high(); // a transition (here, rising) under AnyEdge
-        cortex_m::asm::delay(1_000);
-        assert!(
-            state.sense.is_pending(),
-            "AnyEdge should latch either transition"
-        );
-
-        state.sense.wait_for_any_edge();
-        assert!(!state.sense.is_pending(), "latch cleared after the wait");
+        state.sense.wait_for_any_edge(); // blocks until the transition is caught
     }
 
     #[test]
     fn is_pending_tracks_and_clears(state: &mut State) {
+        // Exercises the raw `is_pending` query directly. `clear_pending` leaves it
+        // not-pending (no live edge), and a continuous poll catches the brief latch
+        // a real edge sets.
         state.out.set_low();
-        cortex_m::asm::delay(1_000);
+        cortex_m::asm::delay(2_000);
         state.sense.set_trigger(Trigger::RisingEdge);
         state.sense.clear_pending();
         assert!(!state.sense.is_pending(), "cleared latch reads not-pending");
 
-        state.out.set_high();
-        cortex_m::asm::delay(1_000);
-        assert!(state.sense.is_pending(), "edge sets the latch");
-
-        state.sense.clear_pending();
+        state.out.set_high(); // rising edge
         assert!(
-            !state.sense.is_pending(),
-            "clear_pending re-arms (latch reads not-pending)"
+            crate::wait_pending(&state.sense),
+            "is_pending should catch the latched edge"
         );
     }
 }
