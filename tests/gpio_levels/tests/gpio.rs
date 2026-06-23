@@ -30,11 +30,20 @@ use defmt_serial as _;
 use panic_probe as _;
 use static_cell::StaticCell;
 
+use cxd56_hal::gpio;
+use cxd56_hal::pac::{Interrupt, interrupt};
 use cxd56_hal::uart::Uart1;
 
 // `defmt-test` owns the module body, so keep the logger cell at crate root and
 // reach it via `crate::SERIAL`.
 static SERIAL: StaticCell<Uart1> = StaticCell::new();
+
+/// D27 (CTS, pin 69) → first free APP slot 6 → `EXDEVICE_6`. Forward the vector to
+/// the HAL so the async `wait_for_*` futures wake.
+#[interrupt]
+fn EXDEVICE_6() {
+    gpio::on_interrupt(Interrupt::EXDEVICE_6);
+}
 
 /// Poll the PMU edge latch *continuously* for up to ~1M iterations, returning
 /// whether the edge was caught.
@@ -56,12 +65,90 @@ fn wait_pending(
     false
 }
 
+/// Minimal in-file async runtime (`block_on` sleeps the core in `WFE`; `join` /
+/// `yield_now` combinators) used to drive the async `wait_for_*` futures from the
+/// synchronous `defmt-test` bodies. No executor crate — `cxd56-hal` implements the
+/// standard `embedded-hal-async` `Wait` trait, so an Embassy executor would work too.
+mod rt {
+    use core::future::{Future, poll_fn};
+    use core::pin::pin;
+    use core::task::{Context, Poll, RawWaker, RawWakerVTable, Waker};
+
+    const VTABLE: RawWakerVTable = RawWakerVTable::new(clone, wake, wake, drop_noop);
+    fn clone(_: *const ()) -> RawWaker {
+        RawWaker::new(core::ptr::null(), &VTABLE)
+    }
+    fn wake(_: *const ()) {
+        cortex_m::asm::sev();
+    }
+    fn drop_noop(_: *const ()) {}
+
+    fn make_waker() -> Waker {
+        // Safety: the vtable's functions ignore the data pointer entirely.
+        unsafe { Waker::from_raw(RawWaker::new(core::ptr::null(), &VTABLE)) }
+    }
+
+    /// Drive `fut` to completion, sleeping in `WFE` between polls.
+    pub fn block_on<F: Future>(fut: F) -> F::Output {
+        let mut fut = pin!(fut);
+        let waker = make_waker();
+        let mut cx = Context::from_waker(&waker);
+        loop {
+            if let Poll::Ready(val) = fut.as_mut().poll(&mut cx) {
+                return val;
+            }
+            cortex_m::asm::wfe();
+        }
+    }
+
+    /// Yield once so a sibling future can run before we re-poll.
+    pub async fn yield_now() {
+        let mut yielded = false;
+        poll_fn(|cx| {
+            if yielded {
+                Poll::Ready(())
+            } else {
+                yielded = true;
+                cx.waker().wake_by_ref();
+                Poll::Pending
+            }
+        })
+        .await
+    }
+
+    /// Poll two futures concurrently until both complete.
+    pub async fn join<A: Future, B: Future>(a: A, b: B) -> (A::Output, B::Output) {
+        let mut a = pin!(a);
+        let mut b = pin!(b);
+        let mut ao: Option<A::Output> = None;
+        let mut bo: Option<B::Output> = None;
+        poll_fn(|cx| {
+            if ao.is_none() {
+                if let Poll::Ready(v) = a.as_mut().poll(cx) {
+                    ao = Some(v);
+                }
+            }
+            if bo.is_none() {
+                if let Poll::Ready(v) = b.as_mut().poll(cx) {
+                    bo = Some(v);
+                }
+            }
+            if ao.is_some() && bo.is_some() {
+                Poll::Ready((ao.take().unwrap(), bo.take().unwrap()))
+            } else {
+                Poll::Pending
+            }
+        })
+        .await
+    }
+}
+
 #[defmt_test::tests]
 mod tests {
     use defmt::assert;
 
     use cxd56_hal::clocks::{Config, RccExt};
-    use cxd56_hal::gpio::{pins, Input, InterruptInput, Level, Output, Pull, Trigger};
+    use cxd56_hal::gpio::{pins, Input, InterruptInput, Level, Output, Pull, Trigger, Wait};
     use cxd56_hal::pac;
     use cxd56_hal::uart::{Uart1, UartConfig};
 
@@ -171,21 +258,22 @@ mod tests {
 
     // --- EXDEVICE interrupt tests (same D27↔D28 jumper) ---
     //
-    // The PMU edge latch is *brief and phase-dependent*: edge detection samples
-    // the pin on the ~32 kHz PMU clock ("two consecutive sampling" per the user
-    // manual), so the latch appears several thousand cycles after the edge and can
-    // self-clear ~1–2 RTC periods later. Sampling `is_pending` once after a fixed
-    // delay races that window, so the edge tests below either drive the edge and
-    // let `wait_for_*edge` catch it (it polls continuously via WFE — reaching the
-    // end means it returned; a missed edge would hang), or poll `is_pending`
-    // continuously with [`wait_pending`]. Level waits use an already-true level and
-    // return at once. Each test sets its own trigger, so order does not matter.
+    // The async `wait_for_*` futures are interrupt-driven: they unmask the NVIC line
+    // and sleep until the `EXDEVICE_6` handler (forwarding to `gpio::on_interrupt`)
+    // masks the line and wakes the task. The NVIC pending bit captures the edge in
+    // hardware, so the brief, phase-dependent PMU latch is never polled. The edge
+    // tests `join` the wait with a task that drives the loopback edge *after* the
+    // wait has armed (a `yield_now` lets it poll first); reaching the end means the
+    // ISR woke the future, a miss would hang → harness timeout. Level waits use an
+    // already-true level and return at once. `is_pending_tracks_and_clears` still
+    // covers the polled latch directly via [`wait_pending`]. Each test sets its own
+    // trigger, so order does not matter.
 
     #[test]
     fn wait_for_high_returns_when_high(state: &mut State) {
         state.out.set_high();
         cortex_m::asm::delay(1_000);
-        state.sense.wait_for_high(); // pin already high → returns immediately
+        let _ = crate::rt::block_on(state.sense.wait_for_high()); // already high → at once
         assert!(state.sense.is_high(), "wait_for_high should leave D27 High");
     }
 
@@ -193,50 +281,59 @@ mod tests {
     fn wait_for_low_returns_when_low(state: &mut State) {
         state.out.set_low();
         cortex_m::asm::delay(1_000);
-        state.sense.wait_for_low(); // pin already low → returns immediately
+        let _ = crate::rt::block_on(state.sense.wait_for_low()); // already low → at once
         assert!(state.sense.is_low(), "wait_for_low should leave D27 Low");
     }
 
     #[test]
     fn rising_edge_latches_and_waits(state: &mut State) {
+        // Hold the low baseline so the PMU detector samples it, then drive the
+        // rising edge once `wait_for_rising_edge` has armed. Reaching the end means
+        // the ISR woke the future; a miss would hang → harness timeout = FAIL.
         state.out.set_low();
-        cortex_m::asm::delay(2_000);
-        state.sense.set_trigger(Trigger::RisingEdge);
-        state.sense.clear_pending();
-        assert!(
-            !state.sense.is_pending(),
-            "no edge should be latched while D28 holds Low"
-        );
+        cortex_m::asm::delay(400_000);
 
-        state.out.set_high(); // rising edge on the shorted line
-        state.sense.wait_for_rising_edge(); // blocks until the edge is caught
+        let sense = &mut state.sense;
+        let out = &mut state.out;
+        let _ = crate::rt::block_on(crate::rt::join(
+            sense.wait_for_rising_edge(),
+            async move {
+                crate::rt::yield_now().await;
+                out.set_high(); // rising edge on the shorted line
+            },
+        ));
     }
 
     #[test]
     fn falling_edge_latches_and_waits(state: &mut State) {
         state.out.set_high();
-        cortex_m::asm::delay(2_000);
-        state.sense.set_trigger(Trigger::FallingEdge);
-        state.sense.clear_pending();
-        assert!(
-            !state.sense.is_pending(),
-            "no edge should be latched while D28 holds High"
-        );
+        cortex_m::asm::delay(400_000); // hold the high baseline
 
-        state.out.set_low(); // falling edge on the shorted line
-        state.sense.wait_for_falling_edge(); // blocks until the edge is caught
+        let sense = &mut state.sense;
+        let out = &mut state.out;
+        let _ = crate::rt::block_on(crate::rt::join(
+            sense.wait_for_falling_edge(), // switches trigger → settle samples high
+            async move {
+                crate::rt::yield_now().await;
+                out.set_low(); // falling edge on the shorted line
+            },
+        ));
     }
 
     #[test]
     fn any_edge_latches_and_waits(state: &mut State) {
         state.out.set_low();
-        cortex_m::asm::delay(2_000);
-        state.sense.set_trigger(Trigger::AnyEdge);
-        state.sense.clear_pending();
-        assert!(!state.sense.is_pending(), "no edge latched on a stable level");
+        cortex_m::asm::delay(400_000); // hold the low baseline
 
-        state.out.set_high(); // a transition (here, rising) under AnyEdge
-        state.sense.wait_for_any_edge(); // blocks until the transition is caught
+        let sense = &mut state.sense;
+        let out = &mut state.out;
+        let _ = crate::rt::block_on(crate::rt::join(
+            sense.wait_for_any_edge(), // switches trigger → settle samples low
+            async move {
+                crate::rt::yield_now().await;
+                out.set_high(); // a transition (here, rising) under AnyEdge
+            },
+        ));
     }
 
     #[test]

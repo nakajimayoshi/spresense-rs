@@ -1,7 +1,13 @@
 use crate::pac;
 use crate::regs;
+use core::cell::RefCell;
+use core::future::poll_fn;
+use core::task::{Poll, Waker};
 use cortex_m::peripheral::NVIC;
+use critical_section::Mutex;
 use thiserror::Error;
+
+pub use embedded_hal_async::digital::Wait;
 
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub enum Level {
@@ -310,10 +316,12 @@ impl<R: PinReg> embedded_hal::digital::InputPin for Input<R> {
 // route the pad straight through. Encodings and register layout follow the NuttX
 // driver `cxd56_gpioint.c`.
 //
-// `wait_for_*` keep the NVIC line masked and sleep in WFE, woken by SCR.SEVONPEND
-// when the (masked) line goes pending. For handler-driven use call
-// `enable_interrupt` and clear the latch from your `#[interrupt]` with
-// [`clear_interrupt`].
+// The async `Wait` impl (embedded-hal-async) unmasks the NVIC line for the
+// duration of a wait so the EXDEVICE handler dispatches; the handler — your
+// one-line `#[interrupt]` forwarding to [`on_interrupt`] — masks the line and
+// wakes the task. The NVIC pending bit captures the edge in hardware, so the brief
+// PMU latch is never polled. For raw handler-driven use call `enable_interrupt`
+// and clear the latch from your `#[interrupt]` with [`clear_interrupt`].
 
 const MAX_SLOT: u8 = 12;
 const MAX_SYS_SLOT: u8 = 6;
@@ -574,9 +582,10 @@ const CLEAR_SETTLE_ITERS: u32 = 20_000;
 /// The PMU is in a slow clock domain, so the raw latch ([`edge_latched`]) does
 /// not read clear until a few PMU cycles after the write. Spinning until it does
 /// makes the clear synchronous: an immediately following [`edge_latched`] read or
-/// edge re-arm sees a clean latch (the polled `wait_for_*`/`is_pending` API), and
-/// an `#[interrupt]` handler's [`clear_interrupt`] de-asserts the line before it
-/// returns so the (level-type) EXDEVICE request does not re-fire.
+/// edge re-arm sees a clean latch (the polled `is_pending` API and the async
+/// `Wait` arm/disarm), and an `#[interrupt]` handler's [`clear_interrupt`]
+/// de-asserts the line before it returns so the (level-type) EXDEVICE request does
+/// not re-fire.
 fn clear_latch(slot: u8) {
     let sub = regs::topreg_sub();
     let bit = 1u32 << (16 + slot as u32);
@@ -588,16 +597,68 @@ fn clear_latch(slot: u8) {
     }
 }
 
-/// Set `SCR.SEVONPEND` so a masked-but-pending NVIC line is a `WFE` wake event.
-/// Process-global and idempotent; harmless because every `WFE` wait re-checks its
-/// own condition, so a spurious wake only costs a loop iteration.
-fn set_sevonpend() {
-    const SEVONPEND: u32 = 1 << 4;
-    // Safety: SCB is a fixed core peripheral; this is one RMW of its SCR register.
-    unsafe {
-        (*cortex_m::peripheral::SCB::PTR)
-            .scr
-            .modify(|scr| scr | SEVONPEND);
+/// A `Waker` cell shared between an [`InterruptInput`] future and the EXDEVICE
+/// interrupt handler. Hand-rolled (rather than pulling in `embassy-sync`) so the
+/// base HAL stays runtime-free — it needs only `critical-section`, already a
+/// dependency. One entry per slot in [`WAKERS`].
+struct AtomicWaker {
+    waker: Mutex<RefCell<Option<Waker>>>,
+}
+
+impl AtomicWaker {
+    const fn new() -> Self {
+        Self {
+            waker: Mutex::new(RefCell::new(None)),
+        }
+    }
+
+    /// Register `waker` as the task to wake for this slot, unless an equivalent one
+    /// is already registered.
+    fn register(&self, waker: &Waker) {
+        critical_section::with(|cs| {
+            let mut slot = self.waker.borrow(cs).borrow_mut();
+            match &*slot {
+                Some(existing) if existing.will_wake(waker) => {}
+                _ => *slot = Some(waker.clone()),
+            }
+        });
+    }
+
+    /// Wake the registered task, if any. Taken out under the critical section but
+    /// woken outside it (waking may run arbitrary executor code).
+    fn wake(&self) {
+        let waker = critical_section::with(|cs| self.waker.borrow(cs).borrow_mut().take());
+        if let Some(waker) = waker {
+            waker.wake();
+        }
+    }
+}
+
+/// One waker per EXDEVICE slot, linking a slot's [`on_interrupt`] call to the task
+/// suspended in that slot's async `wait_for_*`.
+static WAKERS: [AtomicWaker; MAX_SLOT as usize] =
+    [const { AtomicWaker::new() }; MAX_SLOT as usize];
+
+/// EXDEVICE interrupt entry point for the async [`Wait`] API. Call this from the
+/// `#[interrupt]` handler of every EXDEVICE line you `wait_for_*` on:
+///
+/// ```ignore
+/// #[interrupt]
+/// fn EXDEVICE_6() {
+///     cxd56_hal::gpio::on_interrupt(cxd56_hal::pac::Interrupt::EXDEVICE_6);
+/// }
+/// ```
+///
+/// A library cannot define the vector symbol itself — the PAC's `device.x` weakly
+/// binds it to `DefaultHandler`, so an rlib's strong definition is dropped — so the
+/// application owns the handler and forwards here. This masks the NVIC line (a
+/// one-shot disarm so a still-latched edge or a held level cannot re-enter before
+/// the future re-arms), then wakes the suspended task. The masked state is what the
+/// future polls as "fired". No-op for a non-EXDEVICE interrupt.
+pub fn on_interrupt(interrupt: pac::Interrupt) {
+    if let Some(slot) = interrupt_slot(interrupt) {
+        NVIC::mask(interrupt);
+        WAKERS[slot as usize].wake();
     }
 }
 
@@ -613,11 +674,15 @@ pub fn clear_interrupt(interrupt: pac::Interrupt) {
 
 /// A GPIO input wired to an EXDEVICE interrupt slot.
 ///
-/// Created by [`Input::into_interrupt`]. Offers blocking
-/// [`wait_for_high`](Self::wait_for_high) … [`wait_for_any_edge`](Self::wait_for_any_edge)
-/// plus a handler-driven mode ([`enable_interrupt`](Self::enable_interrupt) with your
-/// own `#[interrupt]` calling [`clear_interrupt`]). Reading the pin
-/// ([`is_high`](Self::is_high) / [`is_low`](Self::is_low)) still works.
+/// Created by [`Input::into_interrupt`]. Implements the async
+/// [`embedded_hal_async::digital::Wait`] trait (`wait_for_high` …
+/// `wait_for_any_edge`): each waits by unmasking the NVIC line and suspending until
+/// the EXDEVICE handler — your one-line `#[interrupt]` forwarding to
+/// [`on_interrupt`] — wakes the task. A polled mode
+/// ([`is_pending`](Self::is_pending) / [`clear_pending`](Self::clear_pending)) and a
+/// raw handler-driven mode ([`enable_interrupt`](Self::enable_interrupt) with your
+/// own `#[interrupt]` calling [`clear_interrupt`]) are also available. Reading the
+/// pin ([`is_high`](Self::is_high) / [`is_low`](Self::is_low)) still works.
 pub struct InterruptInput<R: PinReg> {
     input: Input<R>,
     slot: u8,
@@ -634,11 +699,10 @@ impl<R: PinReg> Input<R> {
     /// [`set_gpioint_config`]). The pad input buffer (ENZI) must already be
     /// enabled, exactly as for reading via
     /// [`Input`]. The chip-level INTC gate is opened here (see [`crate::interrupt`])
-    /// so a latched edge reaches the NVIC; the NVIC line itself is left **masked**:
-    /// [`wait_for_high`](InterruptInput::wait_for_high) and friends sleep in `WFE`,
-    /// woken when the masked-but-pending line raises an event via `SCR.SEVONPEND`
-    /// (this sets it once). The INTC gate is required for that wake as well as for
-    /// handler-driven dispatch via [`enable_interrupt`](InterruptInput::enable_interrupt);
+    /// so a latched edge reaches the NVIC; the NVIC line itself is left **masked**
+    /// until a wait arms it. The INTC gate is required both for the async `Wait`
+    /// dispatch and for handler-driven use via
+    /// [`enable_interrupt`](InterruptInput::enable_interrupt);
     /// [`release`](InterruptInput::release) closes it again.
     ///
     /// Returns [`InterruptError::NoSlotAvailable`] if every slot in the pin's
@@ -649,7 +713,6 @@ impl<R: PinReg> Input<R> {
         noise_filter: bool,
     ) -> Result<InterruptInput<R>, InterruptError> {
         let slot = allocate_slot(R::PIN)?;
-        set_sevonpend();
         let mut this = InterruptInput {
             input: self,
             slot,
@@ -659,9 +722,9 @@ impl<R: PinReg> Input<R> {
         };
         this.apply_trigger();
         this.clear_pending();
-        // Open the INTC gate so a latched edge reaches the NVIC — needed both for
-        // handler dispatch and for `SCR.SEVONPEND` to wake the masked `wait_for_*`
-        // sleeps. The NVIC line stays masked until `enable_interrupt`.
+        // Open the INTC gate so a latched edge reaches the NVIC — needed for the
+        // async `Wait` dispatch and for handler-driven use. The NVIC line stays
+        // masked until a wait (or `enable_interrupt`) arms it.
         crate::interrupt::enable(this.irq);
         Ok(this)
     }
@@ -702,8 +765,8 @@ impl<R: PinReg> InterruptInput<R> {
 
     /// Unmask the NVIC line so the configured trigger dispatches your `#[interrupt]`
     /// handler. The INTC gate in front of the NVIC was already opened by
-    /// [`into_interrupt`](Input::into_interrupt). Not needed for the `wait_for_*`
-    /// methods (they keep the NVIC line masked and sleep in `WFE`).
+    /// [`into_interrupt`](Input::into_interrupt). The async `Wait` methods arm and
+    /// disarm this themselves, so call this only for raw handler-driven use.
     pub fn enable_interrupt(&mut self) {
         // Safety: this HAL uses `critical-section` (PRIMASK), not BASEPRI priority
         // masking, so unmasking a line cannot escape an in-progress critical section.
@@ -728,62 +791,59 @@ impl<R: PinReg> InterruptInput<R> {
         NVIC::unpend(self.irq);
     }
 
-    /// Block until the pin reads high. Returns immediately if it already is.
-    pub fn wait_for_high(&mut self) {
-        self.wait_level(Trigger::LevelHigh, Level::High);
+    /// Arm this slot and await an edge — the implementation behind the async
+    /// [`Wait`] edge methods. Reconfigures the trigger first if it differs (which
+    /// re-samples the baseline via [`EDGE_ARM_SETTLE`]), clears any stale latch, and
+    /// unmasks the NVIC line (the INTC gate was opened in `into_interrupt`), then
+    /// suspends until [`on_interrupt`] masks the line and wakes us — the NVIC pending
+    /// bit captures the edge in hardware, so the brief PMU latch is never polled.
+    /// Leaves the line masked (the handler disarmed it) and the latch clear.
+    async fn wait_edge_async(&mut self, trigger: Trigger) {
+        if self.trigger != trigger {
+            self.set_trigger(trigger);
+        }
+        self.clear_pending();
+        self.enable_interrupt();
+        self.armed_wait().await;
+        self.clear_pending();
     }
 
-    /// Block until the pin reads low. Returns immediately if it already is.
-    pub fn wait_for_low(&mut self) {
-        self.wait_level(Trigger::LevelLow, Level::Low);
-    }
-
-    /// Block until a rising edge is latched. An edge already latched since
-    /// configuration / the last [`clear_pending`](Self::clear_pending) satisfies
-    /// this immediately — call `clear_pending` first to discard earlier edges.
-    pub fn wait_for_rising_edge(&mut self) {
-        self.wait_edge(Trigger::RisingEdge);
-    }
-
-    /// Block until a falling edge is latched. See [`wait_for_rising_edge`](Self::wait_for_rising_edge).
-    pub fn wait_for_falling_edge(&mut self) {
-        self.wait_edge(Trigger::FallingEdge);
-    }
-
-    /// Block until either edge is latched. See [`wait_for_rising_edge`](Self::wait_for_rising_edge).
-    pub fn wait_for_any_edge(&mut self) {
-        self.wait_edge(Trigger::AnyEdge);
-    }
-
-    fn wait_level(&mut self, trigger: Trigger, level: Level) {
+    /// Await `level` — the implementation behind async `wait_for_high`/`wait_for_low`.
+    /// Returns at once if the pin already reads it; otherwise arms a level trigger
+    /// and suspends, re-arming if the level deasserted before we polled (the pin is
+    /// the source of truth).
+    async fn wait_level_async(&mut self, trigger: Trigger, level: Level) {
         if self.input.get_level() == level {
             return;
         }
         if self.trigger != trigger {
             self.set_trigger(trigger);
         }
-        // The level trigger pends the (masked) line when the pin reaches `level`,
-        // waking WFE via SEVONPEND; the pin is the source of truth each iteration.
-        while self.input.get_level() != level {
-            cortex_m::asm::wfe();
+        loop {
+            self.clear_pending();
+            self.enable_interrupt();
+            self.armed_wait().await;
+            if self.input.get_level() == level {
+                break;
+            }
         }
-        self.clear_pending();
     }
 
-    fn wait_edge(&mut self, trigger: Trigger) {
-        if self.trigger != trigger {
-            self.set_trigger(trigger);
-            // Drop any edge captured under the previous trigger.
-            self.clear_pending();
-        }
-        // Return on an edge already latched since config / last clear; otherwise
-        // sleep until one arrives. Checking before WFE, together with the ARM event
-        // register, closes the latch-vs-sleep race (an edge in the window sets the
-        // event register, so the next WFE returns immediately and we re-check).
-        while !self.is_pending() {
-            cortex_m::asm::wfe();
-        }
-        self.clear_pending();
+    /// Suspend until [`on_interrupt`] masks this slot's NVIC line — the "fired"
+    /// signal — and wakes the registered waker. Registers the waker *before* the
+    /// masked-state check, so an edge that lands in the window still wakes us.
+    async fn armed_wait(&self) {
+        let slot = self.slot as usize;
+        let irq = self.irq;
+        poll_fn(|cx| {
+            WAKERS[slot].register(cx.waker());
+            if NVIC::is_enabled(irq) {
+                Poll::Pending
+            } else {
+                Poll::Ready(())
+            }
+        })
+        .await;
     }
 
     /// Release the EXDEVICE slot and return the plain [`Input`]. Masks the NVIC
@@ -797,6 +857,42 @@ impl<R: PinReg> InterruptInput<R> {
         critical_section::with(|_| intsel_write(self.slot, SLOT_UNUSED));
         self.clear_pending();
         self.input
+    }
+}
+
+impl<R: PinReg> embedded_hal::digital::ErrorType for InterruptInput<R> {
+    type Error = core::convert::Infallible;
+}
+
+impl<R: PinReg> embedded_hal::digital::InputPin for InterruptInput<R> {
+    fn is_high(&mut self) -> Result<bool, Self::Error> {
+        Ok(self.input.is_high())
+    }
+    fn is_low(&mut self) -> Result<bool, Self::Error> {
+        Ok(self.input.is_low())
+    }
+}
+
+impl<R: PinReg> embedded_hal_async::digital::Wait for InterruptInput<R> {
+    async fn wait_for_high(&mut self) -> Result<(), Self::Error> {
+        self.wait_level_async(Trigger::LevelHigh, Level::High).await;
+        Ok(())
+    }
+    async fn wait_for_low(&mut self) -> Result<(), Self::Error> {
+        self.wait_level_async(Trigger::LevelLow, Level::Low).await;
+        Ok(())
+    }
+    async fn wait_for_rising_edge(&mut self) -> Result<(), Self::Error> {
+        self.wait_edge_async(Trigger::RisingEdge).await;
+        Ok(())
+    }
+    async fn wait_for_falling_edge(&mut self) -> Result<(), Self::Error> {
+        self.wait_edge_async(Trigger::FallingEdge).await;
+        Ok(())
+    }
+    async fn wait_for_any_edge(&mut self) -> Result<(), Self::Error> {
+        self.wait_edge_async(Trigger::AnyEdge).await;
+        Ok(())
     }
 }
 

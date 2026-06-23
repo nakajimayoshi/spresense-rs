@@ -440,6 +440,7 @@ dependencies = [
  "critical-section",
  "cxd56-pac-svd2rust",
  "embedded-hal 1.0.0",
+ "embedded-hal-async",
  "embedded-hal-nb",
  "embedded-io",
  "fugit",
