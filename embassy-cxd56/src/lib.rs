@@ -2,7 +2,9 @@
 
 pub use cxd56_pac_chiptool as pac;
 
+mod clock;
 pub mod gpio;
+pub mod uart;
 
 embassy_hal_internal::peripherals! {
     UART1,
@@ -12,6 +14,11 @@ embassy_hal_internal::peripherals! {
     I2C0,
     AIN4,
     AIN5,
+
+    /// UART1 TXD pad (SPI0_CS_X, pin 17) — Func1 routes it to UART1.
+    SPI0_CS_X,
+    /// UART1 RXD pad (SPI0_SCK, pin 18) — Func1 routes it to UART1.
+    SPI0_SCK,
 
     P1e_00,
     P1j_00,
