@@ -92,11 +92,14 @@ static TARGET_ID_TABLE: [u32; 6] = [0; 6];
 
 static BOOTED: AtomicBool = AtomicBool::new(false);
 
-/// Mirrors NuttX `g_freqlock_flag`: the last aggregate FREQLOCK flag sent to the
-/// SYSIOP (`0` = none sent yet). `cxd56_pm_checkfreqlock` only messages the
-/// SYSIOP when this value changes; the SYSIOP acks (and acts on) a FREQLOCK only
-/// for a real change, so re-sending an unchanged flag would block forever.
-static LAST_FLAG: AtomicU32 = AtomicU32::new(0);
+/// Last voltage-mode FREQLOCK flag sent to the SYSIOP. The SYSIOP runs the
+/// CLK_CHG handshake only on a *change* of voltage mode, so re-requesting the
+/// current mode gets no handshake and would block the recv loop forever — we skip
+/// it (mirroring `cxd56_pm_checkfreqlock`'s `if (g_freqlock_flag != flag)` guard).
+/// Initialised to the **boot** mode, observed on CXD5602 to be HV (high voltage,
+/// ~1.0 V: boot COM reads 48.75 MHz — the HV-mode value — and an HV request from
+/// boot produces no CLK_CHG handshake).
+static LAST_FLAG: AtomicU32 = AtomicU32::new(FLAG_INITIALIZED | FLAG_HV);
 
 fn boot_once() {
     if BOOTED
@@ -137,33 +140,32 @@ fn send_pm(proto_data: u32, data: u32) {
 
 // --- Public API --------------------------------------------------------------
 
-/// Request a CPU/bus operating-point change from the SYSIOP loader firmware.
+/// Request a CPU/bus operating-point (voltage-mode) change from the SYSIOP.
 ///
-/// Sends `FREQLOCK` over the ICC CPU-FIFO and returns once the SYSIOP **acks the
-/// lock** — the same completion signal NuttX waits on: `cxd56_pm_checkfreqlock`
-/// sends `MSGID_FREQLOCK` then `nxsem_wait(&g_freqlockwait)`, and the semaphore
-/// is posted by the FREQLOCK ack in `cxd56_pmmsghandler`.
+/// Sends `FREQLOCK(flag)` over the ICC CPU-FIFO, then drives the SYSIOP handshake
+/// to completion: the SYSIOP answers a real change with `CLK_CHG_START` (we ack
+/// it), reconfigures the PLL/dividers + PMIC core voltage, sends `CLK_CHG_END`
+/// (we ack it), and the call returns. It **blocks** until `CLK_CHG_END`.
 ///
-/// The clock change proceeds on the SYSIOP side. The `CLK_CHG_START`/`CLK_CHG_END`
-/// handshake exists only to quiesce **registered domain callbacks**
-/// (`cxd56_pm_do_callback`) and is serviced asynchronously by NuttX's PM task —
-/// `up_pm_acquire_freqlock` does **not** wait for it. With our empty target-id
-/// table (no callbacks) the SYSIOP omits that handshake entirely, so waiting for
-/// `CLK_CHG_END` here would block forever. We still ack `CLK_CHG_START`/`END` if
-/// they do arrive (callbacks registered), and surface a non-zero `CLK_CHG_END`
-/// status as an error.
+/// Observed on CXD5602 (hardware probe): `FREQLOCK` is answered *directly* with
+/// `CLK_CHG_START` — there is no separate FREQLOCK ack on this path, so
+/// `CLK_CHG_END` is the completion signal.
 ///
-/// Mirrors `cxd56_pm_checkfreqlock`'s `if (g_freqlock_flag != flag)` guard: a
-/// request whose flag matches the last one sent is a no-op (the SYSIOP neither
-/// acks nor acts on an unchanged FREQLOCK) and returns immediately.
+/// `FREQLOCK` selects the **voltage mode** (HV ≈ 1.0 V / LV ≈ 0.7 V); the APP CPU
+/// *and* the SYSIOP bus clocks move with it — including COM, which feeds
+/// UART1/SPI0/I2C2 (User Manual Tables UART-791/792: COM 48.75 MHz HV → 32.5 MHz
+/// LV). Re-read rates with [`crate::clocks::Crg::freeze`] after `Ok(())`, and
+/// rebuild any COM-bus peripheral so its divisor matches the new clock.
 ///
-/// After this returns `Ok(())`, call [`crate::clocks::Crg::freeze`] for updated
-/// rates.
+/// Requesting the mode already in effect is a no-op: the SYSIOP runs no handshake,
+/// so the blocking recv would never return. We track the last mode (seeded to the
+/// boot mode, HV) and skip such requests — mirroring `cxd56_pm_checkfreqlock`'s
+/// `if (g_freqlock_flag != flag)` guard.
 ///
 /// # Errors
 ///
-/// Returns [`PmError::ClockChangeFailed`] if the SYSIOP reports a non-zero status
-/// in a `CLK_CHG_END` message (a firmware-side callback failure).
+/// Returns [`PmError::ClockChangeFailed`] if `CLK_CHG_END` carries a non-zero
+/// status (a firmware-side callback failure).
 pub fn request_perf(perf: Perf) -> Result<(), PmError> {
     boot_once();
 
@@ -173,8 +175,8 @@ pub fn request_perf(perf: Perf) -> Result<(), PmError> {
             Perf::Lp => FLAG_LV,
         };
 
-    // cxd56_pm_checkfreqlock: only message the SYSIOP when the flag changes.
-    // Re-sending an unchanged flag yields no ack and would hang the recv below.
+    // Skip a no-op (unchanged voltage mode): the SYSIOP runs no handshake for it,
+    // so the recv loop below would block forever.
     if LAST_FLAG.swap(flag, Ordering::Relaxed) == flag {
         return Ok(());
     }
@@ -182,17 +184,13 @@ pub fn request_perf(perf: Perf) -> Result<(), PmError> {
     // cxd56_pmsendmsg(MSGID_FREQLOCK, flag)
     send_pm(MSGID_FREQLOCK, flag);
 
-    // Completion is the FREQLOCK ack (NuttX returns from the g_freqlockwait post
-    // here). Ack the optional CLK_CHG handshake if the SYSIOP drives it; do not
-    // require CLK_CHG_END, which never comes with an empty target-id table.
+    // Drive the handshake: ack CLK_CHG_START, then ack CLK_CHG_END (completion).
     loop {
         let words = Mailbox::recv_blocking();
         let Some((proto_data, data)) = unpack_pm(words) else {
             continue;
         };
         match proto_data {
-            // SYSIOP ack — the lock is accepted and the request is complete.
-            MSGID_FREQLOCK => return Ok(()),
             MSGID_CLK_CHG_START => {
                 // cxd56_pmsendmsg(MSGID_CLK_CHG_START, 0 /*ret=OK*/)
                 send_pm(MSGID_CLK_CHG_START, 0);
@@ -200,10 +198,13 @@ pub fn request_perf(perf: Perf) -> Result<(), PmError> {
             MSGID_CLK_CHG_END => {
                 // cxd56_pmsendmsg(MSGID_CLK_CHG_END, 0 /*ret=OK*/)
                 send_pm(MSGID_CLK_CHG_END, 0);
-                if data != 0 {
-                    return Err(PmError::ClockChangeFailed(data));
-                }
+                return if data != 0 {
+                    Err(PmError::ClockChangeFailed(data))
+                } else {
+                    Ok(())
+                };
             }
+            // An unexpected FREQLOCK ack (other firmware revisions): ignore.
             _ => {}
         }
     }
