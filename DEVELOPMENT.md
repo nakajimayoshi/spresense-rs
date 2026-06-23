@@ -241,3 +241,65 @@ RTC alarm channels elsewhere, or one that wants sub-µs delay resolution for its
 `DelayNs` use, can move the async delay onto a spare SP804 channel. Most embassy
 HALs expose exactly this kind of compile-time time-driver choice for the same
 reasons.
+
+## The embassy-time driver (RTC default, SP804 optional)
+
+`async_delay` above is single-in-flight (one alarm, one waker) — fine for the
+edge-arm settle, but it can't run two delays at once. For concurrent timers the HAL
+also implements the **embassy `Driver`** (`cxd56_hal::time`, behind `time-driver-*`),
+which is now the **default** async-time backend. It pairs one hardware compare with an
+`embassy-time-queue-utils` software queue, so any number of `embassy_time::Timer`s can
+be in flight, and apps get the whole `embassy_time` API (`Timer`, `Instant`,
+`Duration`, `with_timeout`, …). Exactly one of the four backends compiles
+(`time-driver-rtc` | `time-driver-timer` | `async-delay-rtc` | `async-delay-timer`);
+the embassy ones pull `embassy-time-driver` + `embassy-time-queue-utils`, the
+async-delay ones stay dependency-free.
+
+**RTC backing** (`time-driver-rtc`, default). `now()` is the always-on 47-bit RTC
+counter, which at 32.768 kHz maps 1:1 onto embassy ticks under `tick-hz-32_768` — no
+rescale, and **no overflow/period counter**: 47 bits @ 32768 Hz wraps in ~136 years,
+so the bare counter already satisfies embassy's "must not overflow for ~10 000 years"
+rule (unlike the 16/24-bit timers other HALs must extend). Alarm channel 0 is armed
+for the queue's earliest deadline; its IRQ wakes expired timers and re-arms. Perf-
+invariant, so timers stay correct across operating-point changes — which is exactly
+why most embassy HALs back their time driver with the low-power always-on RTC.
+
+**SP804 backing** (`time-driver-timer`). The SP804 is a relative down-counter with no
+native `now()` and **no compare register**, so it needs the overflow-counter machinery
+narrow/down-counter timers use throughout the Rust embedded world — and *two* timer
+halves: `TIMER0` free-runs as the monotonic base, a software `PERIOD` counter (an
+`AtomicU32`, since the M4 has no `AtomicU64`) extends it across each 32-bit wrap;
+`TIMER1` is the one-shot alarm. The counter clocks the **perf-dependent** CPU base
+clock, which lands on no clean embassy `tick-hz`, so `now()`/alarm values are
+software-rescaled (a u128 mul+div) between hardware ticks and `tick-hz-1_000_000`. The
+rate is sampled once at `time::init`, so — like `async-delay-timer` and `timer::Timer`
+— the operating point must not change while the driver is live. Payoff: ~1 µs
+resolution vs the RTC's ~30.5 µs; price: the rescale cost and that fixed-OP constraint.
+The fiddly bit is the wrap race — `now()` services a latched-but-unserviced `TIMER0`
+overflow inside a critical section (a single `update_period`, shared with the overflow
+ISR), so the high bits never lag the low bits and time can't read backward.
+
+**Queue.** We use the **generic** queue (`generic-queue-64`), not embassy-executor's
+integrated-timer queue, so the one driver works with any waker — the in-file `block_on`
+the example/test use, and any executor not built with integrated timers. Apps enable
+`embassy-time` with `tick-hz-32_768` *or* `tick-hz-1_000_000` (matching the backing —
+the HAL `const`-asserts it) plus `generic-queue-N`, and must **not** turn on
+`embassy-executor/integrated-timers`.
+
+**App wiring.** Call `time::init(&clock)` once after the clock/perf setup, and forward
+the backing's vector(s): `RTC0_A0` → `time::on_interrupt` (rtc); `TIMER0` →
+`time::on_overflow_interrupt` and `TIMER1` → `time::on_alarm_interrupt` (timer). The
+GPIO edge-arm settle routes through whichever backend is active, so `wait_for_*_edge`
+needs the same forwarding.
+
+**Exercised by** `examples/rust_embassy_time` (four concurrent one-shot timers + a
+periodic tick) and `tests/embassy_time` (monotonic `now`, elapsed vs an independent
+raw-RTC oracle, concurrent ordering), each with a `time-rtc` (default) / `time-timer` /
+`low-power` feature — both backings at both operating points. The cross-OP check is
+that the timings are identical at HP and LP: trivially for the perf-invariant RTC, and
+for the SP804 because `init` re-samples the base clock and the rescale absorbs it.
+
+The older `async-delay-*` backends stay (now opt-in, `--no-default-features --features
+async-delay-rtc|timer`) for code that wants the lighter single-in-flight delay with no
+embassy dependency; the GPIO examples/tests still pin them, which is why flipping the
+default to embassy left them untouched.
