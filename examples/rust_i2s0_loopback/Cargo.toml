@@ -11,6 +11,7 @@ cortex-m-rt = "0.7.5"
 cxd56-hal   = { path = "../../cxd56-hal", features = ["rt", "critical-section"] }
 cxd56-blink-debug = { path = "../../cxd56-blink-debug" }
 embedded-hal = "1.0.0"
+fugit       = "0.3"
 panic-halt  = "1.0.0"
 
 [profile.dev]

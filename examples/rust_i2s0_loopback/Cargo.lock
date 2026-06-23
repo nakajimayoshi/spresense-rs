@@ -215,6 +215,7 @@ dependencies = [
  "cxd56-blink-debug",
  "cxd56-hal",
  "embedded-hal 1.0.0",
+ "fugit",
  "panic-halt",
 ]
 
