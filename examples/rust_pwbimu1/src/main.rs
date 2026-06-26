@@ -104,21 +104,24 @@ fn main() -> ! {
         drdy: parts.gp_emmc_data3,
     });
 
-    let mut imu = imu.power_on(&mut delay);
-
-    match imu.whoami() {
-        Ok(id) => {
-            writeln!(
-                uart,
-                "whoami -> fw=0x{:02x} hwrev=0x{:02x} uid=0x{:02x}",
-                id.fw_ver, id.hw_rev, id.hw_uid
-            )
-            .ok();
-        }
+    // Off -> Idle: sequence the board up and probe its identity. Reaching Idle
+    // means the PSoC answered, so an absent/mis-seated board fails right here.
+    let mut imu = match imu.power_on(&mut delay) {
+        Ok(imu) => imu,
         Err(e) => {
-            writeln!(uart, "whoami failed: {e:?} — board not detected").ok();
+            writeln!(uart, "power-on probe failed: {:?} — board not detected", e.source).ok();
             fail(&mut led);
         }
+    };
+
+    // Already confirmed present; read the full identity just to log it.
+    if let Ok(id) = imu.whoami() {
+        writeln!(
+            uart,
+            "whoami -> fw=0x{:02x} hwrev=0x{:02x} uid=0x{:02x}",
+            id.fw_ver, id.hw_rev, id.hw_uid
+        )
+        .ok();
     }
 
     // Configure (DRDY + ODR + ranges) while still in Idle.

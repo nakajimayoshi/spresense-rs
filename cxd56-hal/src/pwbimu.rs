@@ -17,8 +17,9 @@
 //! # Reading axis data
 //!
 //! 1. [`Pwbimu::new`] → a handle in the [`Off`] state.
-//! 2. [`Pwbimu::power_on`] — sequence the board up; returns it in [`Idle`].
-//! 3. [`Pwbimu::whoami`] (optional) — confirm the PSoC answers.
+//! 2. [`Pwbimu::power_on`] — sequence the board up **and probe its identity**;
+//!    on success returns it in [`Idle`], on no-answer returns [`NotResponding`].
+//! 3. [`Pwbimu::whoami`] (optional) — read the full identity for logging.
 //! 4. [`Pwbimu::configure`] — enable the DRDY line, set ODR and full-scale range.
 //! 5. [`Pwbimu::enable`] — start the 6-axis stream; returns it in [`Streaming`].
 //! 6. [`Pwbimu::read_sample_blocking`] — wait for DRDY, read one [`ImuSample`].
@@ -27,7 +28,9 @@
 //! reachable in the right state, so e.g. reading a sample before [`enable`] or
 //! configuring before [`power_on`] is a **compile error**, not a runtime hang.
 //! The transitions ([`power_on`], [`enable`], [`disable`]) consume the handle and
-//! return it in its new state, so the idiom is `let imu = imu.power_on(&mut d);`.
+//! return it in its new state, so the idiom is `let imu = imu.power_on(&mut d)?;`.
+//! [`power_on`] *earns* the [`Idle`] state by confirming the board answered; use
+//! [`power_on_unchecked`] to drive the lines open-loop without a probe.
 //!
 //! Steps 2–5 ride the I2C control plane; step 6 the SPI5 data plane — but all are
 //! methods on the same [`Pwbimu`], and all fallible ones share one error type
@@ -37,6 +40,7 @@
 //! [`enable`]: Pwbimu::enable
 //! [`disable`]: Pwbimu::disable
 //! [`power_on`]: Pwbimu::power_on
+//! [`power_on_unchecked`]: Pwbimu::power_on_unchecked
 //!
 //! # The board is powered off until you sequence it
 //!
@@ -225,6 +229,20 @@ pub type BusError<I, S> = Error<
     <S as embedded_hal::spi::ErrorType>::Error,
 >;
 
+/// Returned by [`Pwbimu::power_on`] when the board does not answer the identity
+/// probe after the power-up sequence.
+///
+/// The board has been powered back down to [`Off`] (rail off, reset asserted), so
+/// [`imu`](Self::imu) is ready to retry [`power_on`](Pwbimu::power_on) — e.g.
+/// after re-seating the add-on — or to drop. [`source`](Self::source) is the
+/// underlying bus error from the failed identity read.
+pub struct NotResponding<I: I2c, S: SpiBus> {
+    /// The handle, powered back down to [`Off`] and ready to retry.
+    pub imu: Pwbimu<I, S, Off>,
+    /// The bus error from the failed identity read ([`reg::FW_VER`]).
+    pub source: BusError<I, S>,
+}
+
 /// Lifecycle states for [`Pwbimu`]'s typestate parameter — see [`state`].
 mod sealed {
     pub trait State {}
@@ -388,16 +406,22 @@ impl<I, S> Pwbimu<I, S, Off> {
         }
     }
 
-    /// Power up and reset the board so the PSoCs begin answering on I2C,
-    /// advancing the handle from [`Off`] to [`Idle`].
+    /// Sequence the board up **without** confirming it answered, advancing the
+    /// handle from [`Off`] to [`Idle`].
     ///
     /// Mirrors NuttX `cxd5602pwbimu_open`: drive power **high** and let the rail
     /// settle (2 ms), pulse `XRST` low for 20 µs, then release it high and wait
-    /// 150 ms for the PSoC firmware to boot. After this returns, control-plane
-    /// reads such as [`whoami`](Pwbimu::whoami) will respond. To re-sequence a
-    /// board that is already up, [`power_off`](Self::power_off) it back to
-    /// [`Off`] first.
-    pub fn power_on<D: DelayNs>(mut self, delay: &mut D) -> Pwbimu<I, S, Idle> {
+    /// 150 ms for the PSoC firmware to boot.
+    ///
+    /// This is open-loop — it only drives GPIOs and delays, so it cannot fail,
+    /// but the resulting [`Idle`] is an *unverified* claim: nothing has checked
+    /// that a board is actually present and responding. Prefer
+    /// [`power_on`](Self::power_on), which runs this same sequence and then probes
+    /// the identity register, so reaching [`Idle`] proves the PSoC answered. Use
+    /// this only when you deliberately want to drive the lines without a bus probe
+    /// (e.g. bring-up testing). To re-sequence a board that is already up,
+    /// [`power_off`](Self::power_off) it back to [`Off`] first.
+    pub fn power_on_unchecked<D: DelayNs>(mut self, delay: &mut D) -> Pwbimu<I, S, Idle> {
         // 1. Enable the power rail and let it settle.
         self.power.set_high();
         delay.delay_ms(POWER_SETTLE_MS);
@@ -408,6 +432,40 @@ impl<I, S> Pwbimu<I, S, Off> {
         self.reset.set_high();
         delay.delay_ms(BOOT_SETTLE_MS);
         self.into_state()
+    }
+}
+
+// --- Off (with buses): checked power-up --------------------------------------
+
+impl<I: I2c, S: SpiBus> Pwbimu<I, S, Off> {
+    /// Sequence the board up and confirm it responds, advancing the handle from
+    /// [`Off`] to [`Idle`].
+    ///
+    /// Runs [`power_on_unchecked`](Self::power_on_unchecked), then reads the
+    /// firmware-version register ([`reg::FW_VER`] — NuttX's presence probe). On
+    /// success the board is in [`Idle`], and unlike `power_on_unchecked` that
+    /// state is *earned*: the PSoC answered at least once, so an absent or
+    /// mis-seated board is caught right here with a clear error instead of
+    /// surfacing as a confusing failure several calls later in
+    /// [`configure`](Pwbimu::configure).
+    ///
+    /// On a probe failure the board is powered back down to [`Off`] and handed
+    /// back inside [`NotResponding`], ready to retry (e.g. after re-seating the
+    /// add-on). Note this proves the board was alive *at power-on*, not
+    /// permanently — every later control/data call still returns a [`Result`]
+    /// that surfaces a board which has since died or been unplugged.
+    pub fn power_on<D: DelayNs>(
+        self,
+        delay: &mut D,
+    ) -> Result<Pwbimu<I, S, Idle>, NotResponding<I, S>> {
+        let mut imu = self.power_on_unchecked(delay);
+        match imu.fw_version() {
+            Ok(_) => Ok(imu),
+            Err(source) => Err(NotResponding {
+                imu: imu.power_off(),
+                source,
+            }),
+        }
     }
 }
 
