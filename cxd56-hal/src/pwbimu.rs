@@ -80,6 +80,7 @@ use core::marker::PhantomData;
 use embedded_hal::delay::DelayNs;
 use embedded_hal::i2c::I2c;
 use embedded_hal::spi::SpiBus;
+use embedded_hal_nb::nb;
 
 use crate::gpio::{GpioPin, Input, Level, Output};
 use crate::pac::topreg::{GpEmmcData2, GpEmmcData3, GpI2s0Bck, GpI2s0DataIn};
@@ -209,10 +210,10 @@ pub struct Identity {
 ///
 /// Control-plane methods ([`whoami`](Pwbimu::whoami),
 /// [`configure`](Pwbimu::configure), [`enable`](Pwbimu::enable), …) yield
-/// [`Error::I2c`]; the data-plane reads ([`read_sample`](Pwbimu::read_sample),
-/// [`read_sample_blocking`](Pwbimu::read_sample_blocking)) yield [`Error::Spi`].
-/// A single error type across both buses means the whole bring-up-to-stream flow
-/// can be `?`-chained on one `Result`.
+/// [`Error::I2c`]; the data-plane read [`read_sample`](Pwbimu::read_sample) yields
+/// [`Error::Spi`] (wrapped in [`nb::Error`], with `WouldBlock` for "no sample
+/// ready"). A single error type across both buses means the whole
+/// bring-up-to-stream flow can be `?`-chained on one `Result`.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Error<I2cErr, SpiErr> {
     /// An error on the I2C control plane.
@@ -561,19 +562,35 @@ impl<I: I2c, S: SpiBus> Pwbimu<I, S, Streaming> {
         self.drdy.is_high()
     }
 
-    /// Read one sample over SPI (NuttX `cxd5602pwbimu_recv`).
+    /// Read one sample over SPI if one is ready (NuttX `cxd5602pwbimu_recv`).
     ///
-    /// Asserts the GPIO chip-select low (with the 5 µs setup guard), exchanges
-    /// [`SAMPLE_BYTES`] bytes full-duplex — the first transmitted byte carries
-    /// the read flag (`0x80`), and the bytes clocked back are the sample packet
-    /// — then deasserts (with the 5 µs hold guard). `delay` supplies the
-    /// chip-select edge guards. Does not check DRDY; call after
-    /// [`data_ready`](Self::data_ready) or use
-    /// [`read_sample_blocking`](Self::read_sample_blocking).
+    /// **Non-blocking**: returns [`WouldBlock`](nb::Error::WouldBlock) when DRDY
+    /// is not asserted (no fresh sample), so the caller owns the wait policy. When
+    /// a sample *is* ready it asserts the GPIO chip-select low (with the 5 µs
+    /// setup guard), exchanges [`SAMPLE_BYTES`] bytes full-duplex — the first
+    /// transmitted byte carries the read flag (`0x80`), and the bytes clocked back
+    /// are the sample packet — then deasserts (with the 5 µs hold guard). `delay`
+    /// supplies the chip-select edge guards. A bus fault surfaces as
+    /// [`Other`](nb::Error::Other)`(`[`Error::Spi`]`)`.
+    ///
+    /// ```ignore
+    /// // Drain whatever samples are ready right now:
+    /// while let Ok(sample) = imu.read_sample(&mut delay) {
+    ///     process(sample);
+    /// }
+    /// ```
+    ///
+    /// To block until the next sample (no timeout), use
+    /// [`read_sample_blocking`](Self::read_sample_blocking). To bound the wait,
+    /// poll this yourself against a deadline and return [`Error::Timeout`].
     pub fn read_sample<D: DelayNs>(
         &mut self,
         delay: &mut D,
-    ) -> Result<ImuSample, BusError<I, S>> {
+    ) -> nb::Result<ImuSample, BusError<I, S>> {
+        if !self.data_ready() {
+            return Err(nb::Error::WouldBlock);
+        }
+
         let mut buf = [0u8; SAMPLE_BYTES];
         buf[0] = SPI_READ_FLAG;
 
@@ -582,20 +599,24 @@ impl<I: I2c, S: SpiBus> Pwbimu<I, S, Streaming> {
         let r = self.spi.transfer_in_place(&mut buf);
         delay.delay_us(CSX_GUARD_US);
         self.csx.set_high();
-        r.map_err(Error::Spi)?;
+        r.map_err(|e| nb::Error::Other(Error::Spi(e)))?;
 
         Ok(ImuSample::from_bytes(&buf))
     }
 
-    /// Spin until [`data_ready`](Self::data_ready), then
-    /// [`read_sample`](Self::read_sample). Blocks the core until the PSoC
-    /// asserts DRDY (paced by the configured [`Odr`]).
+    /// Block until a sample arrives, then return it.
+    ///
+    /// A convenience wrapper that [`nb::block!`]s on the non-blocking
+    /// [`read_sample`](Self::read_sample), busy-waiting for the PSoC to assert
+    /// DRDY (paced by the configured [`Odr`]). It has **no timeout** — if DRDY
+    /// never comes (e.g. a wedged board) it spins forever. When that matters,
+    /// poll [`read_sample`](Self::read_sample) yourself against a deadline
+    /// instead. `delay` supplies the chip-select edge guards.
     pub fn read_sample_blocking<D: DelayNs>(
         &mut self,
         delay: &mut D,
     ) -> Result<ImuSample, BusError<I, S>> {
-        while !self.data_ready() {}
-        self.read_sample(delay)
+        nb::block!(self.read_sample(delay))
     }
 
     /// Stop the output stream ([`reg::OUTPUT_ENABLE`] = 0), returning the handle

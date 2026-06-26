@@ -20,8 +20,3 @@ opt-level = "s"
 lto = true
 codegen-units = 1
 panic = "abort"
-
-[[bin]]
-name = "rust_pwbimu1"
-test = false
-
