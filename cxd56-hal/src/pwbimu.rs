@@ -580,7 +580,7 @@ impl<I: I2c, S: SpiBus> Pwbimu<I, S, Streaming> {
     ///
     /// Because "not ready" and a real fault are distinct [`Error`] variants, a
     /// caller can poll and handle them differently — retry on not-ready, bail on
-    /// a fault — without depending on `nb`:
+    /// a fault.
     ///
     /// ```ignore
     /// let sample = loop {
