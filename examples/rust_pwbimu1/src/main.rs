@@ -141,8 +141,8 @@ fn main() -> ! {
 
     // This demo doesn't worry about a stalled board, so it just blocks for each
     // sample. If you need to bound the wait, poll the non-blocking
-    // `imu.read_sample()` (returns `WouldBlock` until ready) against your own
-    // deadline
+    // `imu.read_sample()` (returns `Err(Error::SampleNotReady)` until ready)
+    // against your own deadline and surface your own timeout error.
     let mut count: u32 = 0;
     let mut led_on = true;
     loop {

@@ -80,7 +80,6 @@ use core::marker::PhantomData;
 use embedded_hal::delay::DelayNs;
 use embedded_hal::i2c::I2c;
 use embedded_hal::spi::SpiBus;
-use embedded_hal_nb::nb;
 
 use crate::gpio::{GpioPin, Input, Level, Output};
 use crate::pac::topreg::{GpEmmcData2, GpEmmcData3, GpI2s0Bck, GpI2s0DataIn};
@@ -211,15 +210,21 @@ pub struct Identity {
 /// Control-plane methods ([`whoami`](Pwbimu::whoami),
 /// [`configure`](Pwbimu::configure), [`enable`](Pwbimu::enable), …) yield
 /// [`Error::I2c`]; the data-plane read [`read_sample`](Pwbimu::read_sample) yields
-/// [`Error::Spi`] (wrapped in [`nb::Error`], with `WouldBlock` for "no sample
-/// ready"). A single error type across both buses means the whole
-/// bring-up-to-stream flow can be `?`-chained on one `Result`.
+/// [`Error::Spi`] on a bus fault or [`Error::SampleNotReady`] when no sample is
+/// waiting. A single, self-contained error type across both buses means the whole
+/// bring-up-to-stream flow can be `?`-chained on one `Result` — with no `nb` in
+/// callers' signatures.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Error<I2cErr, SpiErr> {
     /// An error on the I2C control plane.
     I2c(I2cErr),
     /// An error on the SPI data plane.
     Spi(SpiErr),
+    /// No sample was ready: DRDY was not asserted when
+    /// [`read_sample`](Pwbimu::read_sample) was called. Not a fault — the caller
+    /// should retry (or wait). Kept distinct from a bus error so the two can be
+    /// handled differently.
+    SampleNotReady,
 }
 
 /// The [`Error`] type shared by every fallible [`Pwbimu`] method, written in
@@ -564,31 +569,43 @@ impl<I: I2c, S: SpiBus> Pwbimu<I, S, Streaming> {
 
     /// Read one sample over SPI if one is ready (NuttX `cxd5602pwbimu_recv`).
     ///
-    /// **Non-blocking**: returns [`WouldBlock`](nb::Error::WouldBlock) when DRDY
-    /// is not asserted (no fresh sample), so the caller owns the wait policy. When
-    /// a sample *is* ready it asserts the GPIO chip-select low (with the 5 µs
-    /// setup guard), exchanges [`SAMPLE_BYTES`] bytes full-duplex — the first
+    /// **Non-blocking**: returns [`Error::SampleNotReady`] when DRDY is not
+    /// asserted (no fresh sample), so the caller owns the wait policy. When a
+    /// sample *is* ready it asserts the GPIO chip-select low (with the 5 µs setup
+    /// guard), exchanges [`SAMPLE_BYTES`] bytes full-duplex — the first
     /// transmitted byte carries the read flag (`0x80`), and the bytes clocked back
     /// are the sample packet — then deasserts (with the 5 µs hold guard). `delay`
     /// supplies the chip-select edge guards. A bus fault surfaces as
-    /// [`Other`](nb::Error::Other)`(`[`Error::Spi`]`)`.
+    /// [`Error::Spi`].
+    ///
+    /// Because "not ready" and a real fault are distinct [`Error`] variants, a
+    /// caller can poll and handle them differently — retry on not-ready, bail on
+    /// a fault — without depending on `nb`:
     ///
     /// ```ignore
-    /// // Drain whatever samples are ready right now:
-    /// while let Ok(sample) = imu.read_sample(&mut delay) {
-    ///     process(sample);
-    /// }
+    /// let sample = loop {
+    ///     match imu.read_sample(&mut delay) {
+    ///         Ok(s) => break s,
+    ///         Err(Error::SampleNotReady) => {
+    ///             // not ready yet: keep polling, sleep, do other work, or give
+    ///             // up against your own deadline (returning your own timeout).
+    ///             if deadline.expired() {
+    ///                 return Err(MyError::Timeout);
+    ///             }
+    ///         }
+    ///         Err(e) => return Err(e.into()),     // real bus fault — bail
+    ///     }
+    /// };
     /// ```
     ///
-    /// To block until the next sample (no timeout), use
-    /// [`read_sample_blocking`](Self::read_sample_blocking). To bound the wait,
-    /// poll this yourself against a deadline and return [`Error::Timeout`].
+    /// To simply block until the next sample (no timeout), use
+    /// [`read_sample_blocking`](Self::read_sample_blocking).
     pub fn read_sample<D: DelayNs>(
         &mut self,
         delay: &mut D,
-    ) -> nb::Result<ImuSample, BusError<I, S>> {
+    ) -> Result<ImuSample, BusError<I, S>> {
         if !self.data_ready() {
-            return Err(nb::Error::WouldBlock);
+            return Err(Error::SampleNotReady);
         }
 
         let mut buf = [0u8; SAMPLE_BYTES];
@@ -599,24 +616,30 @@ impl<I: I2c, S: SpiBus> Pwbimu<I, S, Streaming> {
         let r = self.spi.transfer_in_place(&mut buf);
         delay.delay_us(CSX_GUARD_US);
         self.csx.set_high();
-        r.map_err(|e| nb::Error::Other(Error::Spi(e)))?;
+        r.map_err(Error::Spi)?;
 
         Ok(ImuSample::from_bytes(&buf))
     }
 
     /// Block until a sample arrives, then return it.
     ///
-    /// A convenience wrapper that [`nb::block!`]s on the non-blocking
-    /// [`read_sample`](Self::read_sample), busy-waiting for the PSoC to assert
-    /// DRDY (paced by the configured [`Odr`]). It has **no timeout** — if DRDY
-    /// never comes (e.g. a wedged board) it spins forever. When that matters,
-    /// poll [`read_sample`](Self::read_sample) yourself against a deadline
-    /// instead. `delay` supplies the chip-select edge guards.
+    /// A convenience wrapper over the non-blocking
+    /// [`read_sample`](Self::read_sample): it busy-waits for the PSoC to assert
+    /// DRDY (paced by the configured [`Odr`]), retrying past every
+    /// [`Error::SampleNotReady`]. It has **no timeout** — if DRDY never comes
+    /// (e.g. a wedged board) it spins forever; when that matters, poll
+    /// [`read_sample`](Self::read_sample) yourself against a deadline instead. A
+    /// bus fault returns as-is. `delay` supplies the chip-select edge guards.
     pub fn read_sample_blocking<D: DelayNs>(
         &mut self,
         delay: &mut D,
     ) -> Result<ImuSample, BusError<I, S>> {
-        nb::block!(self.read_sample(delay))
+        loop {
+            match self.read_sample(delay) {
+                Err(Error::SampleNotReady) => continue,
+                other => return other,
+            }
+        }
     }
 
     /// Stop the output stream ([`reg::OUTPUT_ENABLE`] = 0), returning the handle
