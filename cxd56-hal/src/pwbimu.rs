@@ -190,7 +190,7 @@ impl GyroRange {
     }
 }
 
-/// Result of [`Pwbimu::whoami`] — the three identity registers.
+/// [`Pwbimu::whoami`] — the three identity registers returned from i2c whoami
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Identity {
     /// [`reg::FW_VER`] — firmware version.
@@ -350,6 +350,15 @@ impl<I, S, St: sealed::State> Pwbimu<I, S, St> {
     }
 }
 
+pub struct PwbImuParts<I, S> {
+    pub i2c: I,
+    pub spi: S,
+    pub power: GpioPin<GpEmmcData2>,
+    pub reset: GpioPin<GpI2s0Bck>,
+    pub csx: GpioPin<GpI2s0DataIn>,
+    pub drdy: GpioPin<GpEmmcData3>,
+}
+
 // --- Off: construction + power-up --------------------------------------------
 
 impl<I, S> Pwbimu<I, S, Off> {
@@ -366,21 +375,14 @@ impl<I, S> Pwbimu<I, S, Off> {
     ///
     /// The SPI bus must already be configured for `MODE_0`, 8 bits, 1 MHz (the
     /// default [`SpiConfig`](crate::spi_alt::SpiConfig)).
-    pub fn new(
-        i2c: I,
-        spi: S,
-        power: GpioPin<GpEmmcData2>,
-        reset: GpioPin<GpI2s0Bck>,
-        csx: GpioPin<GpI2s0DataIn>,
-        drdy: GpioPin<GpEmmcData3>,
-    ) -> Self {
+    pub fn new(parts: PwbImuParts<I, S>) -> Self {
         Self {
-            i2c,
-            spi,
-            power: power.into_output(Level::Low),
-            reset: reset.into_output(Level::Low),
-            csx: csx.into_output(Level::High),
-            drdy: drdy.into_pull_down_input(),
+            i2c: parts.i2c,
+            spi: parts.spi,
+            power: parts.power.into_output(Level::Low),
+            reset: parts.reset.into_output(Level::Low),
+            csx: parts.csx.into_output(Level::High),
+            drdy: parts.drdy.into_pull_down_input(),
             addr: ADDR_PRIMARY,
             _state: PhantomData,
         }

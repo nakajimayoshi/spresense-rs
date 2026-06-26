@@ -30,7 +30,7 @@ use cxd56_hal::{
     i2c_alt::{I2c, I2c0Pins, I2cConfig},
     pac,
     pac::topreg::GpI2s1Bck,
-    pwbimu::{AccelRange, GyroRange, Odr, Pwbimu},
+    pwbimu::{AccelRange, GyroRange, Odr, Pwbimu, PwbImuParts},
     spi_alt::{Spi, Spi5Pins, SpiConfig},
     uart_alt::{Uart, Uart1Pins},
 };
@@ -95,14 +95,14 @@ fn main() -> ! {
     // GPIOs (power, reset, chip-select, DRDY). The board lifecycle is a typestate
     // — `new()` yields an `Off` handle, and each transition consumes it and hands
     // it back in the next state, so the bring-up order is checked at compile time.
-    let imu = Pwbimu::new(
+    let imu = Pwbimu::new(PwbImuParts{
         i2c,
         spi,
-        parts.gp_emmc_data2,   // power     (D20)
-        parts.gp_i2s0_bck,     // reset     (D26)
-        parts.gp_i2s0_data_in, // CSX       (D19)
-        parts.gp_emmc_data3,   // DRDY      (D21)
-    );
+        power: parts.gp_emmc_data2,
+        reset: parts.gp_i2s0_bck,
+        csx: parts.gp_i2s0_data_in,
+        drdy: parts.gp_emmc_data3,
+    });
 
     let mut imu = imu.power_on(&mut delay);
 
