@@ -46,7 +46,6 @@ pub mod i2s_alt;
 pub mod interrupt;
 pub mod multicore;
 pub mod pmic;
-pub mod pwbimu;
 pub mod spi_alt;
 pub(crate) mod regs;
 pub mod timer;

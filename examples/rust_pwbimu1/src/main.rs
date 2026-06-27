@@ -30,10 +30,11 @@ use cxd56_hal::{
     i2c_alt::{I2c, I2c0Pins, I2cConfig},
     pac,
     pac::topreg::GpI2s1Bck,
-    pwbimu::{AccelRange, GyroRange, Odr, Pwbimu, PwbImuParts},
     spi_alt::{Spi, Spi5Pins, SpiConfig},
     uart_alt::{Uart, Uart1Pins},
 };
+
+use spresense_bsp::pwbimu::{AccelRange, GyroRange, Odr, Pwbimu, PwbImuParts};
 
 /// Print a sample and toggle LED0 every this many samples (≈4 Hz at 60 Hz ODR,
 /// so the LED blinks ~2 Hz — visibly "alive" without flooding the console).

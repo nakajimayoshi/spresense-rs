@@ -81,8 +81,8 @@ use embedded_hal::delay::DelayNs;
 use embedded_hal::i2c::I2c;
 use embedded_hal::spi::SpiBus;
 
-use crate::gpio::{GpioPin, Input, Level, Output};
-use crate::pac::topreg::{GpEmmcData2, GpEmmcData3, GpI2s0Bck, GpI2s0DataIn};
+use cxd56_hal::gpio::{GpioPin, Input, Level, Output};
+use cxd56_hal::pac::topreg::{GpEmmcData2, GpEmmcData3, GpI2s0Bck, GpI2s0DataIn};
 
 /// Identity / control registers read over I2C (NuttX `cxd5602pwbimu` register map).
 pub mod reg {
@@ -230,10 +230,8 @@ pub enum Error<I2cErr, SpiErr> {
 /// The [`Error`] type shared by every fallible [`Pwbimu`] method, written in
 /// terms of the I2C bus `I` and SPI bus `S` (so `BusError<I, S>` instead of the
 /// spelled-out `Error<I::Error, S::Error>`).
-pub type BusError<I, S> = Error<
-    <I as embedded_hal::i2c::ErrorType>::Error,
-    <S as embedded_hal::spi::ErrorType>::Error,
->;
+pub type BusError<I, S> =
+    Error<<I as embedded_hal::i2c::ErrorType>::Error, <S as embedded_hal::spi::ErrorType>::Error>;
 
 /// Returned by [`Pwbimu::power_on`] when the board does not answer the identity
 /// probe after the power-up sequence.
@@ -483,7 +481,9 @@ impl<I: I2c, S: SpiBus> Pwbimu<I, S, Idle> {
     /// Issues the standard register-pointer-then-read transaction: write the
     /// 1-byte register address with a repeated start (no STOP), then read `buf`.
     pub fn read_regs(&mut self, reg: u8, buf: &mut [u8]) -> Result<(), BusError<I, S>> {
-        self.i2c.write_read(self.addr, &[reg], buf).map_err(Error::I2c)
+        self.i2c
+            .write_read(self.addr, &[reg], buf)
+            .map_err(Error::I2c)
     }
 
     /// Read a single register.
@@ -600,10 +600,7 @@ impl<I: I2c, S: SpiBus> Pwbimu<I, S, Streaming> {
     ///
     /// To simply block until the next sample (no timeout), use
     /// [`read_sample_blocking`](Self::read_sample_blocking).
-    pub fn read_sample<D: DelayNs>(
-        &mut self,
-        delay: &mut D,
-    ) -> Result<ImuSample, BusError<I, S>> {
+    pub fn read_sample<D: DelayNs>(&mut self, delay: &mut D) -> Result<ImuSample, BusError<I, S>> {
         if !self.data_ready() {
             return Err(Error::SampleNotReady);
         }

@@ -285,6 +285,7 @@ dependencies = [
  "cxd56-hal",
  "embedded-hal 1.0.0",
  "panic-halt",
+ "spresense-bsp",
 ]
 
 [[package]]
@@ -319,6 +320,15 @@ name = "semver-parser"
 version = "0.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "388a1df253eca08550bef6c72392cfe7c30914bf41df5269b68cbd6ff8f570a3"
+
+[[package]]
+name = "spresense-bsp"
+version = "0.1.0"
+dependencies = [
+ "cxd56-hal",
+ "cxd56-pac-svd2rust",
+ "embedded-hal 1.0.0",
+]
 
 [[package]]
 name = "stable_deref_trait"
