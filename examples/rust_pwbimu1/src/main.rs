@@ -34,7 +34,7 @@ use cxd56_hal::{
     uart_alt::{Uart, Uart1Pins},
 };
 
-use spresense_bsp::pwbimu::{AccelRange, GyroRange, Odr, Pwbimu, PwbImuParts};
+use spresense_bsp::pwbimu::{self, AccelRange, GyroRange, Odr};
 
 /// Print a sample and toggle LED0 every this many samples (≈4 Hz at 60 Hz ODR,
 /// so the LED blinks ~2 Hz — visibly "alive" without flooding the console).
@@ -93,17 +93,20 @@ fn main() -> ! {
     writeln!(uart, "CXD5602PWBIMU: bringing up board").ok();
 
     // One handle over both buses: take the two bus objects plus the four board
-    // GPIOs (power, reset, chip-select, DRDY). The board lifecycle is a typestate
-    // — `new()` yields an `Off` handle, and each transition consumes it and hands
-    // it back in the next state, so the bring-up order is checked at compile time.
-    let imu = Pwbimu::new(PwbImuParts{
+    // GPIOs (power, reset, chip-select, DRDY). `spresense()` is the BSP
+    // convenience for the add-on's direct connection — it wires I2C0/SPI5 and the
+    // fixed add-on pins into the otherwise host-agnostic `Pwbimu` driver. The
+    // board lifecycle is a typestate — this yields an `Off` handle, and each
+    // transition consumes it and hands it back in the next state, so the bring-up
+    // order is checked at compile time.
+    let imu = pwbimu::spresense(
         i2c,
         spi,
-        power: parts.gp_emmc_data2,
-        reset: parts.gp_i2s0_bck,
-        csx: parts.gp_i2s0_data_in,
-        drdy: parts.gp_emmc_data3,
-    });
+        parts.gp_emmc_data2,
+        parts.gp_i2s0_bck,
+        parts.gp_i2s0_data_in,
+        parts.gp_emmc_data3,
+    );
 
     // Off -> Idle: sequence the board up and probe its identity. Reaching Idle
     // means the PSoC answered, so an absent/mis-seated board fails right here.

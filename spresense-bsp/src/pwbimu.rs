@@ -1,17 +1,34 @@
-//! CXD5602PWBIMU add-on board — dual-bus interface.
+//! CXD5602PWBIMU add-on board — dual-bus driver.
 //!
 //! The CXD5602PWBIMU is *not* a bare IMU chip addressed directly. The board
 //! fronts the sensor with one or more on-board PSoC microcontrollers, and the
-//! Spresense host talks to them over **two buses at once**:
+//! host talks to them over **two buses at once**:
 //!
-//! * **I2C0 @ 400 kHz — the control plane.** Identity, full-scale range, ODR,
+//! * **I2C @ 400 kHz — the control plane.** Identity, full-scale range, ODR,
 //!   interrupt enable, FIFO threshold, output enable, calibration, mode.
-//! * **SPI5 (+DMA) — the data plane.** The high-rate 6-axis sample stream,
+//! * **SPI (+DMA) — the data plane.** The high-rate 6-axis sample stream,
 //!   triggered by `DRDY`.
+//!
+//! # The driver is host-agnostic
+//!
+//! [`Pwbimu`] cares only that it is handed something implementing the
+//! `embedded-hal` bus and pin traits: an I2C master ([`embedded_hal::i2c::I2c`]),
+//! a SPI bus ([`embedded_hal::spi::SpiBus`]), and four GPIOs — power, reset,
+//! chip-select ([`OutputPin`](embedded_hal::digital::OutputPin)) and DRDY
+//! ([`InputPin`](embedded_hal::digital::InputPin)). It has **no** dependency on
+//! the CXD56 HAL, on I2C0/SPI5, or on any particular pad assignment, so the same
+//! driver works whether the add-on is plugged straight into a Spresense or wired
+//! to a custom PCB on a different I2C/SPI combination (or even a different chip).
+//!
+//! On a Spresense the add-on plugs directly into the main board, which is the
+//! common case: [`spresense`] is a convenience constructor that consumes the
+//! CXD56 HAL's I2C0/SPI5 buses and the fixed add-on GPIOs and hands back a
+//! [`SpresensePwbimu`]. The wiring it assumes is the table in
+//! [Spresense direct-connection wiring](#spresense-direct-connection-wiring).
 //!
 //! [`Pwbimu`] is a single handle over **both** buses: it owns the I2C control
 //! plane (power sequencing, `whoami`, ODR / full-scale / output-enable) *and* the
-//! SPI5 data plane (the DRDY-gated 6-axis sample read), so from one object you
+//! SPI data plane (the DRDY-gated 6-axis sample read), so from one object you
 //! can power_on and stream [`ImuSample`]s.
 //!
 //! # Reading axis data
@@ -32,7 +49,7 @@
 //! [`power_on`] *earns* the [`Idle`] state by confirming the board answered; use
 //! [`power_on_unchecked`] to drive the lines open-loop without a probe.
 //!
-//! Steps 2–5 ride the I2C control plane; step 6 the SPI5 data plane — but all are
+//! Steps 2–5 ride the I2C control plane; step 6 the SPI data plane — but all are
 //! methods on the same [`Pwbimu`], and all fallible ones share one error type
 //! ([`Error`]). The PSoC emits each sample as IEEE-754 floats already scaled to
 //! g / dps, so no conversion is needed host-side.
@@ -44,9 +61,9 @@
 //!
 //! # The board is powered off until you sequence it
 //!
-//! You cannot just open I2C0 and read a register: the board's power rail and
-//! reset (`XRST`) are gated off out of reset. The PSoCs only answer on I2C after
-//! the power → reset-pulse → 150 ms-settle sequence performed by
+//! You cannot just open the I2C bus and read a register: the board's power rail
+//! and reset (`XRST`) are gated off out of reset. The PSoCs only answer on I2C
+//! after the power → reset-pulse → 150 ms-settle sequence performed by
 //! [`Pwbimu::power_on`] (mirroring the NuttX implementation `cxd5602pwbimu_open`). Call it once
 //! after construction, before any register access.
 //!
@@ -57,9 +74,14 @@
 //! returning a plausible firmware-version byte means the primary PSoC at I2C
 //! `0x10` answered — that is the `whoami` succeeding. See [`Pwbimu::whoami`].
 //!
-//! # Board wiring (fixed by the add-on)
+//! # Spresense direct-connection wiring
 //!
-//! | Signal           | CXD5602 pad   | Arduino | This crate                 |
+//! When the add-on is plugged straight into a Spresense main board, the signals
+//! land on these pads — this is the wiring [`spresense`] consumes. A custom PCB
+//! is free to route them differently and build a [`Pwbimu`] from whatever buses
+//! and pins it exposes.
+//!
+//! | Signal           | CXD5602 pad   | Arduino | CXD56 HAL pin              |
 //! |------------------|---------------|---------|----------------------------|
 //! | Power enable     | `EMMC_DATA2`  | D20     | `gp_emmc_data2`            |
 //! | Reset (`XRST`)   | `I2S0_BCK`    | D26     | `gp_i2s0_bck`             |
@@ -71,18 +93,16 @@
 //! | SPI chip-select  | `I2S0_DATA_IN`| D19     | `gp_i2s0_data_in`          |
 //! | Data ready (DRDY)| `EMMC_DATA3`  | D21     | `gp_emmc_data3`            |
 //!
-//! Note the IMU's chip-select is the **GPIO** `I2S0_DATA_IN` (driven by
-//! [`Pwbimu`] around each sample read), *not* the PL022 hardware frame-select on
-//! `EMMC_CMD` that the SPI5 bus toggles — `EMMC_CMD` is unused by the add-on.
+//! Note the IMU's chip-select is a plain **GPIO** (driven by [`Pwbimu`] around
+//! each sample read), *not* the SPI peripheral's hardware frame-select — on
+//! Spresense the PL022 frame-select on `EMMC_CMD` is unused by the add-on.
 
 use core::marker::PhantomData;
 
 use embedded_hal::delay::DelayNs;
+use embedded_hal::digital::{InputPin, OutputPin};
 use embedded_hal::i2c::I2c;
 use embedded_hal::spi::SpiBus;
-
-use cxd56_hal::gpio::{GpioPin, Input, Level, Output};
-use cxd56_hal::pac::topreg::{GpEmmcData2, GpEmmcData3, GpI2s0Bck, GpI2s0DataIn};
 
 /// Identity / control registers read over I2C (NuttX `cxd5602pwbimu` register map).
 pub mod reg {
@@ -205,21 +225,23 @@ pub struct Identity {
     pub hw_uid: u8,
 }
 
-/// Error from a [`Pwbimu`] operation, tagged by which bus produced it.
+/// Error from a [`Pwbimu`] operation, tagged by which resource produced it.
 ///
 /// Control-plane methods ([`whoami`](Pwbimu::whoami),
 /// [`configure`](Pwbimu::configure), [`enable`](Pwbimu::enable), …) yield
 /// [`Error::I2c`]; the data-plane read [`read_sample`](Pwbimu::read_sample) yields
-/// [`Error::Spi`] on a bus fault or [`Error::SampleNotReady`] when no sample is
-/// waiting. A single, self-contained error type across both buses means the whole
-/// bring-up-to-stream flow can be `?`-chained on one `Result` — with no `nb` in
-/// callers' signatures.
+/// [`Error::Spi`] on a bus fault, [`Error::Pin`] on a chip-select / DRDY GPIO
+/// fault, or [`Error::SampleNotReady`] when no sample is waiting. A single,
+/// self-contained error type means the whole bring-up-to-stream flow can be
+/// `?`-chained on one `Result` — with no `nb` in callers' signatures.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum Error<I2cErr, SpiErr> {
+pub enum Error<I2cErr, SpiErr, PinErr> {
     /// An error on the I2C control plane.
     I2c(I2cErr),
     /// An error on the SPI data plane.
     Spi(SpiErr),
+    /// An error driving or reading one of the board's GPIOs (chip-select / DRDY).
+    Pin(PinErr),
     /// No sample was ready: DRDY was not asserted when
     /// [`read_sample`](Pwbimu::read_sample) was called. Not a fault — the caller
     /// should retry (or wait). Kept distinct from a bus error so the two can be
@@ -228,10 +250,13 @@ pub enum Error<I2cErr, SpiErr> {
 }
 
 /// The [`Error`] type shared by every fallible [`Pwbimu`] method, written in
-/// terms of the I2C bus `I` and SPI bus `S` (so `BusError<I, S>` instead of the
-/// spelled-out `Error<I::Error, S::Error>`).
-pub type BusError<I, S> =
-    Error<<I as embedded_hal::i2c::ErrorType>::Error, <S as embedded_hal::spi::ErrorType>::Error>;
+/// terms of the I2C bus `I`, the SPI bus `S`, and the shared GPIO error `E` (so
+/// `BusError<I, S, E>` instead of the spelled-out `Error<I::Error, S::Error, E>`).
+pub type BusError<I, S, E> = Error<
+    <I as embedded_hal::i2c::ErrorType>::Error,
+    <S as embedded_hal::spi::ErrorType>::Error,
+    E,
+>;
 
 /// Returned by [`Pwbimu::power_on`] when the board does not answer the identity
 /// probe after the power-up sequence.
@@ -240,11 +265,11 @@ pub type BusError<I, S> =
 /// [`imu`](Self::imu) is ready to retry [`power_on`](Pwbimu::power_on) — e.g.
 /// after re-seating the add-on — or to drop. [`source`](Self::source) is the
 /// underlying bus error from the failed identity read.
-pub struct NotResponding<I: I2c, S: SpiBus> {
+pub struct NotResponding<I: I2c, S: SpiBus, PWR, RST, CSX, DRDY, E> {
     /// The handle, powered back down to [`Off`] and ready to retry.
-    pub imu: Pwbimu<I, S, Off>,
+    pub imu: Pwbimu<I, S, PWR, RST, CSX, DRDY, Off>,
     /// The bus error from the failed identity read ([`reg::FW_VER`]).
-    pub source: BusError<I, S>,
+    pub source: BusError<I, S, E>,
 }
 
 /// Lifecycle states for [`Pwbimu`]'s typestate parameter — see [`state`].
@@ -254,7 +279,7 @@ mod sealed {
 
 /// The board lifecycle as zero-sized typestate markers.
 ///
-/// [`Pwbimu`]'s third type parameter is one of these, and each state exposes
+/// [`Pwbimu`]'s last type parameter is one of these, and each state exposes
 /// only the methods legal in it, so the bring-up order is enforced at compile
 /// time: you cannot read a sample before [`enable`](super::Pwbimu::enable), or
 /// configure before [`power_on`](super::Pwbimu::power_on). The markers are
@@ -289,12 +314,16 @@ pub use state::{Idle, Off, Streaming};
 /// CXD5602PWBIMU board handle — both buses in one object, with the board
 /// lifecycle tracked in the type system.
 ///
-/// Owns everything the add-on board needs: the I2C bus `I` (any
-/// [`embedded_hal::i2c::I2c`] master — typically this crate's
-/// [`crate::i2c_alt::I2c`] on [`pac::I2c0`](crate::pac::I2c0)) for the control
-/// plane, the SPI bus `S` (any [`embedded_hal::spi::SpiBus`] — typically
-/// [`crate::spi_alt::Spi`] on [`pac::Spi5`](crate::pac::Spi5)) for the data
-/// plane, plus the board's four fixed GPIOs (power, reset, chip-select, DRDY).
+/// Owns everything the add-on board needs, and is generic over all of it: the
+/// I2C bus `I` (any [`embedded_hal::i2c::I2c`] master) for the control plane, the
+/// SPI bus `S` (any [`embedded_hal::spi::SpiBus`]) for the data plane, and the
+/// board's four control GPIOs — `PWR`, `RST`, `CSX`
+/// ([`OutputPin`](embedded_hal::digital::OutputPin)) and `DRDY`
+/// ([`InputPin`](embedded_hal::digital::InputPin)). Because it is written against
+/// the `embedded-hal` traits only, it has no dependency on the CXD56 HAL or on a
+/// fixed pad map; on a Spresense the buses/pins are typically I2C0/SPI5 and the
+/// add-on pins, built via [`spresense`] / [`SpresensePwbimu`], but any other
+/// routing works just as well.
 ///
 /// The `St` type parameter is a [`state`] marker that gates which methods exist;
 /// the lifecycle is `new` → [`Off`] → [`power_on`](Self::power_on) → [`Idle`] →
@@ -302,22 +331,39 @@ pub use state::{Idle, Off, Streaming};
 /// `self` and return the handle in its new state, so the wrong-order call (read
 /// before enable, configure before power-on) is a compile error rather than a
 /// runtime hang or I2C NACK. All fallible methods share the [`Error`] type.
-pub struct Pwbimu<I, S, St> {
+pub struct Pwbimu<I, S, PWR, RST, CSX, DRDY, St> {
     i2c: I,
     spi: S,
-    power: Output<GpEmmcData2>,
-    reset: Output<GpI2s0Bck>,
-    csx: Output<GpI2s0DataIn>,
-    drdy: Input<GpEmmcData3>,
+    power: PWR,
+    reset: RST,
+    csx: CSX,
+    drdy: DRDY,
     addr: u8,
     _state: PhantomData<St>,
 }
 
+/// The buses and (already-configured) GPIOs a [`Pwbimu`] takes ownership of.
+///
+/// The pins must already be set to the right *mode*: `power`, `reset` and `csx`
+/// as outputs, `drdy` as an input (with a pull-down, since DRDY is active-high).
+/// `embedded-hal`'s pin traits have no notion of pull configuration, so that —
+/// like the choice of which physical pads to use — is the caller's job;
+/// [`Pwbimu::new`] then drives the outputs to the safe [`Off`] levels. On
+/// Spresense, [`spresense`] does all of this for you from raw HAL pins.
+pub struct PwbImuParts<I, S, PWR, RST, CSX, DRDY> {
+    pub i2c: I,
+    pub spi: S,
+    pub power: PWR,
+    pub reset: RST,
+    pub csx: CSX,
+    pub drdy: DRDY,
+}
+
 // --- state-agnostic: construction-independent accessors + power-down ---------
 
-impl<I, S, St: sealed::State> Pwbimu<I, S, St> {
+impl<I, S, PWR, RST, CSX, DRDY, St: sealed::State> Pwbimu<I, S, PWR, RST, CSX, DRDY, St> {
     /// Move the handle (all owned buses and pins) into a different typestate.
-    fn into_state<New: sealed::State>(self) -> Pwbimu<I, S, New> {
+    fn into_state<New: sealed::State>(self) -> Pwbimu<I, S, PWR, RST, CSX, DRDY, New> {
         Pwbimu {
             i2c: self.i2c,
             spi: self.spi,
@@ -344,18 +390,6 @@ impl<I, S, St: sealed::State> Pwbimu<I, S, St> {
         self.addr
     }
 
-    /// Cut the power rail and assert reset, returning the handle to [`Off`].
-    ///
-    /// Drives `XRST` low (reset asserted) then the power pin low. From here you
-    /// can re-sequence with [`power_on`](Self::power_on). Available in any state
-    /// — including [`Streaming`], where it is the hard way to stop (it kills the
-    /// rail rather than clearing `OUTPUT_ENABLE` like [`disable`](Self::disable)).
-    pub fn power_off(mut self) -> Pwbimu<I, S, Off> {
-        self.reset.set_low();
-        self.power.set_low();
-        self.into_state()
-    }
-
     /// Borrow the underlying I2C bus.
     ///
     /// An escape hatch for control-plane registers not wrapped here. It bypasses
@@ -372,42 +406,67 @@ impl<I, S, St: sealed::State> Pwbimu<I, S, St> {
     }
 }
 
-pub struct PwbImuParts<I, S> {
-    pub i2c: I,
-    pub spi: S,
-    pub power: GpioPin<GpEmmcData2>,
-    pub reset: GpioPin<GpI2s0Bck>,
-    pub csx: GpioPin<GpI2s0DataIn>,
-    pub drdy: GpioPin<GpEmmcData3>,
+impl<I, S, PWR, RST, CSX, DRDY, St: sealed::State> Pwbimu<I, S, PWR, RST, CSX, DRDY, St>
+where
+    PWR: OutputPin,
+    RST: OutputPin,
+{
+    /// Cut the power rail and assert reset, returning the handle to [`Off`].
+    ///
+    /// Drives `XRST` low (reset asserted) then the power pin low. From here you
+    /// can re-sequence with [`power_on`](Self::power_on). Available in any state
+    /// — including [`Streaming`], where it is the hard way to stop (it kills the
+    /// rail rather than clearing `OUTPUT_ENABLE` like [`disable`](Self::disable)).
+    ///
+    /// Powering down is best-effort: a GPIO write fault here is ignored, since
+    /// this also runs on the error/cleanup path and there is nothing useful to do
+    /// about it.
+    pub fn power_off(mut self) -> Pwbimu<I, S, PWR, RST, CSX, DRDY, Off> {
+        let _ = self.reset.set_low();
+        let _ = self.power.set_low();
+        self.into_state()
+    }
 }
 
 // --- Off: construction + power-up --------------------------------------------
 
-impl<I, S> Pwbimu<I, S, Off> {
+impl<I, S, PWR, RST, CSX, DRDY> Pwbimu<I, S, PWR, RST, CSX, DRDY, Off>
+where
+    PWR: OutputPin,
+    RST: OutputPin,
+    CSX: OutputPin,
+{
     /// Consume both buses and the four board GPIOs and configure the board in its
     /// powered-off, reset-asserted, stream-idle state.
     ///
     /// The power pin is driven **low** (rail off) and `XRST` **low** (reset
     /// asserted, since it is active-low); the SPI chip-select is driven **high**
-    /// (deasserted, also active-low) and DRDY is set up as a pull-down input
-    /// (active-high data-ready, matching the NuttX board config). Nothing answers
-    /// on either bus yet; call [`power_on`](Self::power_on) to sequence the board
-    /// up. Defaults to the primary PSoC address ([`ADDR_PRIMARY`]); use
+    /// (deasserted, also active-low). DRDY is taken as-is — the caller is
+    /// responsible for having configured it as a pull-down input (active-high
+    /// data-ready, matching the NuttX board config). Nothing answers on either
+    /// bus yet; call [`power_on`](Self::power_on) to sequence the board up.
+    /// Defaults to the primary PSoC address ([`ADDR_PRIMARY`]); use
     /// [`with_address`](Self::with_address) to select another.
     ///
-    /// The SPI bus must already be configured for `MODE_0`, 8 bits, 1 MHz (the
-    /// default [`SpiConfig`](crate::spi_alt::SpiConfig)).
-    pub fn new(parts: PwbImuParts<I, S>) -> Self {
-        Self {
+    /// The SPI bus must already be configured for `MODE_0`, 8 bits, 1 MHz.
+    /// Driving the outputs to their idle levels is best-effort; a GPIO write
+    /// fault is ignored here (the subsequent [`power_on`](Self::power_on) probe
+    /// will surface a genuinely dead pin).
+    pub fn new(parts: PwbImuParts<I, S, PWR, RST, CSX, DRDY>) -> Self {
+        let mut this = Self {
             i2c: parts.i2c,
             spi: parts.spi,
-            power: parts.power.into_output(Level::Low),
-            reset: parts.reset.into_output(Level::Low),
-            csx: parts.csx.into_output(Level::High),
-            drdy: parts.drdy.into_pull_down_input(),
+            power: parts.power,
+            reset: parts.reset,
+            csx: parts.csx,
+            drdy: parts.drdy,
             addr: ADDR_PRIMARY,
             _state: PhantomData,
-        }
+        };
+        let _ = this.power.set_low();
+        let _ = this.reset.set_low();
+        let _ = this.csx.set_high();
+        this
     }
 
     /// Sequence the board up **without** confirming it answered, advancing the
@@ -417,23 +476,27 @@ impl<I, S> Pwbimu<I, S, Off> {
     /// settle (2 ms), pulse `XRST` low for 20 µs, then release it high and wait
     /// 150 ms for the PSoC firmware to boot.
     ///
-    /// This is open-loop — it only drives GPIOs and delays, so it cannot fail,
-    /// but the resulting [`Idle`] is an *unverified* claim: nothing has checked
-    /// that a board is actually present and responding. Prefer
-    /// [`power_on`](Self::power_on), which runs this same sequence and then probes
-    /// the identity register, so reaching [`Idle`] proves the PSoC answered. Use
-    /// this only when you deliberately want to drive the lines without a bus probe
-    /// (e.g. bring-up testing). To re-sequence a board that is already up,
-    /// [`power_off`](Self::power_off) it back to [`Off`] first.
-    pub fn power_on_unchecked<D: DelayNs>(mut self, delay: &mut D) -> Pwbimu<I, S, Idle> {
+    /// This is open-loop — it only drives GPIOs and delays, so it cannot fail
+    /// (GPIO write faults are ignored), but the resulting [`Idle`] is an
+    /// *unverified* claim: nothing has checked that a board is actually present
+    /// and responding. Prefer [`power_on`](Self::power_on), which runs this same
+    /// sequence and then probes the identity register, so reaching [`Idle`]
+    /// proves the PSoC answered. Use this only when you deliberately want to drive
+    /// the lines without a bus probe (e.g. bring-up testing). To re-sequence a
+    /// board that is already up, [`power_off`](Self::power_off) it back to
+    /// [`Off`] first.
+    pub fn power_on_unchecked<D: DelayNs>(
+        mut self,
+        delay: &mut D,
+    ) -> Pwbimu<I, S, PWR, RST, CSX, DRDY, Idle> {
         // 1. Enable the power rail and let it settle.
-        self.power.set_high();
+        let _ = self.power.set_high();
         delay.delay_ms(POWER_SETTLE_MS);
         // 2. Assert reset (XRST active-low) for the reset pulse width.
-        self.reset.set_low();
+        let _ = self.reset.set_low();
         delay.delay_us(RESET_PULSE_US);
         // 3. Release reset and wait for the PSoC firmware to boot.
-        self.reset.set_high();
+        let _ = self.reset.set_high();
         delay.delay_ms(BOOT_SETTLE_MS);
         self.into_state()
     }
@@ -441,7 +504,15 @@ impl<I, S> Pwbimu<I, S, Off> {
 
 // --- Off (with buses): checked power-up --------------------------------------
 
-impl<I: I2c, S: SpiBus> Pwbimu<I, S, Off> {
+impl<I, S, PWR, RST, CSX, DRDY, E> Pwbimu<I, S, PWR, RST, CSX, DRDY, Off>
+where
+    I: I2c,
+    S: SpiBus,
+    PWR: OutputPin<Error = E>,
+    RST: OutputPin<Error = E>,
+    CSX: OutputPin<Error = E>,
+    DRDY: InputPin<Error = E>,
+{
     /// Sequence the board up and confirm it responds, advancing the handle from
     /// [`Off`] to [`Idle`].
     ///
@@ -458,10 +529,16 @@ impl<I: I2c, S: SpiBus> Pwbimu<I, S, Off> {
     /// add-on). Note this proves the board was alive *at power-on*, not
     /// permanently — every later control/data call still returns a [`Result`]
     /// that surfaces a board which has since died or been unplugged.
+    // Six hardware generics threaded through both arms of the `Result` trip the
+    // lint; the shape is unavoidable for a fully bus/pin-generic transition.
+    #[allow(clippy::type_complexity)]
     pub fn power_on<D: DelayNs>(
         self,
         delay: &mut D,
-    ) -> Result<Pwbimu<I, S, Idle>, NotResponding<I, S>> {
+    ) -> Result<
+        Pwbimu<I, S, PWR, RST, CSX, DRDY, Idle>,
+        NotResponding<I, S, PWR, RST, CSX, DRDY, E>,
+    > {
         let mut imu = self.power_on_unchecked(delay);
         match imu.fw_version() {
             Ok(_) => Ok(imu),
@@ -475,36 +552,41 @@ impl<I: I2c, S: SpiBus> Pwbimu<I, S, Off> {
 
 // --- Idle: control plane (identity + configuration) --------------------------
 
-impl<I: I2c, S: SpiBus> Pwbimu<I, S, Idle> {
+impl<I, S, PWR, RST, CSX, DRDY, E> Pwbimu<I, S, PWR, RST, CSX, DRDY, Idle>
+where
+    I: I2c,
+    S: SpiBus,
+    DRDY: InputPin<Error = E>,
+{
     /// Read `buf.len()` bytes starting at register `reg` (NuttX `getregsn`).
     ///
     /// Issues the standard register-pointer-then-read transaction: write the
     /// 1-byte register address with a repeated start (no STOP), then read `buf`.
-    pub fn read_regs(&mut self, reg: u8, buf: &mut [u8]) -> Result<(), BusError<I, S>> {
+    pub fn read_regs(&mut self, reg: u8, buf: &mut [u8]) -> Result<(), BusError<I, S, E>> {
         self.i2c
             .write_read(self.addr, &[reg], buf)
             .map_err(Error::I2c)
     }
 
     /// Read a single register.
-    pub fn read_reg(&mut self, reg: u8) -> Result<u8, BusError<I, S>> {
+    pub fn read_reg(&mut self, reg: u8) -> Result<u8, BusError<I, S, E>> {
         let mut buf = [0u8];
         self.read_regs(reg, &mut buf)?;
         Ok(buf[0])
     }
 
     /// Read [`reg::FW_VER`] — the firmware version / de-facto `whoami` byte.
-    pub fn fw_version(&mut self) -> Result<u8, BusError<I, S>> {
+    pub fn fw_version(&mut self) -> Result<u8, BusError<I, S, E>> {
         self.read_reg(reg::FW_VER)
     }
 
     /// Read [`reg::HW_REVISION`].
-    pub fn hw_revision(&mut self) -> Result<u8, BusError<I, S>> {
+    pub fn hw_revision(&mut self) -> Result<u8, BusError<I, S, E>> {
         self.read_reg(reg::HW_REVISION)
     }
 
     /// Read [`reg::HW_UNIQUE_ID`].
-    pub fn hw_unique_id(&mut self) -> Result<u8, BusError<I, S>> {
+    pub fn hw_unique_id(&mut self) -> Result<u8, BusError<I, S, E>> {
         self.read_reg(reg::HW_UNIQUE_ID)
     }
 
@@ -512,7 +594,7 @@ impl<I: I2c, S: SpiBus> Pwbimu<I, S, Idle> {
     ///
     /// A successful return (and a plausible `fw_ver`) means the PSoC at the
     /// selected [`address`](Self::address) answered — the `whoami` succeeded.
-    pub fn whoami(&mut self) -> Result<Identity, BusError<I, S>> {
+    pub fn whoami(&mut self) -> Result<Identity, BusError<I, S, E>> {
         Ok(Identity {
             fw_ver: self.read_reg(reg::FW_VER)?,
             hw_rev: self.read_reg(reg::HW_REVISION)?,
@@ -522,7 +604,7 @@ impl<I: I2c, S: SpiBus> Pwbimu<I, S, Idle> {
 
     /// Write a single control register (NuttX `putreg8`): a 2-byte I2C write of
     /// `[reg, val]`.
-    pub fn write_reg(&mut self, reg: u8, val: u8) -> Result<(), BusError<I, S>> {
+    pub fn write_reg(&mut self, reg: u8, val: u8) -> Result<(), BusError<I, S, E>> {
         self.i2c.write(self.addr, &[reg, val]).map_err(Error::I2c)
     }
 
@@ -539,7 +621,7 @@ impl<I: I2c, S: SpiBus> Pwbimu<I, S, Idle> {
         odr: Odr,
         accel: AccelRange,
         gyro: GyroRange,
-    ) -> Result<(), BusError<I, S>> {
+    ) -> Result<(), BusError<I, S, E>> {
         self.write_reg(reg::INTR_ENABLE, 1)?;
         self.write_reg(reg::ODR, odr.code())?;
         self.write_reg(reg::FSR, (accel.code() << 4) | gyro.code())?;
@@ -553,7 +635,10 @@ impl<I: I2c, S: SpiBus> Pwbimu<I, S, Idle> {
     /// [`read_sample`](Pwbimu::read_sample). On an I2C error the handle is
     /// consumed (not returned) — the board is left in an indeterminate state, so
     /// recover by reconstructing or power-cycling rather than retrying in place.
-    pub fn enable(mut self) -> Result<Pwbimu<I, S, Streaming>, BusError<I, S>> {
+    #[allow(clippy::type_complexity)]
+    pub fn enable(
+        mut self,
+    ) -> Result<Pwbimu<I, S, PWR, RST, CSX, DRDY, Streaming>, BusError<I, S, E>> {
         self.write_reg(reg::OUTPUT_ENABLE, 1)?;
         Ok(self.into_state())
     }
@@ -561,10 +646,21 @@ impl<I: I2c, S: SpiBus> Pwbimu<I, S, Idle> {
 
 // --- Streaming: data plane ---------------------------------------------------
 
-impl<I: I2c, S: SpiBus> Pwbimu<I, S, Streaming> {
+impl<I, S, PWR, RST, CSX, DRDY, E> Pwbimu<I, S, PWR, RST, CSX, DRDY, Streaming>
+where
+    I: I2c,
+    S: SpiBus,
+    CSX: OutputPin<Error = E>,
+    DRDY: InputPin<Error = E>,
+{
     /// Whether a fresh sample is ready (DRDY asserted high).
-    pub fn data_ready(&self) -> bool {
-        self.drdy.is_high()
+    ///
+    /// A convenience predicate: a GPIO read fault is reported as "not ready"
+    /// (`false`). The authoritative check is inside
+    /// [`read_sample`](Self::read_sample), which surfaces a DRDY fault as
+    /// [`Error::Pin`].
+    pub fn data_ready(&mut self) -> bool {
+        self.drdy.is_high().unwrap_or(false)
     }
 
     /// Read one sample over SPI if one is ready (NuttX `cxd5602pwbimu_recv`).
@@ -576,7 +672,7 @@ impl<I: I2c, S: SpiBus> Pwbimu<I, S, Streaming> {
     /// transmitted byte carries the read flag (`0x80`), and the bytes clocked back
     /// are the sample packet — then deasserts (with the 5 µs hold guard). `delay`
     /// supplies the chip-select edge guards. A bus fault surfaces as
-    /// [`Error::Spi`].
+    /// [`Error::Spi`]; a chip-select / DRDY GPIO fault as [`Error::Pin`].
     ///
     /// Because "not ready" and a real fault are distinct [`Error`] variants, a
     /// caller can poll and handle them differently — retry on not-ready, bail on
@@ -600,20 +696,24 @@ impl<I: I2c, S: SpiBus> Pwbimu<I, S, Streaming> {
     ///
     /// To simply block until the next sample (no timeout), use
     /// [`read_sample_blocking`](Self::read_sample_blocking).
-    pub fn read_sample<D: DelayNs>(&mut self, delay: &mut D) -> Result<ImuSample, BusError<I, S>> {
-        if !self.data_ready() {
+    pub fn read_sample<D: DelayNs>(
+        &mut self,
+        delay: &mut D,
+    ) -> Result<ImuSample, BusError<I, S, E>> {
+        if !self.drdy.is_high().map_err(Error::Pin)? {
             return Err(Error::SampleNotReady);
         }
 
         let mut buf = [0u8; SAMPLE_BYTES];
         buf[0] = SPI_READ_FLAG;
 
-        self.csx.set_low();
+        self.csx.set_low().map_err(Error::Pin)?;
         delay.delay_us(CSX_GUARD_US);
-        let r = self.spi.transfer_in_place(&mut buf);
+        let xfer = self.spi.transfer_in_place(&mut buf);
         delay.delay_us(CSX_GUARD_US);
-        self.csx.set_high();
-        r.map_err(Error::Spi)?;
+        let deassert = self.csx.set_high();
+        xfer.map_err(Error::Spi)?;
+        deassert.map_err(Error::Pin)?;
 
         Ok(ImuSample::from_bytes(&buf))
     }
@@ -630,7 +730,7 @@ impl<I: I2c, S: SpiBus> Pwbimu<I, S, Streaming> {
     pub fn read_sample_blocking<D: DelayNs>(
         &mut self,
         delay: &mut D,
-    ) -> Result<ImuSample, BusError<I, S>> {
+    ) -> Result<ImuSample, BusError<I, S, E>> {
         loop {
             match self.read_sample(delay) {
                 Err(Error::SampleNotReady) => continue,
@@ -644,14 +744,12 @@ impl<I: I2c, S: SpiBus> Pwbimu<I, S, Streaming> {
     ///
     /// On an I2C error the handle is consumed (not returned); see
     /// [`enable`](Pwbimu::enable).
-    pub fn disable(mut self) -> Result<Pwbimu<I, S, Idle>, BusError<I, S>> {
-        self.write_reg_streaming(reg::OUTPUT_ENABLE, 0)?;
+    #[allow(clippy::type_complexity)]
+    pub fn disable(mut self) -> Result<Pwbimu<I, S, PWR, RST, CSX, DRDY, Idle>, BusError<I, S, E>> {
+        self.i2c
+            .write(self.addr, &[reg::OUTPUT_ENABLE, 0])
+            .map_err(Error::I2c)?;
         Ok(self.into_state())
-    }
-
-    /// `write_reg` for the [`Streaming`] state (the public one lives on [`Idle`]).
-    fn write_reg_streaming(&mut self, reg: u8, val: u8) -> Result<(), BusError<I, S>> {
-        self.i2c.write(self.addr, &[reg, val]).map_err(Error::I2c)
     }
 }
 
@@ -685,4 +783,62 @@ impl ImuSample {
             accel: [f(20), f(24), f(28)],
         }
     }
+}
+
+// =============================================================================
+// Spresense convenience: wire the add-on's direct connection to the CXD56 HAL.
+// =============================================================================
+//
+// This is the BSP's job, not the driver's: it pins the generic `Pwbimu` to the
+// concrete I2C0 / SPI5 buses and the fixed add-on GPIOs, and configures those
+// pins (direction + DRDY pull-down) from raw HAL pins. Everything above is
+// host-agnostic; only this section knows about the CXD56.
+
+use cxd56_hal::gpio::{GpioPin, Input, Level, Output};
+use cxd56_hal::i2c_alt::I2c as HalI2c;
+use cxd56_hal::pac::topreg::{GpEmmcData2, GpEmmcData3, GpI2s0Bck, GpI2s0DataIn};
+use cxd56_hal::pac::{I2c0, Spi5};
+use cxd56_hal::spi_alt::Spi as HalSpi;
+
+/// A [`Pwbimu`] wired to the Spresense add-on's direct connection: I2C0 + SPI5
+/// and the fixed add-on GPIOs. Build one with [`spresense`].
+pub type SpresensePwbimu<'clk, St> = Pwbimu<
+    HalI2c<I2c0>,
+    HalSpi<'clk, Spi5>,
+    Output<GpEmmcData2>,
+    Output<GpI2s0Bck>,
+    Output<GpI2s0DataIn>,
+    Input<GpEmmcData3>,
+    St,
+>;
+
+/// Build a [`SpresensePwbimu`] from the CXD56 HAL's I2C0/SPI5 buses and the four
+/// raw add-on GPIO pins, returning it in the [`Off`] state.
+///
+/// This is the convenience path for the common case — the add-on plugged
+/// straight into a Spresense main board (see the wiring table in the
+/// [module docs](crate::pwbimu)). It configures the pins for you: `power`,
+/// `reset` and `csx` as outputs, `drdy` as a pull-down input. The arguments are
+/// in pad order — power (`gp_emmc_data2`), reset (`gp_i2s0_bck`), chip-select
+/// (`gp_i2s0_data_in`), DRDY (`gp_emmc_data3`) — and their distinct pin types
+/// make a mis-ordering a compile error.
+///
+/// For any other routing (a custom PCB on, say, I2C1/SPI4) skip this and build a
+/// [`Pwbimu`] directly with [`Pwbimu::new`].
+pub fn spresense(
+    i2c: HalI2c<I2c0>,
+    spi: HalSpi<Spi5>,
+    power: GpioPin<GpEmmcData2>,
+    reset: GpioPin<GpI2s0Bck>,
+    csx: GpioPin<GpI2s0DataIn>,
+    drdy: GpioPin<GpEmmcData3>,
+) -> SpresensePwbimu<Off> {
+    Pwbimu::new(PwbImuParts {
+        i2c,
+        spi,
+        power: power.into_output(Level::Low),
+        reset: reset.into_output(Level::Low),
+        csx: csx.into_output(Level::High),
+        drdy: drdy.into_pull_down_input(),
+    })
 }
