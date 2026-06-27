@@ -37,6 +37,7 @@ pub mod critical_section_impl;
 pub mod delay;
 pub mod delay_alt;
 pub mod farapi;
+pub mod gnss;
 pub mod gpio;
 pub mod i2c;
 pub mod adc;

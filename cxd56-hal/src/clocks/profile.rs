@@ -200,6 +200,21 @@ impl Clock {
         self.gps_ahb = Fixed(c.gps_ahb);
     }
 
+    /// Refresh the perf-dependent cached fields from live registers after the
+    /// SYSIOP changed the operating point **out-of-band** — i.e. through a path
+    /// other than [`request_perf`](Clock::request_perf) / [`set_gear`].
+    ///
+    /// The motivating case is GNSS bring-up: starting the `gnssfw` DSP makes the
+    /// loader raise the SYSIOP clock tree (the GPS CPU is clocked from `sys`),
+    /// which shifts COM (48.75 MHz HP ↔ 32.5 MHz LP) without any
+    /// [`request_perf`] call of ours. A COM-bus peripheral built before that
+    /// (an `uart_alt` UART1) is then mis-divided. Call this once the external
+    /// change has settled, then rebuild the affected peripheral so it recomputes
+    /// its divisors from the refreshed [`com`](Clock::com).
+    pub fn resample(&mut self) {
+        self.resample_dyn();
+    }
+
     /// Snapshot every readable clock. Cheap; delegates to the owned `Crg`.
     pub fn freeze(&self) -> Clocks {
         self.crg.freeze()

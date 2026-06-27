@@ -47,8 +47,10 @@ use crate::multicore::cpu;
 const PROTO_MBX: u32 = 1;
 const PROTO_FLG: u32 = 3;
 
-/// The SYSIOP core is CPU 0 — every `_modulelist_*` entry in
-/// `cxd56_farapistub.S` has `cpuno == 0`.
+/// The SYSIOP core is CPU 0 — most `_modulelist_*` entries in
+/// `cxd56_farapistub.S` have `cpuno == 0` (power_mgr, flash_mgr, aca, …). A few
+/// run on a different core: the `gnss` module list has `cpuno == 1` (the GNSS
+/// DSP), reached with [`call_on_cpu`].
 const CPUID_SYSIOP: u32 = 0;
 
 /// `mbxid` is `0` for every module in `cxd56_farapistub.S`.
@@ -109,7 +111,44 @@ fn pack_word0(dest_cpuid: u32, proto: u32, msgid: u32, pdata: u32) -> u32 {
 /// mirrors the `r0-r3` the asm stub pushes).
 ///
 /// On `Ok(())`, read the firmware return value from `arg[0]`.
+///
+/// Routes to the SYSIOP (CPU 0), which hosts most modules. For a module whose
+/// `_modulelist_*` entry has a non-zero `cpuno` (the `gnss` module runs on the
+/// GNSS DSP, `cpuno == 1`), use [`call_on_cpu`] with that core's id.
 pub fn call(modid: i32, api_id: i32, arg: &mut [u32], budget: u32) -> Result<(), FarapiError> {
+    call_on_cpu(CPUID_SYSIOP, modid, api_id, arg, budget)
+}
+
+/// Like [`call`], but sends the request to `dest_cpuid` — the `cpuno` of the
+/// target module's `_modulelist_*` entry. Use `0` for SYSIOP modules (or just
+/// call [`call`]); use [`crate::gnss::GNSS_CPUID`] (1) for the `gnss` module.
+///
+/// The completion `FLG` is matched and acknowledged generically (back to
+/// whichever core sent it), so only the request destination differs.
+pub fn call_on_cpu(
+    dest_cpuid: u32,
+    modid: i32,
+    api_id: i32,
+    arg: &mut [u32],
+    budget: u32,
+) -> Result<(), FarapiError> {
+    call_on_cpu_with_unrelated(dest_cpuid, modid, api_id, arg, budget, |_, _| {})
+}
+
+/// Like [`call_on_cpu`], but invokes `on_unrelated` for every FIFO message that
+/// is not this call's FLG completion.
+///
+/// NuttX uses an interrupt dispatcher, so unrelated messages can still reach
+/// their protocol handlers while `farapi_main` blocks. Polling users that need
+/// that behavior, such as GNSS boot, can provide a small dispatcher here.
+pub fn call_on_cpu_with_unrelated(
+    dest_cpuid: u32,
+    modid: i32,
+    api_id: i32,
+    arg: &mut [u32],
+    budget: u32,
+    mut on_unrelated: impl FnMut(u32, u32),
+) -> Result<(), FarapiError> {
     // `cpuid` of the *caller* — `getreg32(CPU_ID)` in NuttX, which is this
     // core's ADSP id (index + 2).
     let cpuid = cpu::raw_pid() as i32;
@@ -135,7 +174,7 @@ pub fn call(modid: i32, api_id: i32, arg: &mut [u32], budget: u32) -> Result<(),
 
     // Send request: cxd56_sendmsg(cpuno, PROTO_MBX, msgtype=4, pdata=1<<8|1,
     // &msg). msgid = msgtype << 4 = 0x40.
-    let req_w0 = pack_word0(CPUID_SYSIOP, PROTO_MBX, 4 << 4, (1 << 8) | 1);
+    let req_w0 = pack_word0(dest_cpuid, PROTO_MBX, 4 << 4, (1 << 8) | 1);
     Mailbox::send_blocking([req_w0, (&mut msg as *mut FarMsg) as u32]);
 
     // Wait for the FLG completion event (`pdata & 0xf == 7`), then acknowledge
@@ -148,6 +187,7 @@ pub fn call(modid: i32, api_id: i32, arg: &mut [u32], budget: u32) -> Result<(),
         let proto = (w0 >> 24) & 0xf;
         if proto != PROTO_FLG || (w0 & 0xf) != FLAG_MAGIC {
             // Unrelated FIFO traffic (e.g. a stray MBX) — drop and keep waiting.
+            on_unrelated(w0, _w1);
             continue;
         }
         // Send event-flag response: cxd56_sendmsg(sender, PROTO_FLG, msgtype=5,
